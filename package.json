@@ -1,0 +1,23 @@
+{
+  "name": "aether-ath-engine",
+  "version": "3.2.0",
+  "private": true,
+  "description": "AETHER TOKEN (ATH) Mining Engine aligned to Mining System Blueprint v3.1",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network bscMainnet",
+    "verify:testnet": "hardhat run scripts/verify.js --network bscTestnet",
+    "verify:mainnet": "hardhat run scripts/verify.js --network bscMainnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  }
+}
