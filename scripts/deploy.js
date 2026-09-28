@@ -55,11 +55,14 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   if (!deployer) throw new Error("No deployer signer available");
 
-  const owner = requiredAddress("OWNER_ADDRESS");
-  const treasury = requiredAddress("TREASURY_ADDRESS");
-  const liquidityWallet = requiredAddress("LIQUIDITY_WALLET");
-  const teamBeneficiary = requiredAddress("TEAM_BENEFICIARY");
-  const marketingWallet = requiredAddress("MARKETING_WALLET");
+  const singleWalletMode = isTestnet && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
+  const roleAddress = (name) => singleWalletMode ? deployer.address : requiredAddress(name);
+
+  const owner = roleAddress("OWNER_ADDRESS");
+  const treasury = roleAddress("TREASURY_ADDRESS");
+  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const teamBeneficiary = roleAddress("TEAM_BENEFICIARY");
+  const marketingWallet = roleAddress("MARKETING_WALLET");
   const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
 
   if (!Number.isInteger(teamLockDays) || teamLockDays < 365 || teamLockDays > 550) {
@@ -77,6 +80,7 @@ async function main() {
   console.log("Chain ID         :", chainId);
   console.log("Deployer         :", deployer.address);
   console.log("Deployer BNB     :", hre.ethers.formatEther(deployerBalance));
+  console.log("Testnet role mode:", singleWalletMode ? "DEPLOYER_FOR_ALL_ROLES" : "EXPLICIT_ADDRESSES");
   console.log("Owner / multisig :", owner);
   console.log("Treasury         :", treasury);
   console.log("Liquidity wallet :", liquidityWallet);
@@ -120,6 +124,7 @@ async function main() {
     network: hre.network.name,
     chainId,
     deployer: deployer.address,
+    testnetSingleWalletMode: singleWalletMode,
     owner,
     treasury,
     liquidityWallet,
