@@ -102,6 +102,7 @@ class MemoryStorage {
       interests: [...(state.interests || existing?.interests || [])],
       experience: state.experience || existing?.experience || "beginner",
       hasWallet: Boolean(state.hasWallet ?? existing?.hasWallet ?? false),
+      countryCode: state.countryCode || existing?.countryCode || "",
       stage: state.stage || existing?.stage || "start",
       status: state.status || existing?.status || "pending",
       score: state.score ?? existing?.score ?? null,
@@ -216,6 +217,7 @@ class PostgresStorage {
         interests JSONB NOT NULL DEFAULT '[]'::jsonb,
         experience TEXT NOT NULL DEFAULT 'beginner',
         has_wallet BOOLEAN NOT NULL DEFAULT FALSE,
+        country_code TEXT,
         stage TEXT NOT NULL DEFAULT 'start',
         status TEXT NOT NULL DEFAULT 'pending',
         score INTEGER,
@@ -223,6 +225,8 @@ class PostgresStorage {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY (telegram_id, chat_id)
       );
+      ALTER TABLE ath_bot_join_requests
+        ADD COLUMN IF NOT EXISTS country_code TEXT;
       CREATE INDEX IF NOT EXISTS idx_ath_bot_join_requests_status
         ON ath_bot_join_requests(status, updated_at DESC);
 
@@ -350,12 +354,13 @@ class PostgresStorage {
   async saveJoinRequest(state) {
     const { rows } = await this.pool.query(
       `INSERT INTO ath_bot_join_requests
-        (telegram_id, chat_id, interests, experience, has_wallet, stage, status, score, created_at, updated_at)
-       VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, NOW(), NOW())
+        (telegram_id, chat_id, interests, experience, has_wallet, country_code, stage, status, score, created_at, updated_at)
+       VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, $9, NOW(), NOW())
        ON CONFLICT (telegram_id, chat_id) DO UPDATE SET
          interests = EXCLUDED.interests,
          experience = EXCLUDED.experience,
          has_wallet = EXCLUDED.has_wallet,
+         country_code = EXCLUDED.country_code,
          stage = EXCLUDED.stage,
          status = EXCLUDED.status,
          score = EXCLUDED.score,
@@ -367,6 +372,7 @@ class PostgresStorage {
         JSON.stringify(state.interests || []),
         state.experience || "beginner",
         Boolean(state.hasWallet),
+        state.countryCode || "",
         state.stage || "start",
         state.status || "pending",
         state.score == null ? null : Number(state.score),
@@ -506,6 +512,7 @@ function mapJoinRow(row) {
     interests: Array.isArray(row.interests) ? row.interests : [],
     experience: row.experience || "beginner",
     hasWallet: Boolean(row.has_wallet),
+    countryCode: row.country_code || "",
     stage: row.stage || "start",
     status: row.status || "pending",
     score: row.score == null ? null : Number(row.score),
