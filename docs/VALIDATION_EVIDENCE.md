@@ -2,24 +2,37 @@
 
 Date: 2026-09-28
 
-## Validated commit
+## Latest validated commit
 
-`a181c715753ad686839a9aac33e4276e32be1289`
+`6591dcd75ea8d8080cdfb261c0f9b85a34265347`
 
-Railway validation deployment:
+Railway latest-main validation deployment:
 
-`2e4ff2ac-c7a6-4c6d-9d1b-7f0c5dbbd87e`
+`5e722129-39ba-4cd6-94f2-588975191451`
 
 Result: **SUCCESS**
 
-## Build evidence
+## Latest-main build evidence
 
 - Zero-dependency source self-check: **PASSED**
+- Deployment-script syntax check: **PASSED**
+- BSC Testnet RPC check: **PASSED**
+- Observed BSC chain ID: **97**
+- Safe Testnet configuration: **READY**
+- Mainnet gates: **all CLOSED**
 - Solidity compiler: **0.8.20**
 - Hardhat compiler mode: optimizer enabled, `viaIR: true`
 - Solidity compile result: **18 files compiled successfully**
 - EVM target: **paris**
 - Automated test result: **13 passing**
+- Railway validation server: **SUCCESS**
+
+The readiness report intentionally remains:
+
+- `deploymentConfig: BLOCKED`
+- `verificationConfig: BLOCKED`
+
+because operator-controlled Testnet values have not been invented or committed. Missing deployment values are `PRIVATE_KEY`, `OWNER_ADDRESS`, `TREASURY_ADDRESS`, `TEAM_BENEFICIARY`, `LIQUIDITY_WALLET`, and `MARKETING_WALLET`. `BSCSCAN_API_KEY` is a separate later verification gate.
 
 ## Covered behaviors
 
@@ -43,9 +56,11 @@ Result: **SUCCESS**
 ## Compiler findings fixed during validation
 
 ### Finding 1 — NatSpec parsing
+
 Solidity rejected `@30d`, `@60d`, `@90d`, and `@180d` inside the contract NatSpec comment. The text was changed to ordinary prose.
 
 ### Finding 2 — Stack depth
+
 `MiningAirdrop.getUserInfo` exceeded the legacy compiler stack-depth limit. Optimizer + IR compilation was enabled, preserving the contract ABI while allowing the current interface to compile successfully.
 
 ## Deployment boundary
