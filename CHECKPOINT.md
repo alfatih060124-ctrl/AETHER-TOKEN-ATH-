@@ -1,6 +1,6 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
-## DONE
+## DONE — Steps 1–23
 
 1. Blueprint v3.1 converted into an explicit ATH engine architecture.
 2. Fixed-supply ATH token retained at 1,000,000,000.
@@ -17,31 +17,44 @@
 13. Automated Hardhat test suite added.
 14. Security/release gates documented.
 15. Deployment config hardened: no fallback private key and mainnet is fail-closed behind explicit audit/multisig/liquidity gates.
-16. Zero-dependency source self-check added for token supply, mining constants, referral tiers, vesting, treasury permissions and mainnet gates.
-17. Testnet/mainnet environment preflight script added; it validates required addresses, RPC selection and Team lock range without printing the deployer private key.
-18. Blueprint ambiguity/decision register added so implementation assumptions are not silently treated as source requirements.
-19. CI workflow hardened with manual dispatch, concurrency cancellation and the source self-check before dependency install.
-20. Failed GitHub Actions run was explicitly retried; a fresh workflow was also triggered after CI hardening.
+16. Zero-dependency source self-check added.
+17. Testnet/mainnet environment preflight added.
+18. Blueprint ambiguity/decision register added.
+19. CI workflow hardened.
+20. GitHub Actions runner issue isolated: jobs ended before runner assignment; no Solidity result was produced there.
+21. Railway fallback build runner created and connected to `main`.
+22. Real compiler validation completed. NatSpec and stack-depth findings were fixed.
+23. Full validation is GREEN on Railway: source self-check PASSED, 18 Solidity files compiled, and 13 automated tests passed.
 
-## CURRENT BLOCKER
+## GREEN VALIDATION EVIDENCE
 
-- Latest GitHub Actions jobs terminate before any workflow step starts.
-- Observed state: `runner_id = 0`, empty runner name, and zero executed steps.
-- This means there is still no Solidity compile/test result to accept or reject; the job is failing before runner assignment.
-- Do not deploy ATH to BSC Testnet until the compile/test gate is green.
+- Commit: `a181c715753ad686839a9aac33e4276e32be1289`
+- Railway deployment: `2e4ff2ac-c7a6-4c6d-9d1b-7f0c5dbbd87e`
+- Result: `SUCCESS`
+- Solidity files compiled: 18
+- Automated tests: 13 passing
+- No BSC deployment performed during validation.
 
-## EXTERNAL FALLBACK STATUS
+## CURRENT STEP — 24: BSC TESTNET PREFLIGHT
 
-- The authorized Remote Desktop device `aether-v3-engine` is currently offline, so it cannot yet be used as a fallback build runner.
-- Mainnet remains blocked regardless of runner availability.
+The code gate is green. BSC Testnet deployment now requires operator-controlled configuration that must not be invented or committed:
 
-## NEXT
+- `PRIVATE_KEY` — dedicated funded BSC Testnet deployer key, stored only as a secret.
+- `OWNER_ADDRESS` — intended testnet owner/admin address.
+- `TREASURY_ADDRESS` — ATH Power/Booster revenue recipient.
+- `TEAM_BENEFICIARY`.
+- `LIQUIDITY_WALLET`.
+- `MARKETING_WALLET`.
+- `TEAM_LOCK_DAYS` — integer 365–550.
+- `BSC_TESTNET_RPC`.
+- `BSCSCAN_API_KEY` — required for automatic verification after deploy.
 
-21. Restore a working build runner (GitHub-hosted Actions or the authorized AETHER VM).
-22. Run source self-check + `npm install` + Solidity compile + automated tests.
-23. Fix any compiler/test findings and repeat until green.
-24. Run `preflight:testnet`, then deploy ATHToken + MiningAirdrop + TeamTokenLock to BSC Testnet only.
-25. Verify contracts on BscScan and test real Web3 flow: Power → Daily Claim → Booster → Vesting Claim.
-26. Freeze verified testnet contract addresses/ABI for Aether Wallet.
-27. Connect the Aether Wallet Mining menu to ATH Engine through Web3.
-28. Keep BSC mainnet deployment fail-closed until external audit, multisig and ATH/USDT liquidity-lock decisions are complete.
+The deployer must also hold enough BSC Testnet BNB to pay deployment gas.
+
+## NEXT — Steps 24–28
+
+24. Load testnet-only secret/address configuration and run `npm run preflight:testnet`.
+25. Deploy ATHToken + MiningAirdrop + TeamTokenLock to BSC Testnet only.
+26. Verify contracts on BscScan and run real Web3 test flow: Power → Daily Claim → Booster → Vesting Claim.
+27. Freeze verified Testnet contract addresses + ABI and connect them to the Aether Wallet Mining menu.
+28. Keep BSC Mainnet fail-closed until external audit, production multisig, exact Team lock period and ATH/USDT liquidity-lock decisions are complete.
