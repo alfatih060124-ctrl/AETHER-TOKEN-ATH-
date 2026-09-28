@@ -334,14 +334,14 @@ async function handleMessage(message) {
   if (command === "myid") {
     return send(
       message.chat.id,
-      `Telegram User ID Anda: <code>${message.from.id}</code>\n\nGunakan angka ini untuk <code>ADMIN_TELEGRAM_IDS</code> di Railway.`
+      `Your Telegram User ID: <code>${message.from.id}</code>\n\nUse this numeric ID for <code>ADMIN_TELEGRAM_IDS</code> in Railway.`
     );
   }
 
   if (command === "chatid") {
     return send(
       message.chat.id,
-      `Chat/Group ID: <code>${message.chat.id}</code>\n\nGunakan angka ini untuk <code>TARGET_CHAT_IDS</code> jika group/channel akan menerima scheduler ATH.`
+      `Chat/Group ID: <code>${message.chat.id}</code>\n\nUse this ID for <code>TARGET_CHAT_IDS</code> when this group/channel should receive ATH scheduled content.`
     );
   }
 
@@ -383,7 +383,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/myid — tampilkan Telegram User ID\n/chatid — tampilkan Chat/Group ID\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/edukasi — crypto & ATH education\n/stop — opt out of promotional updates"
+      "<b>Commands</b>\n/start — open ATH bot\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/stop — opt out of promotional updates"
     );
   }
 
