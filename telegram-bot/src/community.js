@@ -60,11 +60,11 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     try {
       await send(
         userId,
-        `Halo ${escapeHtml(request.from.first_name || "teman")}!\n\nKamu meminta bergabung ke <b>${escapeHtml(request.chat.title || "komunitas ATH")}</b>. Untuk menjaga kualitas komunitas, lakukan verifikasi singkat minat crypto.`,
+        `Hello ${escapeHtml(request.from.first_name || "friend")}!\n\nYou requested to join <b>${escapeHtml(request.chat.title || "the ATH community")}</b>. To help keep the community focused, please complete a short crypto-interest verification.`,
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "Mulai Verifikasi", callback_data: `verify:start:${chatId}` }],
+              [{ text: "Start Verification", callback_data: `verify:start:${chatId}` }],
             ],
           },
         }
@@ -92,14 +92,14 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       const key = joinKey(userId, chatId);
       const state = joinStates.get(key);
       if (!state) {
-        await send(query.message.chat.id, "Permintaan verifikasi sudah kedaluwarsa.");
+        await send(query.message.chat.id, "This verification request has expired.");
         return true;
       }
       state.stage = "interests";
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
-        text: "Pilih minat crypto kamu. Bisa lebih dari satu, lalu tekan Selesai:",
+        text: "Select your crypto interests. You may choose more than one, then tap Done:",
         reply_markup: {
           inline_keyboard: [
             [
@@ -110,7 +110,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
               { text: "Staking", callback_data: `verify:interest:${chatId}:staking` },
               { text: "Mining", callback_data: `verify:interest:${chatId}:mining` },
             ],
-            [{ text: "Selesai Pilih", callback_data: `verify:interest:${chatId}:done` }],
+            [{ text: "Done", callback_data: `verify:interest:${chatId}:done` }],
           ],
         },
       });
@@ -128,7 +128,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         if (!state.interests.length) {
           await telegram("answerCallbackQuery", {
             callback_query_id: query.id,
-            text: "Pilih minimal satu minat dulu.",
+            text: "Please select at least one interest first.",
             show_alert: true,
           }).catch(() => {});
           return true;
@@ -138,11 +138,11 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         await telegram("editMessageText", {
           chat_id: query.message.chat.id,
           message_id: query.message.message_id,
-          text: "Seberapa berpengalaman kamu di crypto?",
+          text: "How experienced are you with crypto?",
           reply_markup: {
             inline_keyboard: [
-              [{ text: "Pemula", callback_data: `verify:exp:${chatId}:beginner` }],
-              [{ text: "Menengah", callback_data: `verify:exp:${chatId}:intermediate` }],
+              [{ text: "Beginner", callback_data: `verify:exp:${chatId}:beginner` }],
+              [{ text: "Intermediate", callback_data: `verify:exp:${chatId}:intermediate` }],
               [{ text: "Advanced", callback_data: `verify:exp:${chatId}:advanced` }],
             ],
           },
@@ -153,7 +153,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       if (!state.interests.includes(value)) state.interests.push(value);
       await telegram("answerCallbackQuery", {
         callback_query_id: query.id,
-        text: "Ditambahkan: " + value,
+        text: "Added: " + value,
       }).catch(() => {});
       return true;
     }
@@ -169,11 +169,11 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
-        text: "Apakah kamu sudah punya crypto wallet?",
+        text: "Do you already have a crypto wallet?",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "Ya, saya punya wallet", callback_data: `verify:wallet:${chatId}:yes` }],
-            [{ text: "Belum punya", callback_data: `verify:wallet:${chatId}:no` }],
+            [{ text: "Yes, I have a wallet", callback_data: `verify:wallet:${chatId}:yes` }],
+            [{ text: "Not yet", callback_data: `verify:wallet:${chatId}:no` }],
           ],
         },
       });
@@ -211,8 +211,8 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
         text: eligible
-          ? `Verifikasi berhasil. Skor crypto: <b>${score}/100</b>. Permintaan join disetujui.`
-          : `Skor crypto: <b>${score}/100</b>. Minimum komunitas saat ini <b>${config.minCryptoScore}</b>. Silakan pelajari materi crypto lalu coba lagi nanti.`,
+          ? `Verification successful. Crypto score: <b>${score}/100</b>. Your join request has been approved.`
+          : `Crypto score: <b>${score}/100</b>. The current community minimum is <b>${config.minCryptoScore}</b>. Please review the crypto education materials and try again later.`,
         parse_mode: "HTML",
       });
 
@@ -226,7 +226,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   async function educationCommand(message) {
     return send(
       message.chat.id,
-      "<b>Pusat Edukasi Crypto & ATH</b>\n\nPilih topik:",
+      "<b>Crypto & ATH Education Center</b>\n\nChoose a topic:",
       { reply_markup: educationKeyboard() }
     );
   }
@@ -266,10 +266,10 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     if (command === "warnings") {
       const target = targetFromMessage(message, args);
       if (!target) {
-        await send(groupId, "Reply user atau gunakan /warnings <user_id>");
+        await send(groupId, "Reply to a user or use /warnings <user_id>");
         return true;
       }
-      await send(groupId, `Warnings untuk <code>${target.id}</code>: <b>${warnings.get(target.id) || 0}</b>`);
+      await send(groupId, `Warnings for <code>${target.id}</code>: <b>${warnings.get(target.id) || 0}</b>`);
       return true;
     }
 
@@ -278,7 +278,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     if (["warn", "mute", "unmute", "kick", "ban", "unban"].includes(command)) {
       const target = targetFromMessage(message, args);
       if (!target) {
-        await send(groupId, `Gunakan reply ke user untuk /${command}, atau sertakan user_id.`);
+        await send(groupId, `Reply to a user for /${command}, or provide a user_id.`);
         return true;
       }
 
@@ -287,7 +287,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         warnings.set(target.id, count);
         await send(
           groupId,
-          `Peringatan diberikan ke <code>${target.id}</code>. Total warning: <b>${count}</b>.`
+          `Warning issued to <code>${target.id}</code>. Total warnings: <b>${count}</b>.`
         );
         return true;
       }
@@ -318,7 +318,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
             can_manage_topics: false,
           },
         });
-        await send(groupId, `User <code>${target.id}</code> di-mute ${minutes} menit.`);
+        await send(groupId, `User <code>${target.id}</code> has been muted for ${minutes} minutes.`);
         return true;
       }
 
@@ -343,7 +343,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
             can_manage_topics: false,
           },
         });
-        await send(groupId, `User <code>${target.id}</code> sudah di-unmute.`);
+        await send(groupId, `User <code>${target.id}</code> has been unmuted.`);
         return true;
       }
 
@@ -354,13 +354,13 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           user_id: Number(target.id),
           only_if_banned: true,
         });
-        await send(groupId, `User <code>${target.id}</code> dikeluarkan.`);
+        await send(groupId, `User <code>${target.id}</code> has been removed from the group.`);
         return true;
       }
 
       if (command === "ban") {
         await telegram("banChatMember", { chat_id: groupId, user_id: Number(target.id) });
-        await send(groupId, `User <code>${target.id}</code> diblokir dari group.`);
+        await send(groupId, `User <code>${target.id}</code> has been banned from the group.`);
         return true;
       }
 
@@ -370,7 +370,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           user_id: Number(target.id),
           only_if_banned: true,
         });
-        await send(groupId, `User <code>${target.id}</code> sudah di-unban.`);
+        await send(groupId, `User <code>${target.id}</code> has been unbanned.`);
         return true;
       }
     }
@@ -392,7 +392,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       }).catch(() => {});
       await send(
         message.chat.id,
-        `Pesan dari ${escapeHtml(message.from.first_name || "member")} dihapus karena terdeteksi berisiko/spam.`
+        `A message from ${escapeHtml(message.from.first_name || "member")} was removed because it was detected as risky or spam.`
       );
       return true;
     }
@@ -420,7 +420,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
     if (parsed) {
       if (await moderationAdmin(message, parsed.command, parsed.args)) return true;
-      if (parsed.command === "edukasi" || parsed.command === "aether") {
+      if (parsed.command === "education" || parsed.command === "aether") {
         return educationCommand(message);
       }
     }
