@@ -63,7 +63,6 @@ The readiness runner reports these values are still absent:
 - `TEAM_BENEFICIARY`
 - `LIQUIDITY_WALLET`
 - `MARKETING_WALLET`
-- `BSCSCAN_API_KEY`
 
 Safe defaults already loaded:
 
@@ -73,6 +72,8 @@ Safe defaults already loaded:
 - all Mainnet release gates = `false`
 
 The deployer must hold Testnet BNB before `npm run preflight:testnet` can pass.
+
+`BSCSCAN_API_KEY` is now separated from deployment readiness and is required only for the later BscScan verification step.
 
 ## NEXT — Steps 24–28
 
