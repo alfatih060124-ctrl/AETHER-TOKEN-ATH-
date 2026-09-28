@@ -489,6 +489,34 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
   async function handleMessage(message) {
     if (!message?.from?.id) return false;
+
+    if (
+      ["group", "supergroup"].includes(message.chat?.type) &&
+      isTargetChat(message.chat?.id) &&
+      Array.isArray(message.new_chat_members) &&
+      message.new_chat_members.length
+    ) {
+      const humans = message.new_chat_members.filter((member) => !member.is_bot);
+      for (const member of humans) {
+        await storage.logModeration({
+          chatId: message.chat.id,
+          targetUserId: member.id,
+          actorUserId: null,
+          action: "member_join",
+        });
+      }
+      if (humans.length) {
+        const names = humans
+          .map((member) => escapeHtml(member.first_name || member.username || "member"))
+          .join(", ");
+        await send(
+          message.chat.id,
+          `Welcome <b>${names}</b> to the ATH community. Use /education to learn about ATH, mining, referral safety, staking, trading, and wallet security.`
+        );
+        return true;
+      }
+    }
+
     const parsed = parseCommand(message.text || "");
 
     if (parsed) {
