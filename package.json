@@ -4,6 +4,7 @@
   "private": true,
   "description": "AETHER TOKEN (ATH) Mining Engine aligned to Mining System Blueprint v3.1",
   "scripts": {
+    "start": "node scripts/ci-server.js",
     "source:selfcheck": "node scripts/source-selfcheck.js",
     "preflight:testnet": "node scripts/preflight.js testnet",
     "preflight:mainnet": "node scripts/preflight.js mainnet",
@@ -22,5 +23,9 @@
   },
   "dependencies": {
     "ethers": "^6.13.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20 <23"
   }
 }
