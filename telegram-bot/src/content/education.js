@@ -2,53 +2,53 @@ const EDUCATION = {
   airdrop: [
     "<b>ATH & Airdrop Education</b>",
     "",
-    "Airdrop adalah distribusi token kepada pengguna yang memenuhi syarat tertentu.",
-    "Untuk ATH, status promosi Telegram tidak otomatis menjadi reward on-chain.",
+    "An airdrop is a token distribution to users who meet specific eligibility requirements.",
+    "For ATH, Telegram promotional activity does not automatically become an on-chain reward.",
     "",
-    "<b>Keamanan:</b>",
-    "• Jangan pernah berikan seed phrase/private key.",
-    "• Gunakan link resmi.",
-    "• Verifikasi wallet dan transaksi sebelum signing.",
-    "• Hindari pesan DM yang meminta pembayaran atau kredensial rahasia.",
+    "<b>Security:</b>",
+    "• Never share your seed phrase or private key.",
+    "• Use official links only.",
+    "• Verify the wallet, contract, and transaction details before signing.",
+    "• Avoid DMs that ask for payment or confidential credentials.",
   ].join("\n"),
 
   mining: [
     "<b>ATH Mining Program</b>",
     "",
-    "ATH menggunakan Power untuk mengaktifkan program mining.",
-    "Base reward mengikuti konfigurasi smart contract ATH dan claim dilakukan sesuai aturan on-chain.",
-    "Referral resmi juga mengikuti smart contract, bukan jumlah klik Telegram.",
+    "ATH uses Power to activate the mining program.",
+    "The base reward follows the ATH smart-contract configuration, and claims follow the on-chain rules.",
+    "Official referral credit is determined by the smart contract, not by Telegram clicks.",
   ].join("\n"),
 
   staking: [
     "<b>Staking Education</b>",
     "",
-    "Staking berarti mengunci atau mendelegasikan aset dalam mekanisme/protokol tertentu untuk memperoleh reward.",
-    "Selalu pahami lock period, smart-contract risk, validator risk, dan kondisi token.",
+    "Staking means locking or delegating assets within a specific mechanism or protocol to earn rewards.",
+    "Always understand the lock period, smart-contract risk, validator risk, and token conditions.",
   ].join("\n"),
 
   trading: [
     "<b>Trading Education</b>",
     "",
-    "Trading memiliki risiko kerugian. Gunakan manajemen risiko, hindari FOMO, dan jangan menganggap konten komunitas sebagai jaminan profit.",
+    "Trading involves the risk of loss. Use risk management, avoid FOMO, and never treat community content as a guarantee of profit.",
   ].join("\n"),
 
   aether: [
     "<b>AETHER Wallet</b>",
     "",
-    "AETHER Wallet menjadi jalur Web3 untuk ATH. Referral Telegram dapat diarahkan ke Wallet, lalu user meninjau sponsor dan menandatangani transaksi sendiri.",
+    "AETHER Wallet is the Web3 route for ATH. Telegram referrals can be routed to the Wallet, where the user reviews the sponsor and signs the transaction locally.",
     "",
-    "Bot Telegram tidak pernah memerlukan seed phrase atau private key wallet pengguna.",
+    "The Telegram bot never needs a user's wallet seed phrase or private key.",
   ].join("\n"),
 
   security: [
     "<b>Crypto Security</b>",
     "",
-    "• Seed phrase/private key tidak boleh dibagikan.",
-    "• Periksa domain dan alamat kontrak.",
-    "• Pisahkan wallet eksperimen dari wallet utama.",
-    "• Jangan menandatangani transaksi yang tidak dipahami.",
-    "• Admin resmi tidak meminta private key melalui DM.",
+    "• Never share a seed phrase or private key.",
+    "• Verify the domain and contract address.",
+    "• Keep experimental wallets separate from your main wallet.",
+    "• Do not sign transactions you do not understand.",
+    "• Official admins will never ask for your private key by DM.",
   ].join("\n"),
 };
 
