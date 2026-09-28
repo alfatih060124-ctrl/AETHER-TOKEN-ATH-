@@ -282,7 +282,7 @@ async function handleAdmin(message, command, args) {
     const s = await storage.stats();
     await send(
       message.chat.id,
-      `<b>ATH Bot Stats</b>\nUsers: ${s.users}\nOpted-in: ${s.optedIn}\nLinked wallets: ${s.linkedWallets}\nAttributed Telegram referrals: ${s.referrals}`
+      `<b>ATH Bot Stats</b>\nUsers: ${s.users}\nOpted-in: ${s.optedIn}\nLinked wallets: ${s.linkedWallets}\nAttributed Telegram referrals: ${s.referrals}\nJoin requests: ${s.joinRequests || 0}\nModeration events: ${s.moderationLogs || 0}\nStorage: ${config.databaseUrl ? "PostgreSQL" : "memory"}`
     );
     return true;
   }
@@ -305,7 +305,7 @@ async function handleAdmin(message, command, args) {
       } catch {
         failed += 1;
       }
-      await sleep(60);
+      await sleep(250);
     }
 
     await send(
@@ -383,7 +383,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/stop — opt out of promotional updates"
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates"
     );
   }
 
@@ -401,15 +401,58 @@ async function handleCallback(query) {
     lastName: query.from.last_name || null,
   });
 
-  await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
-
-  if (query.data === "airdrop") return showAirdrop(query.message.chat.id);
-  if (query.data === "invite") return showInvite(query.message.chat.id, String(query.from.id));
-  if (query.data === "referral") return showReferral(query.message.chat.id, String(query.from.id));
+  if (query.data === "airdrop") {
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+    return showAirdrop(query.message.chat.id);
+  }
+  if (query.data === "invite") {
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+    return showInvite(query.message.chat.id, String(query.from.id));
+  }
+  if (query.data === "referral") {
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+    return showReferral(query.message.chat.id, String(query.from.id));
+  }
 
   if (community) {
-    return community.handleCallback(query);
+    const handled = await community.handleCallback(query);
+    if (handled) {
+      await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+      return;
+    }
   }
+
+  await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+}
+
+async function configureTelegramProfile() {
+  const commands = [
+    { command: "start", description: "Open the AETHER ATH bot" },
+    { command: "airdrop", description: "View ATH airdrop information" },
+    { command: "invite", description: "Get your ATH referral link" },
+    { command: "referral", description: "Check ATH sponsor and referral status" },
+    { command: "wallet", description: "Link your public BSC/EVM wallet" },
+    { command: "stats", description: "View your ATH campaign stats" },
+    { command: "education", description: "Open crypto and ATH education" },
+    { command: "article", description: "Read the daily ATH education article" },
+    { command: "help", description: "Show the command reference" },
+    { command: "stop", description: "Disable promotional updates" },
+  ];
+
+  await telegram("setMyCommands", { commands }).catch((err) => {
+    console.warn("Unable to register Telegram commands:", err.message);
+  });
+  await telegram("setMyDescription", {
+    description:
+      "Official AETHER ATH community, education, referral and security bot. Never share a seed phrase or private key.",
+  }).catch((err) => {
+    console.warn("Unable to set bot description:", err.message);
+  });
+  await telegram("setMyShortDescription", {
+    short_description: "Official AETHER ATH community and referral bot.",
+  }).catch((err) => {
+    console.warn("Unable to set short bot description:", err.message);
+  });
 }
 
 async function checkTargetChatAccess(me) {
@@ -447,8 +490,10 @@ async function checkTargetChatAccess(me) {
 }
 
 async function pollingLoop() {
+  await telegram("deleteWebhook", { drop_pending_updates: false }).catch(() => {});
   const me = await telegram("getMe");
   console.log(`ATH Telegram bot connected as @${me.username}`);
+  await configureTelegramProfile();
   await checkTargetChatAccess(me);
 
   while (!stopping) {
@@ -510,6 +555,19 @@ async function boot() {
         targetChats: config.targetChats.length,
         athReferralConfigured: athReferral.enabled,
         athReferralReady: Boolean(referralHealth.ready),
+        persistentStorage: Boolean(config.databaseUrl),
+        adminsConfigured: config.admins.size,
+        communityReady:
+          config.enabled &&
+          config.admins.size > 0 &&
+          config.targetChats.length > 0 &&
+          config.communityFeaturesEnabled,
+        productionReady:
+          config.enabled &&
+          config.admins.size > 0 &&
+          config.targetChats.length > 0 &&
+          config.communityFeaturesEnabled &&
+          Boolean(config.databaseUrl),
         nonce: crypto.randomBytes(4).toString("hex"),
       }));
       return;
@@ -532,11 +590,16 @@ async function boot() {
     throw new Error("BOT_ENABLED=true but TELEGRAM_BOT_TOKEN is missing");
   }
 
+  if (!config.databaseUrl) {
+    console.warn(
+      "DATABASE_URL is not configured; the bot is running with non-persistent memory storage."
+    );
+  }
+
   stopScheduler = startScheduler({
     config,
     community,
     send,
-    escapeHtml,
   });
 
   pollingLoop().catch((err) => {
