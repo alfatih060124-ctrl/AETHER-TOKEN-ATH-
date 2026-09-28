@@ -1,7 +1,12 @@
 const { FloodGuard, containsForbidden, detectTopic } = require("./services/moderation");
 const { calculateCryptoScore, isEligible } = require("./services/scoring");
 const { EDUCATION, educationKeyboard } = require("./content/education");
-const { articleForDate } = require("./content/articles");
+const {
+  articleForDate,
+  articlesByCategory,
+  articleById,
+  articleKeyboard,
+} = require("./content/articles");
 const { PromotionService } = require("./services/promotion");
 const { createAIReplyService } = require("./services/aiReply");
 
@@ -319,7 +324,52 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   }
 
   async function articleCommand(message) {
-    return send(message.chat.id, articleForDate());
+    return send(
+      message.chat.id,
+      "<b>ATH Crypto Article Center</b>\n\nChoose a category or open today's featured article:",
+      { reply_markup: articleKeyboard() }
+    );
+  }
+
+  async function articleCallback(query) {
+    const data = String(query.data || "");
+    if (!data.startsWith("article:")) return false;
+
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+
+    let body = "";
+    if (data === "article:latest") {
+      body = articleForDate();
+    } else if (data.startsWith("article:cat:")) {
+      const category = data.split(":")[2];
+      const items = articlesByCategory(category);
+      if (!items.length) {
+        await telegram("answerCallbackQuery", {
+          callback_query_id: query.id,
+          text: "No article is available in this category yet.",
+          show_alert: true,
+        }).catch(() => {});
+        return true;
+      }
+      body = items[0].body;
+    } else if (data.startsWith("article:id:")) {
+      const article = articleById(data.split(":").slice(2).join(":"));
+      if (!article) return true;
+      body = article.body;
+    } else {
+      return true;
+    }
+
+    await telegram("editMessageText", {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: body,
+      parse_mode: "HTML",
+      reply_markup: articleKeyboard(),
+    }).catch(async () => {
+      await send(query.message.chat.id, body, { reply_markup: articleKeyboard() });
+    });
+    return true;
   }
 
   async function educationCallback(query) {
@@ -638,8 +688,13 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
     if (parsed) {
       if (await moderationAdmin(message, parsed.command, parsed.args)) return true;
-      if (parsed.command === "education" || parsed.command === "aether") {
+      if (parsed.command === "education") {
         return educationCommand(message);
+      }
+      if (parsed.command === "aether") {
+        return send(message.chat.id, EDUCATION.aether, {
+          reply_markup: educationKeyboard(),
+        });
       }
       if (parsed.command === "article") {
         return articleCommand(message);
@@ -684,6 +739,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   async function handleCallback(query) {
     if (await verificationCallback(query)) return true;
     if (await educationCallback(query)) return true;
+    if (await articleCallback(query)) return true;
     return false;
   }
 
