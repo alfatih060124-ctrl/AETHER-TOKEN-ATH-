@@ -126,3 +126,22 @@ Production persistence requires a durable PostgreSQL service and a Railway `DATA
 
 The Railway automation agent could not provision PostgreSQL because the Railway Agent usage limit was reached. No credentials were exposed and no temporary database was created.
 
+
+
+## ATH MINING WEB — DEPLOYED FRONTEND
+
+- Railway service: `ath-mining-web`
+- Service ID: `3b78bd0c-c843-42b7-9530-59e6e71cd2de`
+- Source: `/mining-web` on `main`
+- Build command: `npm run check`
+- Start command: `npm start`
+- Health check: `/health`
+- Latest deployment: `65c20143-50a7-4a6d-9fcd-2fef73708854` — `SUCCESS`
+- Health check: `PASSED`
+- Runtime mode: `TESTNET`
+- Mainnet flag: `false`
+- Mining contract configured: `false` (expected until BSC Testnet deployment)
+- Custom domain attached in Railway: `mining.aether.boats`
+- DNS authority for `aether.boats`: Spaceship (`launch1.spaceship.net`, `launch2.spaceship.net`)
+- Current DNS status: `mining.aether.boats` does not resolve yet.
+- Final public activation therefore requires the Railway-provided custom-domain DNS record to be created in Spaceship DNS.
