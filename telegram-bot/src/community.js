@@ -124,6 +124,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "start") {
+      await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
       await storage.updateJoinRequest(userId, chatId, { stage: "interests" });
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
@@ -159,6 +160,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           return true;
         }
 
+        await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
         await storage.updateJoinRequest(userId, chatId, { stage: "experience" });
         await telegram("editMessageText", {
           chat_id: query.message.chat.id,
@@ -185,6 +187,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "exp") {
+      await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
       const experience = parts[3];
       await storage.updateJoinRequest(userId, chatId, {
         experience,
@@ -236,6 +239,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "country") {
+      await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
       const countryCode = parts[3] || "OTHER";
       await storage.updateJoinRequest(userId, chatId, {
         countryCode,
@@ -257,6 +261,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "wallet") {
+      await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
       const hasWallet = parts[3] === "yes";
       const latest = await storage.updateJoinRequest(userId, chatId, {
         hasWallet,
@@ -330,6 +335,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   async function educationCallback(query) {
     const data = String(query.data || "");
     if (!data.startsWith("edu:")) return false;
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
     const topic = data.split(":")[1];
     const body = EDUCATION[topic];
     if (!body) return true;
