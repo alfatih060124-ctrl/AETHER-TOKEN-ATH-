@@ -180,6 +180,38 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       const experience = parts[3];
       await storage.updateJoinRequest(userId, chatId, {
         experience,
+        stage: "country",
+      });
+
+      await telegram("editMessageText", {
+        chat_id: query.message.chat.id,
+        message_id: query.message.message_id,
+        text: "Select your country or region for community analytics and crypto-interest scoring:",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "Brazil", callback_data: `verify:country:${chatId}:BR` },
+              { text: "Nigeria", callback_data: `verify:country:${chatId}:NG` },
+            ],
+            [
+              { text: "India", callback_data: `verify:country:${chatId}:IN` },
+              { text: "Indonesia", callback_data: `verify:country:${chatId}:ID` },
+            ],
+            [
+              { text: "Vietnam", callback_data: `verify:country:${chatId}:VN` },
+              { text: "Philippines", callback_data: `verify:country:${chatId}:PH` },
+            ],
+            [{ text: "Other", callback_data: `verify:country:${chatId}:OTHER` }],
+          ],
+        },
+      });
+      return true;
+    }
+
+    if (action === "country") {
+      const countryCode = parts[3] || "OTHER";
+      await storage.updateJoinRequest(userId, chatId, {
+        countryCode,
         stage: "wallet",
       });
 
@@ -205,11 +237,14 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       });
       if (!latest) return true;
 
-      const score = calculateCryptoScore({
-        interests: latest.interests,
-        experience: latest.experience,
-        hasWallet,
-      });
+      const score = calculateCryptoScore(
+        {
+          interests: latest.interests,
+          experience: latest.experience,
+          hasWallet,
+        },
+        latest.countryCode
+      );
       const eligible = isEligible(score, config.minCryptoScore);
 
       if (eligible) {
