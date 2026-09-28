@@ -2,47 +2,69 @@
 
 Current engine validation is green. The remaining deployment gate is operator-controlled wallet configuration.
 
-## Minimum manual inputs before Testnet deployment
+## Recommended mobile-friendly Testnet path
 
-1. Create or choose a **dedicated BSC Testnet wallet**.
-2. Fund that wallet with **Testnet BNB** for deployment gas.
-3. In Railway project `aether-ath-testnet` → service `ath-engine-ci` → Variables, add:
-   - `PRIVATE_KEY` — store only in Railway. Do not commit it and do not paste it into chat.
-   - `OWNER_ADDRESS`
-   - `TREASURY_ADDRESS`
-   - `TEAM_BENEFICIARY`
-   - `LIQUIDITY_WALLET`
-   - `MARKETING_WALLET`
-4. Keep these existing safety values unchanged:
-   - `ATH_CHAIN_ID=97`
-   - all four Mainnet gates = `false`
-5. Run `npm run preflight:testnet`. It verifies:
-   - chain ID is 97,
-   - addresses are valid,
-   - private key is valid without printing it,
-   - deployer has Testnet BNB,
-   - Team lock is inside the configured 365–550 day range,
-   - Mainnet gates remain closed.
+For Testnet only, the repository supports `TESTNET_USE_DEPLOYER_ROLES=true`.
 
-## Fast Testnet-only option
+With that flag enabled, the dedicated BSC Testnet deployer address is also used as:
+- Owner
+- Treasury
+- Team Beneficiary
+- Liquidity Wallet
+- Marketing Wallet
 
-For Testnet convenience, the operator may deliberately use the **same public Testnet address** for Owner, Treasury, Team Beneficiary, Liquidity Wallet and Marketing Wallet. This is only a Testnet simplification; it is not a production-governance recommendation and is not required by the blueprint.
+This reduces the operator setup to **one secret only**:
 
-If this option is chosen, only one public address needs to be supplied for those five role variables. The deployer private key must still remain a Railway secret.
+- `PRIVATE_KEY` — a dedicated BSC Testnet wallet private key, stored only in Railway.
+
+The private key must never be committed to GitHub and must not be pasted into chat.
+
+The Testnet wallet must hold enough **Testnet BNB** for deployment gas.
+
+## Safe Testnet values
+
+Keep:
+- `BSC_TESTNET_RPC`
+- `ATH_CHAIN_ID=97`
+- `TEAM_LOCK_DAYS=365` for Testnet validation
+- `TESTNET_USE_DEPLOYER_ROLES=true`
+- all four Mainnet release gates = `false`
+
+Then run:
+
+```bash
+npm run preflight:testnet
+```
+
+Preflight validates:
+- BSC chain ID 97,
+- private-key validity without printing the key,
+- deployer Testnet BNB balance,
+- Team lock range,
+- Mainnet gates remain closed.
+
+## Explicit-address Testnet path
+
+Set `TESTNET_USE_DEPLOYER_ROLES=false` if separate Testnet addresses are desired. In that mode also configure:
+- `OWNER_ADDRESS`
+- `TREASURY_ADDRESS`
+- `TEAM_BENEFICIARY`
+- `LIQUIDITY_WALLET`
+- `MARKETING_WALLET`
 
 ## BscScan verification
 
-`BSCSCAN_API_KEY` is not required to deploy to Testnet. Add it before running `npm run verify:testnet`.
+`BSCSCAN_API_KEY` is not required for deployment. Add it before `npm run verify:testnet`.
 
-After deployment, use the generated deployment manifest to set:
+After deployment, use the deployment manifest to set:
 - `ATH_TOKEN`
 - `MINING_AIRDROP`
 - `TEAM_TOKEN_LOCK`
 - `DEPLOYER_ADDRESS`
 - `TEAM_RELEASE_AT`
 
-Then run BscScan verification and the post-deployment invariant checker before connecting Aether Wallet.
+When Testnet single-wallet mode is enabled, verification and post-deployment checks derive the expected role addresses from `DEPLOYER_ADDRESS`.
 
 ## Production boundary
 
-Do not reuse the Testnet private key for Mainnet. Mainnet remains blocked until audit, multisig, final Team lock selection and ATH/USDT liquidity-lock decisions are complete.
+The Testnet single-wallet shortcut is ignored for Mainnet. Mainnet always requires explicit role addresses and remains blocked until audit, production multisig, exact Team lock selection and ATH/USDT liquidity-lock decisions are complete.
