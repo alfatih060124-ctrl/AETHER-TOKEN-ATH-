@@ -1,11 +1,15 @@
-const deployRequired = [
-  "PRIVATE_KEY",
-  "OWNER_ADDRESS",
-  "TREASURY_ADDRESS",
-  "TEAM_BENEFICIARY",
-  "LIQUIDITY_WALLET",
-  "MARKETING_WALLET",
-];
+const singleWalletMode = process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
+
+const deployRequired = singleWalletMode
+  ? ["PRIVATE_KEY"]
+  : [
+      "PRIVATE_KEY",
+      "OWNER_ADDRESS",
+      "TREASURY_ADDRESS",
+      "TEAM_BENEFICIARY",
+      "LIQUIDITY_WALLET",
+      "MARKETING_WALLET",
+    ];
 
 const verificationRequired = [
   "BSCSCAN_API_KEY",
@@ -15,6 +19,7 @@ const safeRequired = [
   "BSC_TESTNET_RPC",
   "ATH_CHAIN_ID",
   "TEAM_LOCK_DAYS",
+  "TESTNET_USE_DEPLOYER_ROLES",
 ];
 
 const mainnetGates = [
@@ -29,6 +34,7 @@ const missingVerificationConfig = verificationRequired.filter((name) => !process
 const missingSafe = safeRequired.filter((name) => !process.env[name]);
 
 console.log("ATH Testnet Readiness Report");
+console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
 console.log("safeConfig:", missingSafe.length === 0 ? "READY" : "MISSING");
 console.log("deploymentConfig:", missingDeployConfig.length === 0 ? "READY" : "BLOCKED");
 console.log("verificationConfig:", missingVerificationConfig.length === 0 ? "READY" : "BLOCKED");
@@ -49,6 +55,4 @@ if (missingSafe.length > 0) {
   throw new Error("Safe Testnet configuration is incomplete");
 }
 
-// Operator deployment or verification values may be absent during CI validation.
-// preflight:testnet and verify:testnet enforce their own required values before transactions/actions.
 console.log("readinessReport: PASSED (operator deployment/verification gates may still be blocked)");
