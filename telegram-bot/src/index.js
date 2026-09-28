@@ -2,9 +2,12 @@ const http = require("http");
 const crypto = require("crypto");
 const config = require("./config");
 const { createStorage } = require("./storage");
+const { createATHReferralService, isAddress } = require("./services/athReferral");
 
 const API = config.token ? `https://api.telegram.org/bot${config.token}` : "";
 const storage = createStorage(config.databaseUrl);
+const athReferral = createATHReferralService(config);
+
 let offset = 0;
 let stopping = false;
 
@@ -40,19 +43,18 @@ function referralPayload(text = "") {
   return m ? m[1] : null;
 }
 
-function isEvmAddress(value) {
-  return /^0x[a-fA-F0-9]{40}$/.test(value || "");
-}
-
 function inviteLink(userId) {
   if (!config.username) return "";
   return `https://t.me/${config.username}?start=ref_${userId}`;
 }
 
-function mainKeyboard(userId) {
+function mainKeyboard() {
   const rows = [];
   if (config.appUrl) rows.push([{ text: "🚀 Open AETHER", url: config.appUrl }]);
-  rows.push([{ text: "🎁 ATH Airdrop", callback_data: "airdrop" }]);
+  rows.push([
+    { text: "🎁 ATH Airdrop", callback_data: "airdrop" },
+    { text: "🔗 ATH Referral", callback_data: "referral" },
+  ]);
   rows.push([{ text: "👥 Invite Friends", callback_data: "invite" }]);
   if (config.communityUrl) rows.push([{ text: "💬 Community", url: config.communityUrl }]);
   if (config.websiteUrl) rows.push([{ text: "🌐 Official Website", url: config.websiteUrl }]);
@@ -83,15 +85,15 @@ async function showHome(message, referrerId = null) {
 
   return send(
     message.chat.id,
-    `<b>AETHER ATH</b>\n\nWelcome to the official ATH promotion bot. Follow campaign updates, share your referral link, and connect a public wallet address when needed.${linked}\n\nThis bot never asks for a seed phrase or private key.`,
-    { reply_markup: mainKeyboard(user.telegramId) }
+    `<b>AETHER ATH</b>\n\nWelcome to the official ATH community and referral bot.${linked}\n\nTelegram attribution is recorded when a new user starts the bot from a referral link. The official ATH on-chain referral is finalized only when Power is purchased through the ATH mining contract with an eligible sponsor wallet.\n\nThis bot never asks for a seed phrase or private key.`,
+    { reply_markup: mainKeyboard() }
   );
 }
 
 async function showAirdrop(chatId) {
   return send(
     chatId,
-    `<b>${escapeHtml(config.campaign)}</b>\n\nCampaign tracking is active. On-chain ATH distribution is not performed by this Telegram bot. Final eligibility and claim actions will be connected to the verified AETHER/ATH Web3 flow.`
+    `<b>${escapeHtml(config.campaign)}</b>\n\nATH uses a referral mining program. A sponsor must already have Power before a new miner activates Power with that sponsor wallet. Referral tiers raise the sponsor's daily mining multiplier from +10% up to +50% according to the number of qualifying referrals.\n\nTelegram is used for acquisition, education and referral routing; the ATH smart contract remains the source of truth for the official on-chain referral count.`
   );
 }
 
@@ -99,10 +101,132 @@ async function showInvite(chatId, userId) {
   const user = await storage.getUser(userId);
   const link = inviteLink(userId);
   const count = user?.referralCount || 0;
+
+  let onchainText = "";
+  if (!user?.walletAddress) {
+    onchainText =
+      "\n\n<b>ATH sponsor status:</b> wallet not linked. Use <code>/wallet 0xYOUR_PUBLIC_ADDRESS</code>.";
+  } else if (!athReferral.enabled) {
+    onchainText =
+      "\n\n<b>ATH sponsor status:</b> Telegram referral tracking is ready; on-chain contract status will activate after ATH contract configuration.";
+  } else {
+    try {
+      const status = await athReferral.sponsorStatus(user.walletAddress);
+      onchainText = status.eligibleAsSponsor
+        ? `\n\n<b>ATH sponsor status:</b> ACTIVE\nOn-chain referrals: <b>${status.referralCount}</b>\nMining referral bonus: <b>+${status.referralBonusPercent}%</b>`
+        : "\n\n<b>ATH sponsor status:</b> wallet linked, but Power is not active yet. The ATH contract will not count this wallet as a sponsor until Power is activated.";
+    } catch (err) {
+      onchainText = "\n\n<b>ATH sponsor status:</b> temporarily unavailable; Telegram attribution remains recorded.";
+      console.error("ATH sponsor status error:", err.message);
+    }
+  }
+
   const body = link
-    ? `<b>Your ATH referral link</b>\n<code>${link}</code>\n\nCampaign referrals: <b>${count}</b>\n\nOnly real users who start the bot are counted. Self-referral and repeat attribution are blocked.`
-    : `BOT username has not been configured yet. Your campaign referral count is <b>${count}</b>.`;
+    ? `<b>Your ATH referral link</b>\n<code>${link}</code>\n\nTelegram referrals: <b>${count}</b>${onchainText}\n\nSelf-referral and repeat Telegram attribution are blocked. Official mining referral credit is determined by the ATH contract when the invited user buys Power.`
+    : `BOT username has not been configured yet. Telegram referrals: <b>${count}</b>.${onchainText}`;
+
   return send(chatId, body);
+}
+
+async function showReferral(chatId, userId) {
+  const user = await storage.getUser(userId);
+  if (!user) return send(chatId, "User profile is not initialized. Send /start first.");
+
+  if (!user.walletAddress) {
+    return send(
+      chatId,
+      "<b>ATH Referral</b>\n\nLink your public BSC/EVM wallet first:\n<code>/wallet 0xYOUR_PUBLIC_ADDRESS</code>\n\nNever send a private key or seed phrase."
+    );
+  }
+
+  let ownStatus = null;
+  if (athReferral.enabled) {
+    try {
+      ownStatus = await athReferral.walletStatus(user.walletAddress);
+    } catch (err) {
+      console.error("ATH member status error:", err.message);
+    }
+  }
+
+  if (
+    ownStatus?.hasPower &&
+    ownStatus.onchainReferrer &&
+    !/^0x0{40}$/i.test(ownStatus.onchainReferrer)
+  ) {
+    return send(
+      chatId,
+      `<b>ATH Referral — ON-CHAIN CONFIRMED</b>\n\nYour wallet: <code>${user.walletAddress}</code>\nOfficial sponsor: <code>${ownStatus.onchainReferrer}</code>\nYour active referrals: <b>${ownStatus.referralCount}</b>\nYour referral mining bonus: <b>+${ownStatus.referralBonusPercent}%</b>\n\nThe smart contract is now the source of truth for this referral relationship.`
+    );
+  }
+
+  const sponsor = await storage.getReferrerForUser(userId);
+  if (!sponsor) {
+    const ownText = ownStatus?.hasPower
+      ? `\n\nYour Power is active. Active referrals: <b>${ownStatus.referralCount}</b>; bonus: <b>+${ownStatus.referralBonusPercent}%</b>.`
+      : "";
+    return send(
+      chatId,
+      `<b>ATH Referral</b>\n\nNo Telegram sponsor is attached to this account.${ownText}`
+    );
+  }
+
+  if (!sponsor.walletAddress) {
+    return send(
+      chatId,
+      "<b>ATH Referral — PENDING</b>\n\nYour Telegram sponsor is recorded, but the sponsor has not linked a public wallet yet. No on-chain sponsor address will be inserted until that is resolved."
+    );
+  }
+
+  if (sponsor.walletAddress.toLowerCase() === user.walletAddress.toLowerCase()) {
+    return send(
+      chatId,
+      "<b>ATH Referral — BLOCKED</b>\n\nSponsor and member wallet are identical. ATH does not allow self-referral."
+    );
+  }
+
+  if (!athReferral.enabled) {
+    return send(
+      chatId,
+      `<b>ATH Referral — TELEGRAM ATTRIBUTION READY</b>\n\nSponsor wallet: <code>${sponsor.walletAddress}</code>\n\nThe ATH mining contract is not configured in the bot yet, so no claim is made that the sponsor is on-chain eligible. Once the verified contract address is connected, the bot will validate Power before routing the referral into AETHER Wallet.`
+    );
+  }
+
+  let sponsorStatus;
+  try {
+    sponsorStatus = await athReferral.sponsorStatus(sponsor.walletAddress);
+  } catch (err) {
+    console.error("ATH sponsor lookup error:", err.message);
+    return send(
+      chatId,
+      "<b>ATH Referral</b>\n\nTelegram sponsor attribution is stored, but the on-chain sponsor status is temporarily unavailable. No referral transaction was created."
+    );
+  }
+
+  if (!sponsorStatus.eligibleAsSponsor) {
+    return send(
+      chatId,
+      `<b>ATH Referral — WAITING FOR SPONSOR POWER</b>\n\nSponsor wallet: <code>${sponsor.walletAddress}</code>\n\nThe sponsor does not currently qualify under the ATH contract because Power is not active. Telegram attribution is preserved, but the bot will not present this wallet as an active on-chain sponsor yet.`
+    );
+  }
+
+  const miningUrl = athReferral.buildMiningUrl({
+    referrerWallet: sponsor.walletAddress,
+    memberWallet: user.walletAddress,
+  });
+
+  const keyboard = miningUrl
+    ? {
+        inline_keyboard: [
+          [{ text: "⛏ Activate ATH Power with Sponsor", url: miningUrl }],
+        ],
+      }
+    : undefined;
+
+  return send(
+    chatId,
+    `<b>ATH Referral — READY</b>\n\nMember wallet: <code>${user.walletAddress}</code>\nEligible sponsor wallet: <code>${sponsor.walletAddress}</code>\nSponsor active referrals: <b>${sponsorStatus.referralCount}</b>\nSponsor mining bonus: <b>+${sponsorStatus.referralBonusPercent}%</b>\n\nWhen you activate Power in AETHER Wallet, the wallet must pass this sponsor address to <code>buyPower(referrer)</code>. The ATH contract makes the final referral decision.`,
+    keyboard ? { reply_markup: keyboard } : {}
+  );
 }
 
 async function handleWallet(message, args) {
@@ -116,16 +240,31 @@ async function handleWallet(message, args) {
       : "";
     return send(
       message.chat.id,
-      `${currentText}To link a public BSC/EVM address, send:\n<code>/wallet 0xYOUR_PUBLIC_ADDRESS</code>\n\nNever send a private key or seed phrase.`
+      `${currentText}To link a public BSC/EVM address, send:\n<code>/wallet 0xYOUR_PUBLIC_ADDRESS</code>\n\nFor referral integrity, a linked wallet cannot be silently replaced. Never send a private key or seed phrase.`
     );
   }
 
-  if (!isEvmAddress(address)) {
-    return send(message.chat.id, "That is not a valid 0x EVM public address.");
+  if (!isAddress(address)) {
+    return send(message.chat.id, "That is not a valid non-zero EVM public address.");
   }
 
-  await storage.setWallet(user.telegramId, address);
-  return send(message.chat.id, `Wallet linked for campaign tracking:\n<code>${address}</code>`);
+  try {
+    await storage.setWallet(user.telegramId, address);
+  } catch (err) {
+    if (err.code === "WALLET_ALREADY_LINKED") {
+      return send(
+        message.chat.id,
+        `A different wallet is already linked: <code>${err.currentWallet}</code>\n\nIt is locked to protect referral attribution. Wallet changes require an explicit account-verification flow rather than silently replacing the sponsor/member identity.`
+      );
+    }
+    throw err;
+  }
+
+  await send(
+    message.chat.id,
+    `Wallet linked for ATH campaign/referral routing:\n<code>${address}</code>`
+  );
+  return showReferral(message.chat.id, user.telegramId);
 }
 
 async function handleAdmin(message, command, args) {
@@ -136,7 +275,7 @@ async function handleAdmin(message, command, args) {
     const s = await storage.stats();
     await send(
       message.chat.id,
-      `<b>ATH Bot Stats</b>\nUsers: ${s.users}\nOpted-in: ${s.optedIn}\nLinked wallets: ${s.linkedWallets}\nAttributed referrals: ${s.referrals}`
+      `<b>ATH Bot Stats</b>\nUsers: ${s.users}\nOpted-in: ${s.optedIn}\nLinked wallets: ${s.linkedWallets}\nAttributed Telegram referrals: ${s.referrals}`
     );
     return true;
   }
@@ -190,13 +329,26 @@ async function handleMessage(message) {
 
   if (command === "airdrop") return showAirdrop(message.chat.id);
   if (command === "invite") return showInvite(message.chat.id, user.telegramId);
+  if (command === "referral") return showReferral(message.chat.id, user.telegramId);
   if (command === "wallet") return handleWallet(message, args);
 
   if (command === "stats") {
     const current = await storage.getUser(user.telegramId);
+    let onchain = "";
+    if (current?.walletAddress && athReferral.enabled) {
+      try {
+        const s = await athReferral.walletStatus(current.walletAddress);
+        onchain =
+          `\nOn-chain active referrals: ${s.referralCount}` +
+          `\nMining referral bonus: +${s.referralBonusPercent}%`;
+      } catch {
+        onchain = "\nOn-chain status: temporarily unavailable";
+      }
+    }
+
     return send(
       message.chat.id,
-      `<b>Your ATH Campaign Stats</b>\nReferrals: ${current?.referralCount || 0}\nWallet linked: ${current?.walletAddress ? "yes" : "no"}`
+      `<b>Your ATH Campaign Stats</b>\nTelegram referrals: ${current?.referralCount || 0}\nWallet linked: ${current?.walletAddress ? "yes" : "no"}${onchain}`
     );
   }
 
@@ -211,7 +363,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — campaign information\n/invite — referral link\n/wallet — link public wallet\n/stats — your campaign stats\n/stop — opt out of promotional updates"
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/stop — opt out of promotional updates"
     );
   }
 }
@@ -229,6 +381,7 @@ async function handleCallback(query) {
 
   if (query.data === "airdrop") return showAirdrop(query.message.chat.id);
   if (query.data === "invite") return showInvite(query.message.chat.id, String(query.from.id));
+  if (query.data === "referral") return showReferral(query.message.chat.id, String(query.from.id));
 }
 
 async function pollingLoop() {
@@ -273,6 +426,7 @@ async function boot() {
         ok: Boolean(s),
         botEnabled: config.enabled,
         storage: config.databaseUrl ? "postgres" : "memory",
+        athReferralConfigured: athReferral.enabled,
         nonce: crypto.randomBytes(4).toString("hex"),
       }));
       return;
