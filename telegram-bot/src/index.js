@@ -438,6 +438,8 @@ async function configureTelegramProfile() {
     { command: "stats", description: "View your ATH campaign stats" },
     { command: "education", description: "Open crypto and ATH education" },
     { command: "article", description: "Read the daily ATH education article" },
+    { command: "myid", description: "Show your Telegram user ID" },
+    { command: "chatid", description: "Show the current chat or group ID" },
     { command: "help", description: "Show the command reference" },
     { command: "stop", description: "Disable promotional updates" },
   ];
