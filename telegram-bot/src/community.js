@@ -209,7 +209,26 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
               { text: "Vietnam", callback_data: `verify:country:${chatId}:VN` },
               { text: "Philippines", callback_data: `verify:country:${chatId}:PH` },
             ],
-            [{ text: "Other", callback_data: `verify:country:${chatId}:OTHER` }],
+            [
+              { text: "Ukraine", callback_data: `verify:country:${chatId}:UA` },
+              { text: "Thailand", callback_data: `verify:country:${chatId}:TH` },
+            ],
+            [
+              { text: "South Africa", callback_data: `verify:country:${chatId}:ZA` },
+              { text: "Türkiye", callback_data: `verify:country:${chatId}:TR` },
+            ],
+            [
+              { text: "United States", callback_data: `verify:country:${chatId}:US` },
+              { text: "Japan", callback_data: `verify:country:${chatId}:JP` },
+            ],
+            [
+              { text: "South Korea", callback_data: `verify:country:${chatId}:KR` },
+              { text: "Mexico", callback_data: `verify:country:${chatId}:MX` },
+            ],
+            [
+              { text: "Canada", callback_data: `verify:country:${chatId}:CA` },
+              { text: "Other", callback_data: `verify:country:${chatId}:OTHER` },
+            ],
           ],
         },
       });
@@ -655,6 +674,12 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           console.error("AI private reply failed:", err.message);
         }
       }
+
+      await send(
+        message.chat.id,
+        "I can help with ATH, airdrops, mining, staking, trading, referrals, AETHER Wallet, and wallet security. Use /education to browse topics or /help to view commands."
+      );
+      return true;
     }
 
     return groupMessage(message);
