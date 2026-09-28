@@ -12,7 +12,7 @@ Date: 2026-09-29
 - Join verification: enabled
 - Target-group permission readiness: PASS
 - Railway deployment: SUCCESS
-- Current bot package: v0.4.0
+- Current bot package: v0.4.1
 - User-facing language: English only
 
 ## COMPLETED
@@ -91,6 +91,10 @@ Date: 2026-09-29
 28. Latest validated build reports zero npm dependency vulnerabilities.
 29. `ATH Telegram bot self-check PASSED`.
 30. English-only runtime scan completed with no Indonesian user-facing strings detected.
+31. English-only runtime is now enforced by an automated release test.
+32. Country/region verification UI covers every priority country defined by the scoring service plus Other.
+33. Telegram callback acknowledgements were cleaned up to avoid duplicate callback responses.
+34. Railway watch patterns are restricted to `/telegram-bot/**` to avoid unnecessary bot redeployments for unrelated repository documentation changes.
 
 ## MEMBER COMMANDS
 
@@ -147,19 +151,20 @@ Telegram attribution alone does not create an ATH mining referral. The ATH minin
 
 Validated code commit deployed before the documentation-only update:
 
-`7db83f17e7658cb6f3960a705b4bf3264be02a31`
+`3a401011f271013e1bd9cef57cf5152967ef8d0a`
 
 Railway deployment:
 
-`a01f3e04-62e8-47ff-9c22-c02a4e5cbb99`
+`13508af0-085e-4360-9ade-06bb5c50f9e8`
 
 Result:
 
 `SUCCESS`
 
 Evidence:
-- package version `0.4.0`,
+- package version `0.4.1`,
 - syntax checks passed,
+- English-only runtime check passed,
 - self-check passed,
 - 0 npm vulnerabilities,
 - bot connected as `@Aetther_bot`,
