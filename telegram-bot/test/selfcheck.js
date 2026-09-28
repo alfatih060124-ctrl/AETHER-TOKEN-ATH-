@@ -6,6 +6,10 @@ const { FloodGuard, containsForbidden, detectTopic } = require("../src/services/
 const { PromotionService } = require("../src/services/promotion");
 const { msUntilNextUtcHour } = require("../src/scheduler");
 const {
+  growthMessage,
+  utcDayStartIso,
+} = require("../src/services/growthCampaign");
+const {
   articleForDate,
   articlesByCategory,
   articleById,
@@ -106,6 +110,16 @@ const {
   assert.strictEqual(articleById("wallet-security").category, "security");
   assert.ok(articleKeyboard().inline_keyboard.length >= 4);
 
+  const growthText = growthMessage({
+    communityUrl: "https://t.me/+example",
+  });
+  assert.ok(growthText.includes("Request to join ATH AIRDROP MINER"));
+  assert.ok(growthText.includes("opt-in"));
+  assert.strictEqual(
+    utcDayStartIso(new Date("2026-09-29T12:34:56Z")),
+    "2026-09-29T00:00:00.000Z"
+  );
+
   await storage.setOptOut("200", true);
   const ids = await storage.optedInChatIds();
   assert.deepStrictEqual(ids, ["100"]);
@@ -145,6 +159,10 @@ const {
     joinMethod: "verified_join_request",
     joinScore: verifiedBeta.cryptoScore,
   });
+  assert.strictEqual(
+    await storage.membershipCountSince("-1001", "2000-01-01T00:00:00.000Z"),
+    1
+  );
 
   assert.strictEqual(await storage.addWarning("-1001", "200"), 1);
   assert.strictEqual(await storage.addWarning("-1001", "200"), 2);
