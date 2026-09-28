@@ -39,6 +39,26 @@ npm run deploy:testnet
 
 Use `engine/athEngine.js` to read dashboard state and build unsigned transactions for Power, Booster, daily claim and vesting claims. See `docs/APK_INTEGRATION.md`.
 
+## ATH Telegram promotion bot
+
+A separate service lives in `telegram-bot/`.
+
+It provides:
+- opt-in ATH campaign onboarding,
+- Telegram referral deep links,
+- campaign referral counts,
+- public wallet-address linking,
+- user campaign stats,
+- admin aggregate stats,
+- opt-in-only promotional broadcast,
+- buttons to AETHER Wallet, community and website.
+
+The Telegram bot is deliberately isolated from smart-contract deployment credentials. Never copy the ATH deployer `PRIVATE_KEY` into the bot service.
+
+Campaign referrals inside Telegram are promotional tracking only. They do not automatically mint, transfer or grant ATH, and they are not silently treated as on-chain mining referrals.
+
+See `telegram-bot/README.md`.
+
 ## Mainnet
 
 Mainnet is **fail-closed**. `scripts/deploy.js` refuses BSC mainnet deployment unless all four explicit release gates are `true`: `ALLOW_MAINNET_DEPLOY`, `MAINNET_AUDIT_PASSED`, `MAINNET_MULTISIG_CONFIRMED`, and `LIQUIDITY_LOCK_CONFIRMED`. Keep them false until the items in `docs/SECURITY_GATES.md` are independently complete.
