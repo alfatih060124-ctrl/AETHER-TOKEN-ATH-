@@ -1,10 +1,13 @@
-const required = [
+const deployRequired = [
   "PRIVATE_KEY",
   "OWNER_ADDRESS",
   "TREASURY_ADDRESS",
   "TEAM_BENEFICIARY",
   "LIQUIDITY_WALLET",
   "MARKETING_WALLET",
+];
+
+const verificationRequired = [
   "BSCSCAN_API_KEY",
 ];
 
@@ -21,17 +24,17 @@ const mainnetGates = [
   "LIQUIDITY_LOCK_CONFIRMED",
 ];
 
-const missingSecretsOrAddresses = required.filter((name) => !process.env[name]);
+const missingDeployConfig = deployRequired.filter((name) => !process.env[name]);
+const missingVerificationConfig = verificationRequired.filter((name) => !process.env[name]);
 const missingSafe = safeRequired.filter((name) => !process.env[name]);
 
 console.log("ATH Testnet Readiness Report");
 console.log("safeConfig:", missingSafe.length === 0 ? "READY" : "MISSING");
-console.log("operatorConfig:", missingSecretsOrAddresses.length === 0 ? "READY" : "BLOCKED");
+console.log("deploymentConfig:", missingDeployConfig.length === 0 ? "READY" : "BLOCKED");
+console.log("verificationConfig:", missingVerificationConfig.length === 0 ? "READY" : "BLOCKED");
 console.log("missingSafe:", missingSafe.length ? missingSafe.join(", ") : "none");
-console.log(
-  "missingOperatorConfig:",
-  missingSecretsOrAddresses.length ? missingSecretsOrAddresses.join(", ") : "none"
-);
+console.log("missingDeploymentConfig:", missingDeployConfig.length ? missingDeployConfig.join(", ") : "none");
+console.log("missingVerificationConfig:", missingVerificationConfig.length ? missingVerificationConfig.join(", ") : "none");
 
 const gateState = Object.fromEntries(
   mainnetGates.map((name) => [name, process.env[name] === "true" ? "OPEN" : "CLOSED"])
@@ -46,6 +49,6 @@ if (missingSafe.length > 0) {
   throw new Error("Safe Testnet configuration is incomplete");
 }
 
-// This report intentionally exits 0 when only operator secrets/addresses are absent.
-// Deployment remains blocked by preflight:testnet until those values exist.
-console.log("readinessReport: PASSED (deployment may still be blocked by operator config)");
+// Operator deployment or verification values may be absent during CI validation.
+// preflight:testnet and verify:testnet enforce their own required values before transactions/actions.
+console.log("readinessReport: PASSED (operator deployment/verification gates may still be blocked)");
