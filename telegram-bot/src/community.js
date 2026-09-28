@@ -63,6 +63,19 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
     const userId = String(request.from.id);
     const chatId = String(request.chat.id);
+    const verificationChatId = String(request.user_chat_id || request.from.id);
+
+    // Telegram's newer join-request guard-bot flow requires an answer within
+    // 10 seconds. Queue the request immediately so interactive verification
+    // can continue without Telegram showing a processing error.
+    if (request.query_id) {
+      await telegram("answerChatJoinRequestQuery", {
+        chat_join_request_query_id: request.query_id,
+        result: "queue",
+      }).catch((error) => {
+        console.error("Unable to queue Telegram join-request query:", error?.message || error);
+      });
+    }
 
     await storage.upsertUser({
       telegramId: userId,
@@ -89,7 +102,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
     try {
       await send(
-        userId,
+        verificationChatId,
         `Hello ${escapeHtml(request.from.first_name || "friend")}!\n\nYou requested to join <b>${escapeHtml(request.chat.title || "the ATH community")}</b>. To help keep the community focused, please complete a short crypto-interest verification.`,
         {
           reply_markup: {
@@ -99,7 +112,8 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           },
         }
       );
-    } catch {
+    } catch (error) {
+      console.warn("ATH join verification DM could not be delivered:", error?.message || error);
       await telegram("declineChatJoinRequest", {
         chat_id: chatId,
         user_id: Number(userId),
