@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07110f" />
+  <title>AETHER ATH Mining</title>
+  <meta name="description" content="AETHER ATH mining dashboard for Power, Booster, daily mining allocation, referral and vesting." />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar shell">
+    <a class="brand" href="/">
+      <span class="brand-mark">A</span>
+      <span>
+        <strong>AETHER</strong>
+        <small>ATH MINING</small>
+      </span>
+    </a>
+    <div class="top-actions">
+      <span id="networkBadge" class="badge badge-warn">TESTNET</span>
+      <button id="connectBtn" class="btn btn-primary">Connect Wallet</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">AETHER TOKEN · ATH</p>
+        <h1>Mine ATH with a transparent, fixed-supply engine.</h1>
+        <p class="hero-copy">Activate Power, claim each mining day, increase Hash with Booster, grow referral rewards, and unlock ATH through the published vesting schedule.</p>
+      </div>
+      <div class="hero-status glass">
+        <div class="status-head">
+          <span>System Status</span>
+          <span id="contractDot" class="status-dot"></span>
+        </div>
+        <strong id="systemStatus">Loading configuration…</strong>
+        <small id="contractStatus">Checking contract configuration</small>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat glass">
+        <span>ATH Price</span>
+        <strong id="priceStat">$3.000</strong>
+        <small>Contract display price</small>
+      </article>
+      <article class="stat glass">
+        <span>Mining Day</span>
+        <strong><span id="dayStat">0</span><em>/180</em></strong>
+        <small id="activeStat">Not active</small>
+      </article>
+      <article class="stat glass">
+        <span>Total Allocated</span>
+        <strong id="allocatedStat">0.000 ATH</strong>
+        <small>Vesting allocation</small>
+      </article>
+      <article class="stat glass">
+        <span>Claimed</span>
+        <strong id="claimedStat">0.000 ATH</strong>
+        <small>Transferred to wallet</small>
+      </article>
+      <article class="stat glass">
+        <span>Pending Vested</span>
+        <strong id="pendingStat">0.000 ATH</strong>
+        <small>Locked by schedule</small>
+      </article>
+      <article class="stat glass">
+        <span>Hash Power</span>
+        <strong id="hashStat">0</strong>
+        <small id="multiplierStat">Reward multiplier 1.00×</small>
+      </article>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="panel glass action-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">MINING ACCESS</p>
+            <h2>Power</h2>
+          </div>
+          <span class="price-pill">0.001 BNB</span>
+        </div>
+        <p>Power starts your 180-day ATH mining window. Each mining day must be claimed on that day or the allocation is missed.</p>
+        <label for="referrer">Sponsor wallet <span>optional</span></label>
+        <input id="referrer" autocomplete="off" spellcheck="false" placeholder="0x0000… or leave empty" />
+        <button id="powerBtn" class="btn btn-primary btn-wide" disabled>Activate Power</button>
+        <div id="powerState" class="inline-state">Wallet not connected</div>
+      </article>
+
+      <article class="panel glass action-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">MINING BOOST</p>
+            <h2>Booster</h2>
+          </div>
+          <span class="price-pill">0.001 BNB</span>
+        </div>
+        <p>Each Booster adds <b>100 Hash</b>. The contract reward multiplier is capped at <b>2×</b>.</p>
+        <div class="booster-visual">
+          <span>+100</span>
+          <small>HASH</small>
+        </div>
+        <button id="boosterBtn" class="btn btn-secondary btn-wide" disabled>Buy Booster</button>
+        <div id="boosterState" class="inline-state">Power required</div>
+      </article>
+
+      <article class="panel glass action-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">DAILY MINING</p>
+            <h2>Claim Today</h2>
+          </div>
+          <span class="price-pill">1 ATH base</span>
+        </div>
+        <p>Your daily allocation is calculated from the 1 ATH base reward, referral multiplier, and Booster multiplier.</p>
+        <div class="claim-orb"><span id="dailyRewardPreview">1.00</span><small>ATH BASE</small></div>
+        <button id="dailyBtn" class="btn btn-primary btn-wide" disabled>Claim Daily Mining</button>
+        <div id="dailyState" class="inline-state">Waiting for active Power</div>
+      </article>
+
+      <article class="panel glass referral-panel">
+        <div class="panel-title">
+          <div>
+            <p class="eyebrow">NETWORK</p>
+            <h2>Referral Mining</h2>
+          </div>
+          <span id="refBonusPill" class="price-pill">+0%</span>
+        </div>
+        <div class="referral-kpis">
+          <div><strong id="referralCount">0</strong><span>Active referrals</span></div>
+          <div><strong id="referralBonus">0%</strong><span>Mining bonus</span></div>
+        </div>
+        <div class="tier-track">
+          <span>1</span><span>6</span><span>11</span><span>21</span><span>31</span><span>41</span><span>46+</span>
+        </div>
+        <p class="microcopy">Referral multiplier rises from +10% to +50% according to qualifying referral count. The smart contract is the source of truth.</p>
+      </article>
+    </section>
+
+    <section class="panel glass vesting-panel">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">TOKEN RELEASE</p>
+          <h2>ATH Vesting</h2>
+        </div>
+        <button id="vestedBtn" class="btn btn-secondary" disabled>Claim All Unlocked</button>
+      </div>
+      <div class="vesting-grid">
+        <div class="vesting-step"><span>30 DAYS</span><strong>10%</strong><small>First unlock</small></div>
+        <div class="vesting-step"><span>60 DAYS</span><strong>5%</strong><small>Second unlock</small></div>
+        <div class="vesting-step"><span>90 DAYS</span><strong>5%</strong><small>Third unlock</small></div>
+        <div class="vesting-step featured"><span>180 DAYS</span><strong>80%</strong><small>Final unlock</small></div>
+      </div>
+    </section>
+
+    <section class="panel glass safety">
+      <div>
+        <p class="eyebrow">SECURITY</p>
+        <h2>Fail-closed by design</h2>
+      </div>
+      <p id="safetyCopy">Mainnet controls remain disabled. This interface will not enable transaction buttons until a verified ATH Mining contract address is configured for the selected network.</p>
+      <div class="security-tags">
+        <span>Fixed 1B supply</span>
+        <span>No token mint function</span>
+        <span>Mining reserve checks</span>
+        <span>Non-custodial wallet signing</span>
+      </div>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer class="shell footer">
+    <span>AETHER ATH Mining</span>
+    <span>Never share a seed phrase or private key.</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" integrity="sha256-i5bUjvVeJtQoZ5aRk3Y5JvY4XhW4tVtGJIRkQYI5j4w=" crossorigin="anonymous"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
