@@ -1,3 +1,5 @@
+const { articleForDate } = require("./content/articles");
+
 function msUntilNextUtcHour(hour) {
   const now = new Date();
   const next = new Date(now);
@@ -7,7 +9,7 @@ function msUntilNextUtcHour(hour) {
   return next.getTime() - now.getTime();
 }
 
-function startScheduler({ config, community, send, escapeHtml }) {
+function startScheduler({ config, community, send }) {
   const timers = [];
 
   if (!config.communityFeaturesEnabled || !config.targetChats.length) {
@@ -27,38 +29,25 @@ function startScheduler({ config, community, send, escapeHtml }) {
   timers.push(promoTimer);
 
   const articleDelay = msUntilNextUtcHour(config.articleHourUtc);
-  const articleText = [
-    "<b>ATH Education — Referral & Security</b>",
-    "",
-    "Telegram referrals help bring new members into the ecosystem.",
-    "Official mining referral credit is recorded only after Power is activated through the smart contract with a valid sponsor.",
-    "",
-    "Never provide a seed phrase or private key to the bot or an admin.",
-    "",
-    "Use /education for more learning materials.",
-  ].join("\n");
 
-  const scheduleArticle = () => {
-    const daily = setInterval(async () => {
-      for (const chatId of config.targetChats) {
-        try {
-          await send(chatId, articleText);
-        } catch (err) {
-          console.error("Scheduled article failed:", chatId, err.message);
-        }
-      }
-    }, 24 * 60 * 60 * 1000);
-    timers.push(daily);
-  };
-
-  const initial = setTimeout(async () => {
+  const sendDailyArticle = async () => {
+    const articleText = articleForDate(new Date());
     for (const chatId of config.targetChats) {
       try {
         await send(chatId, articleText);
       } catch (err) {
-        console.error("Initial scheduled article failed:", chatId, err.message);
+        console.error("Scheduled article failed:", chatId, err.message);
       }
     }
+  };
+
+  const scheduleArticle = () => {
+    const daily = setInterval(sendDailyArticle, 24 * 60 * 60 * 1000);
+    timers.push(daily);
+  };
+
+  const initial = setTimeout(async () => {
+    await sendDailyArticle();
     scheduleArticle();
   }, articleDelay);
   timers.push(initial);
@@ -68,7 +57,10 @@ function startScheduler({ config, community, send, escapeHtml }) {
   );
 
   return () => {
-    for (const timer of timers) clearInterval(timer);
+    for (const timer of timers) {
+      clearInterval(timer);
+      clearTimeout(timer);
+    }
   };
 }
 
