@@ -1,5 +1,12 @@
 const { Pool } = require("pg");
 
+function walletConflictError(currentWallet) {
+  const err = new Error("WALLET_ALREADY_LINKED");
+  err.code = "WALLET_ALREADY_LINKED";
+  err.currentWallet = currentWallet;
+  return err;
+}
+
 class MemoryStorage {
   constructor() {
     this.users = new Map();
@@ -46,9 +53,23 @@ class MemoryStorage {
     return this.users.get(String(userId)) || null;
   }
 
+  async getReferrerForUser(userId) {
+    const user = await this.getUser(userId);
+    if (!user?.referrerId) return null;
+    return this.getUser(user.referrerId);
+  }
+
   async setWallet(userId, walletAddress) {
     const user = this.users.get(String(userId));
     if (!user) return null;
+
+    if (
+      user.walletAddress &&
+      user.walletAddress.toLowerCase() !== walletAddress.toLowerCase()
+    ) {
+      throw walletConflictError(user.walletAddress);
+    }
+
     user.walletAddress = walletAddress;
     return user;
   }
@@ -166,7 +187,29 @@ class PostgresStorage {
     return rows[0] ? mapRow(rows[0]) : null;
   }
 
+  async getReferrerForUser(userId) {
+    const { rows } = await this.pool.query(
+      `SELECT r.*,
+        (SELECT COUNT(*)::int FROM ath_bot_users x WHERE x.referrer_id=r.telegram_id) AS referral_count
+       FROM ath_bot_users u
+       JOIN ath_bot_users r ON r.telegram_id=u.referrer_id
+       WHERE u.telegram_id=$1`,
+      [String(userId)]
+    );
+    return rows[0] ? mapRow(rows[0]) : null;
+  }
+
   async setWallet(userId, walletAddress) {
+    const existing = await this.getUser(userId);
+    if (!existing) return null;
+
+    if (
+      existing.walletAddress &&
+      existing.walletAddress.toLowerCase() !== walletAddress.toLowerCase()
+    ) {
+      throw walletConflictError(existing.walletAddress);
+    }
+
     const { rows } = await this.pool.query(
       "UPDATE ath_bot_users SET wallet_address=$2 WHERE telegram_id=$1 RETURNING *",
       [String(userId), walletAddress]
@@ -231,4 +274,9 @@ function createStorage(databaseUrl) {
   return databaseUrl ? new PostgresStorage(databaseUrl) : new MemoryStorage();
 }
 
-module.exports = { createStorage, MemoryStorage, PostgresStorage };
+module.exports = {
+  createStorage,
+  MemoryStorage,
+  PostgresStorage,
+  walletConflictError,
+};
