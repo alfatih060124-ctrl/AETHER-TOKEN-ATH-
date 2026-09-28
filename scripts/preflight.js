@@ -37,7 +37,6 @@ async function main() {
   const teamBeneficiary = address("TEAM_BENEFICIARY");
   const liquidityWallet = address("LIQUIDITY_WALLET");
   const marketingWallet = address("MARKETING_WALLET");
-  required("BSCSCAN_API_KEY");
 
   const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
   if (!Number.isInteger(teamLockDays) || teamLockDays < 365 || teamLockDays > 550) {
