@@ -104,14 +104,6 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
     title: "ATH AIRDROP MINER",
     type: "supergroup",
   });
-  await storage.recordMembership({
-    userId: "200",
-    chatId: "-1001",
-    role: "member",
-    joinMethod: "verified_join_request",
-    joinScore: 80,
-  });
-
   await storage.saveJoinRequest({
     userId: "200",
     chatId: "-1001",
@@ -130,6 +122,18 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
   const completedJoin = await storage.getJoinRequest("200", "-1001");
   assert.strictEqual(completedJoin.status, "approved");
   assert.strictEqual(completedJoin.score, 80);
+  const verifiedBeta = await storage.getUser("200");
+  assert.strictEqual(verifiedBeta.countryCode, "BR");
+  assert.strictEqual(verifiedBeta.cryptoScore, 80);
+  assert.strictEqual(verifiedBeta.isVerified, true);
+
+  await storage.recordMembership({
+    userId: "200",
+    chatId: "-1001",
+    role: "member",
+    joinMethod: "verified_join_request",
+    joinScore: verifiedBeta.cryptoScore,
+  });
 
   assert.strictEqual(await storage.addWarning("-1001", "200"), 1);
   assert.strictEqual(await storage.addWarning("-1001", "200"), 2);
