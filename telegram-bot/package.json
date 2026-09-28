@@ -1,6 +1,6 @@
 {
   "name": "aether-ath-telegram-bot",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "description": "AETHER ATH Telegram community, promotion and referral bot",
   "scripts": {
