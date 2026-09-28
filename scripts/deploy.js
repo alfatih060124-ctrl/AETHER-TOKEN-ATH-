@@ -113,8 +113,20 @@ async function main() {
   await (await token.transfer(teamLockAddress, teamAllocation)).wait();
   await (await token.transfer(marketingWallet, marketingAllocation)).wait();
 
+  let expectedDeployerATH = 0n;
+  if (liquidityWallet.toLowerCase() === deployer.address.toLowerCase()) {
+    expectedDeployerATH += liquidityAllocation;
+  }
+  if (marketingWallet.toLowerCase() === deployer.address.toLowerCase()) {
+    expectedDeployerATH += marketingAllocation;
+  }
+
   const remaining = await token.balanceOf(deployer.address);
-  if (remaining !== 0n) throw new Error(`Unexpected deployer ATH balance: ${remaining}`);
+  if (remaining !== expectedDeployerATH) {
+    throw new Error(
+      `Unexpected deployer ATH balance: got ${remaining}, expected ${expectedDeployerATH}`
+    );
+  }
 
   if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
     await (await token.transferOwnership(owner)).wait();
@@ -143,6 +155,7 @@ async function main() {
       teamLocked: "50000000",
       marketing: "50000000",
     },
+    deployerExpectedATH: hre.ethers.formatEther(expectedDeployerATH),
     deployedAt: new Date().toISOString(),
   };
 
@@ -155,6 +168,7 @@ async function main() {
   console.log("MINING_AIRDROP  =", miningAddress);
   console.log("TEAM_TOKEN_LOCK =", teamLockAddress);
   console.log("TEAM_RELEASE_AT =", releaseTime);
+  console.log("DEPLOYER_ADDRESS=", deployer.address);
   console.log("MANIFEST        =", manifestPath);
   console.log("====================================");
 }
