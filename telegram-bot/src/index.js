@@ -3,6 +3,8 @@ const crypto = require("crypto");
 const config = require("./config");
 const { createStorage } = require("./storage");
 const { createATHReferralService, isAddress } = require("./services/athReferral");
+const { createCommunity } = require("./community");
+const { startScheduler } = require("./scheduler");
 
 const API = config.token ? `https://api.telegram.org/bot${config.token}` : "";
 const storage = createStorage(config.databaseUrl);
@@ -10,6 +12,8 @@ const athReferral = createATHReferralService(config);
 
 let offset = 0;
 let stopping = false;
+let community = null;
+let stopScheduler = () => {};
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,7 +59,10 @@ function mainKeyboard() {
     { text: "🎁 ATH Airdrop", callback_data: "airdrop" },
     { text: "🔗 ATH Referral", callback_data: "referral" },
   ]);
-  rows.push([{ text: "👥 Invite Friends", callback_data: "invite" }]);
+  rows.push([
+    { text: "👥 Invite Friends", callback_data: "invite" },
+    { text: "📚 Education", callback_data: "edu:aether" },
+  ]);
   if (config.communityUrl) rows.push([{ text: "💬 Community", url: config.communityUrl }]);
   if (config.websiteUrl) rows.push([{ text: "🌐 Official Website", url: config.websiteUrl }]);
   return { inline_keyboard: rows };
@@ -321,11 +328,10 @@ async function handleMessage(message) {
   }
 
   const m = text.match(/^\/(\w+)(?:@\w+)?(?:\s+([\s\S]*))?$/);
-  if (!m) return;
-  const command = m[1].toLowerCase();
-  const args = m[2] || "";
+  const command = m ? m[1].toLowerCase() : "";
+  const args = m ? m[2] || "" : "";
 
-  if (await handleAdmin(message, command, args)) return;
+  if (command && await handleAdmin(message, command, args)) return;
 
   if (command === "airdrop") return showAirdrop(message.chat.id);
   if (command === "invite") return showInvite(message.chat.id, user.telegramId);
@@ -363,8 +369,12 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/stop — opt out of promotional updates"
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/edukasi — crypto & ATH education\n/stop — opt out of promotional updates"
     );
+  }
+
+  if (community) {
+    return community.handleMessage(message);
   }
 }
 
@@ -382,6 +392,10 @@ async function handleCallback(query) {
   if (query.data === "airdrop") return showAirdrop(query.message.chat.id);
   if (query.data === "invite") return showInvite(query.message.chat.id, String(query.from.id));
   if (query.data === "referral") return showReferral(query.message.chat.id, String(query.from.id));
+
+  if (community) {
+    return community.handleCallback(query);
+  }
 }
 
 async function pollingLoop() {
@@ -393,11 +407,14 @@ async function pollingLoop() {
       const updates = await telegram("getUpdates", {
         offset,
         timeout: 30,
-        allowed_updates: ["message", "callback_query"],
+        allowed_updates: ["message", "callback_query", "chat_join_request"],
       });
 
       for (const update of updates) {
         offset = update.update_id + 1;
+        if (update.chat_join_request && community) {
+          await community.handleJoinRequest(update.chat_join_request);
+        }
         if (update.message) await handleMessage(update.message);
         if (update.callback_query) await handleCallback(update.callback_query);
       }
@@ -418,19 +435,37 @@ function escapeHtml(value) {
 async function boot() {
   await storage.init();
 
+  community = createCommunity({
+    telegram,
+    storage,
+    config,
+    send,
+    escapeHtml,
+  });
+
   const server = http.createServer(async (req, res) => {
     if (req.url === "/health") {
       const s = await storage.stats().catch(() => null);
+      const referralHealth = await athReferral.health().catch(() => ({
+        enabled: athReferral.enabled,
+        ready: false,
+      }));
+
       res.writeHead(s ? 200 : 503, { "content-type": "application/json" });
       res.end(JSON.stringify({
         ok: Boolean(s),
         botEnabled: config.enabled,
         storage: config.databaseUrl ? "postgres" : "memory",
+        communityFeatures: config.communityFeaturesEnabled,
+        joinVerification: config.joinVerificationEnabled,
+        targetChats: config.targetChats.length,
         athReferralConfigured: athReferral.enabled,
+        athReferralReady: Boolean(referralHealth.ready),
         nonce: crypto.randomBytes(4).toString("hex"),
       }));
       return;
     }
+
     res.writeHead(200, { "content-type": "text/plain" });
     res.end("AETHER ATH Telegram Bot");
   });
@@ -448,23 +483,28 @@ async function boot() {
     throw new Error("BOT_ENABLED=true but TELEGRAM_BOT_TOKEN is missing");
   }
 
+  stopScheduler = startScheduler({
+    config,
+    community,
+    send,
+    escapeHtml,
+  });
+
   pollingLoop().catch((err) => {
     console.error(err);
     process.exit(1);
   });
 }
 
-process.on("SIGTERM", async () => {
+async function shutdown() {
   stopping = true;
+  stopScheduler();
   await storage.close().catch(() => {});
   process.exit(0);
-});
+}
 
-process.on("SIGINT", async () => {
-  stopping = true;
-  await storage.close().catch(() => {});
-  process.exit(0);
-});
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 boot().catch((err) => {
   console.error(err);
