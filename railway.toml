@@ -1,6 +1,6 @@
 [build]
 builder = "RAILPACK"
-buildCommand = "npm install --no-audit --no-fund && npm run source:selfcheck && npm run rpc:check:testnet && npm run readiness:testnet && npm run compile && npm test"
+buildCommand = "npm install --no-audit --no-fund && npm run source:selfcheck && npm run syntax:check && npm run rpc:check:testnet && npm run readiness:testnet && npm run compile && npm test"
 
 [deploy]
 startCommand = "npm start"
