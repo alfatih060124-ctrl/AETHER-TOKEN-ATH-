@@ -331,6 +331,20 @@ async function handleMessage(message) {
   const command = m ? m[1].toLowerCase() : "";
   const args = m ? m[2] || "" : "";
 
+  if (command === "myid") {
+    return send(
+      message.chat.id,
+      `Telegram User ID Anda: <code>${message.from.id}</code>\n\nGunakan angka ini untuk <code>ADMIN_TELEGRAM_IDS</code> di Railway.`
+    );
+  }
+
+  if (command === "chatid") {
+    return send(
+      message.chat.id,
+      `Chat/Group ID: <code>${message.chat.id}</code>\n\nGunakan angka ini untuk <code>TARGET_CHAT_IDS</code> jika group/channel akan menerima scheduler ATH.`
+    );
+  }
+
   if (command && await handleAdmin(message, command, args)) return;
 
   if (command === "airdrop") return showAirdrop(message.chat.id);
@@ -369,7 +383,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/edukasi — crypto & ATH education\n/stop — opt out of promotional updates"
+      "<b>Commands</b>\n/start — open ATH bot\n/myid — tampilkan Telegram User ID\n/chatid — tampilkan Chat/Group ID\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/edukasi — crypto & ATH education\n/stop — opt out of promotional updates"
     );
   }
 
