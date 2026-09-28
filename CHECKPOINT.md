@@ -29,45 +29,60 @@
 
 ## LATEST GREEN EVIDENCE
 
-- Last fully validated code commit: `86b30e4611b0829398210f1e4f2c507b9a73010a`
-- Railway deployment: `c5e1a309-fa60-4070-acc5-aabaea956786`
-- Result: `SUCCESS`
-- BSC Testnet chain ID: `97`
-- Testnet single-wallet mode: `ENABLED`
+- Current deployment-runner code commit: `9b7d57e12551b5e4be7fb82cdf72cb4521d894ac`
+- Railway deployer service: `ath-testnet-deployer`
+- Initial Railway deployment: `ac0ee8d2-12ed-4346-a58f-def732649935`
 - Source self-check: `PASSED`
-- Script syntax checks: `PASSED`
+- BSC Testnet RPC: `PASSED`
+- BSC chain ID: `97`
+- Safe config: `READY`
+- Deployment config: `READY`
 - Solidity files compiled: `18`
 - Automated tests: `13 passing`
 - Mainnet gates: all `CLOSED`
 
-## STEP 24B — DEPLOYMENT RUNNER READY
+## STEP 24B — PREFLIGHT REACHED GAS CHECK
 
-Additional fail-closed deployment controls are now prepared in GitHub:
+The operator private key is now connected to the deployer service through a Railway reference and is accepted as a valid EVM key.
 
-- `TESTNET_USE_DEPLOYER_ROLES=true` reduces the Testnet role setup to the deployer wallet.
-- `TESTNET_DEPLOY_APPROVED=false` is loaded in Railway.
-- `npm run deploy:once:testnet` refuses to transact unless approval is explicitly true.
-- The one-shot runner also refuses if deployed ATH contract address variables already exist.
-- It runs `preflight:testnet` before any deployment transaction.
+A real BSC Testnet preflight was executed on Railway deployment:
 
-No blockchain transaction has been performed by these changes.
+`3f09d0d4-4ec9-4c5e-8b4d-c50883a95391`
+
+Result:
+
+- Private key: present and parseable.
+- BSC Testnet RPC: reachable.
+- Chain ID: 97.
+- Single-wallet Testnet mode: enabled.
+- Mainnet gates: closed.
+- Testnet deployer BNB balance: `0.0`.
+- Deployment transaction: **NOT STARTED**.
+
+A conservative minimum gas reserve of `0.02 tBNB` is now enforced before deployment begins.
+
+## SAFETY FIXES ADDED BEFORE DEPLOYMENT
+
+- Single-wallet Testnet mode now correctly allows Liquidity + Marketing allocations to share the deployer address.
+- Deployer ATH balance checks account for overlapping allocation destinations.
+- Post-deployment checks now sum allocations for shared destination addresses instead of falsely expecting separate balances.
+- The one-shot deployment runner remains blocked unless `TESTNET_DEPLOY_APPROVED=true`.
+- Deployment remains blocked if existing ATH deployment address variables are already present.
 
 ## CURRENT BLOCKER
 
-The Railway service still has no `PRIVATE_KEY`.
+Fund the dedicated BSC Testnet wallet used by `PRIVATE_KEY` with at least:
 
-The only remaining input before preflight is:
+`0.02 tBNB`
 
-- `PRIVATE_KEY` — dedicated funded BSC Testnet deployer secret, stored only in Railway.
+No real BNB is required for this Testnet deployment.
 
-The deployer must hold Testnet BNB for gas.
-
-`BSCSCAN_API_KEY` remains a later Step 26 verification input and is not required to deploy.
+`BSCSCAN_API_KEY` remains a later Step 26 verification input and is not required for Step 25 deployment.
 
 ## NEXT — Steps 24B–28
 
-24B. Operator stores `PRIVATE_KEY` in Railway; run preflight and verify Testnet BNB balance.
-25. Set the Testnet approval gate for the authorized deployment, run the one-shot deploy, capture addresses, immediately close the gate, and run post-deploy invariants.
+24B. Fund the Testnet deployer with at least 0.02 tBNB and rerun preflight.
+25. If preflight passes, temporarily open the Testnet approval gate, run the one-shot deployment, capture addresses, close the gate, and run post-deployment invariants.
 26. Add `BSCSCAN_API_KEY`, verify contracts, then test Power → Daily Claim → Booster → Vesting Claim.
 27. Freeze verified Testnet addresses + ABI and connect them to Aether Wallet Mining.
 28. Keep Mainnet blocked until audit, production multisig, exact Team lock period and ATH/USDT liquidity-lock decisions are complete.
