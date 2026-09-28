@@ -25,7 +25,15 @@ const LOCK_ABI = [
 function required(name) {
   const value = process.env[name];
   if (!value) throw new Error("Missing required env: " + name);
-  return value;
+  return value.trim();
+}
+
+function requiredAddress(name) {
+  const value = required(name);
+  if (!ethers.isAddress(value) || value === ethers.ZeroAddress) {
+    throw new Error(name + " must be a non-zero EVM address");
+  }
+  return ethers.getAddress(value);
 }
 
 function eqAddr(a, b) {
@@ -34,15 +42,19 @@ function eqAddr(a, b) {
 
 async function main() {
   const rpcUrl = required("BSC_TESTNET_RPC");
-  const tokenAddress = required("ATH_TOKEN_ADDRESS");
-  const miningAddress = required("ATH_MINING_ADDRESS");
-  const teamLockAddress = required("ATH_TEAM_LOCK_ADDRESS");
+  const tokenAddress = requiredAddress("ATH_TOKEN_ADDRESS");
+  const miningAddress = requiredAddress("ATH_MINING_ADDRESS");
+  const teamLockAddress = requiredAddress("ATH_TEAM_LOCK_ADDRESS");
 
-  const ownerExpected = required("OWNER_ADDRESS");
-  const treasuryExpected = required("TREASURY_ADDRESS");
-  const teamExpected = required("TEAM_BENEFICIARY");
-  const liquidityWallet = required("LIQUIDITY_WALLET");
-  const marketingWallet = required("MARKETING_WALLET");
+  const singleWalletMode = process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
+  const deployerAddress = singleWalletMode ? requiredAddress("DEPLOYER_ADDRESS") : null;
+  const roleAddress = (name) => singleWalletMode ? deployerAddress : requiredAddress(name);
+
+  const ownerExpected = roleAddress("OWNER_ADDRESS");
+  const treasuryExpected = roleAddress("TREASURY_ADDRESS");
+  const teamExpected = roleAddress("TEAM_BENEFICIARY");
+  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const marketingWallet = roleAddress("MARKETING_WALLET");
 
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const network = await provider.getNetwork();
@@ -104,6 +116,7 @@ async function main() {
 
   const report = {
     chainId: 97,
+    testnetSingleWalletMode: singleWalletMode,
     tokenAddress,
     miningAddress,
     teamLockAddress,
