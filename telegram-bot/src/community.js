@@ -3,6 +3,7 @@ const { calculateCryptoScore, isEligible } = require("./services/scoring");
 const { EDUCATION, educationKeyboard } = require("./content/education");
 const { articleForDate } = require("./content/articles");
 const { PromotionService } = require("./services/promotion");
+const { createAIReplyService } = require("./services/aiReply");
 
 function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   const floodGuard = new FloodGuard({
@@ -10,6 +11,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     windowSeconds: config.floodWindowSeconds,
   });
   const promotion = new PromotionService({ cooldownHours: config.softPromoHours });
+  const aiReply = createAIReplyService(config);
 
   function isAdmin(userId) {
     return config.admins.has(String(userId));
@@ -519,6 +521,35 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       return true;
     }
 
+    if (aiReply.enabled) {
+      const lower = text.toLowerCase();
+      const username = String(config.username || "").toLowerCase();
+      const isMentioned = Boolean(username && lower.includes("@" + username));
+      const isQuestion =
+        text.includes("?") ||
+        /\b(what|why|how|when|where|can|could|should|help|explain|tell me)\b/i.test(text);
+      const shouldReply =
+        isMentioned ||
+        isQuestion ||
+        Math.random() < Number(config.aiRandomReplyRate || 0);
+
+      if (shouldReply) {
+        try {
+          const answer = await aiReply.generate({
+            userMessage: text,
+            userName: message.from.first_name || message.from.username || "member",
+            groupName: message.chat.title || "ATH Community",
+          });
+          if (answer) {
+            await send(message.chat.id, escapeHtml(answer));
+            return true;
+          }
+        } catch (err) {
+          console.error("AI community reply failed:", err.message);
+        }
+      }
+    }
+
     return false;
   }
 
@@ -561,6 +592,32 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       }
       if (parsed.command === "article") {
         return articleCommand(message);
+      }
+    }
+
+    if (message.chat?.type === "private" && message.text) {
+      const text = String(message.text).trim();
+      if (/^(hi|hello|hey)\b/i.test(text)) {
+        await send(
+          message.chat.id,
+          `Hello ${escapeHtml(message.from.first_name || "there")}! I am the AETHER ATH community bot. You can ask about airdrops, mining, staking, trading, referrals, AETHER Wallet, or wallet security. Use /help to view commands.`
+        );
+        return true;
+      }
+      if (aiReply.enabled) {
+        try {
+          const answer = await aiReply.generate({
+            userMessage: text,
+            userName: message.from.first_name || message.from.username || "member",
+            groupName: "Private Chat",
+          });
+          if (answer) {
+            await send(message.chat.id, escapeHtml(answer));
+            return true;
+          }
+        } catch (err) {
+          console.error("AI private reply failed:", err.message);
+        }
       }
     }
 
