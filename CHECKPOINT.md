@@ -37,7 +37,9 @@
 
 ## CURRENT STEP — 24: BSC TESTNET PREFLIGHT
 
-The code gate is green. BSC Testnet deployment now requires operator-controlled configuration that must not be invented or committed:
+The code gate is green. Safe non-sensitive Testnet defaults are now loaded in Railway: `BSC_TESTNET_RPC`, `ATH_CHAIN_ID=97`, `TEAM_LOCK_DAYS=365` (testnet-only), and every Mainnet release gate remains `false`.
+
+BSC Testnet deployment still requires operator-controlled configuration that must not be invented or committed:
 
 - `PRIVATE_KEY` — dedicated funded BSC Testnet deployer key, stored only as a secret.
 - `OWNER_ADDRESS` — intended testnet owner/admin address.
@@ -45,8 +47,7 @@ The code gate is green. BSC Testnet deployment now requires operator-controlled 
 - `TEAM_BENEFICIARY`.
 - `LIQUIDITY_WALLET`.
 - `MARKETING_WALLET`.
-- `TEAM_LOCK_DAYS` — integer 365–550.
-- `BSC_TESTNET_RPC`.
+- `TEAM_LOCK_DAYS` — production choice remains 365–550; Railway currently uses 365 for Testnet validation only.
 - `BSCSCAN_API_KEY` — required for automatic verification after deploy.
 
 The deployer must also hold enough BSC Testnet BNB to pay deployment gas.
