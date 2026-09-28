@@ -1,68 +1,61 @@
-# AETHER ATH Telegram Promotion Bot
+# AETHER ATH Telegram Bot
 
-A separate Telegram-facing service for ATH community growth, education, promotion and referral routing. It is intentionally isolated from ATH smart-contract deployment credentials.
+Production-oriented Telegram service for the ATH community, education, promotion, moderation, join verification and ATH referral routing.
 
-## Referral integration architecture
+The bot is isolated from ATH deployment credentials. It never needs a blockchain private key.
 
-The referral path is:
+## Referral architecture
 
 `Telegram invite → Telegram attribution → public wallet link → sponsor Power validation → AETHER Wallet deep link → MiningAirdrop.buyPower(referrer) → on-chain referral`
 
-This deliberately separates two states:
+Two states are intentionally separated:
 
-1. **Telegram referral** — acquisition attribution after a user opens the bot through `?start=ref_<telegram_user_id>`.
-2. **ATH on-chain referral** — official mining referral recorded only by `MiningAirdrop.buyPower(referrer)`.
+1. **Telegram attribution** records who referred a user to the bot.
+2. **ATH on-chain referral** is official only when the ATH mining contract accepts the sponsor during `buyPower(referrer)`.
 
-The Telegram bot does not manufacture an ATH referral count. The smart contract remains the source of truth.
+Telegram clicks alone never create ATH mining referral credit.
 
-## ATH qualification rule
+## Community features
 
-Before the bot presents a sponsor wallet as ready for ATH referral routing, it reads the configured MiningAirdrop contract and checks the sponsor's `hasPower` status.
+- English-only user interface.
+- Join-request verification with crypto-interest scoring.
+- Country-aware scoring.
+- Automatic approve/decline flow.
+- Welcome onboarding.
+- Anti-scam filters.
+- Anti-flood protection.
+- Warn, mute, unmute, kick, ban and unban.
+- Persistent warning counts and moderation logs when PostgreSQL is configured.
+- `/modlog` for recent moderation activity.
+- Crypto and ATH education menus.
+- Rotating daily education articles.
+- Soft promotion with a long cooldown.
+- Optional AI replies, disabled unless explicitly configured.
+- Safe bot command registration and Telegram profile description.
+- Target-group permission readiness checks at startup.
 
-The existing ATH contract itself performs the final checks:
-- the new miner cannot refer themselves,
-- the sponsor must already have Power to be counted,
-- the referral is recorded when the invited user buys Power,
-- the sponsor's mining multiplier rises according to the on-chain referral count.
+## ATH referral bridge
 
-## AETHER Wallet bridge
+Before the bot presents a sponsor as ready for referral routing, it checks the configured ATH mining contract in read-only mode.
 
-When `AETHER_APP_URL` is configured and the sponsor is eligible, the bot builds a link using:
+The ATH contract remains authoritative for:
+
+- sponsor Power eligibility,
+- self-referral protection,
+- official referral assignment,
+- active referral count,
+- referral mining bonus.
+
+When `AETHER_APP_URL` is configured, the bot can generate an AETHER Wallet handoff with:
 
 - `source=telegram`
 - `campaign=ath-airdrop`
 - `ath_referrer=0x...`
-- `ath_wallet=0x...` when the member wallet is known
+- `ath_wallet=0x...`
 
-AETHER Wallet must read `ath_referrer`, display it to the user for review, and pass it to:
+AETHER Wallet must show the sponsor for review and pass it to `buyPower(referrer)`. The user signs locally.
 
-`buyPower(referrer)`
-
-The transaction is still signed locally by the user's wallet.
-
-## Goals
-
-- Opt-in ATH campaign onboarding.
-- Referral deep links.
-- Public wallet-address linking.
-- Telegram and on-chain referral status.
-- Per-user referral/campaign stats.
-- Admin aggregate stats.
-- Admin broadcast only to users who started the bot and did not opt out.
-- Direct buttons to AETHER Wallet / official community / website.
-
-## Safety boundaries
-
-- The bot never asks for a private key or seed phrase.
-- The bot does not custody funds.
-- The bot has read-only ATH RPC access.
-- Telegram referral attribution alone does not grant ATH.
-- The bot does not mint, transfer, promise, or claim ATH.
-- Self-referral and repeat Telegram attribution are blocked.
-- A linked wallet is not silently replaced, protecting referral identity.
-- Users may opt out with `/stop`.
-
-## Commands
+## Member commands
 
 - `/start`
 - `/airdrop`
@@ -70,26 +63,114 @@ The transaction is still signed locally by the user's wallet.
 - `/referral`
 - `/wallet 0x...`
 - `/stats`
-- `/stop`
+- `/education`
+- `/aether`
+- `/article`
+- `/myid`
+- `/chatid`
 - `/help`
+- `/stop`
 
-Admin IDs configured in `ADMIN_TELEGRAM_IDS` additionally receive:
+## Admin commands
+
+Admin access is controlled by `ADMIN_TELEGRAM_IDS`.
 
 - `/adminstats`
+- `/promo`
+- `/warn`
+- `/warnings`
+- `/mute`
+- `/unmute`
+- `/kick`
+- `/ban`
+- `/unban`
+- `/modlog`
 - `/broadcast <message>`
 
-## Storage
+## Durable storage
 
-If `DATABASE_URL` is provided, the bot creates and uses the `ath_bot_users` PostgreSQL table.
+When `DATABASE_URL` is configured, the bot automatically creates and maintains PostgreSQL tables for:
 
-If no database is configured, it runs with memory storage for development only. Memory data is lost on restart.
+- users,
+- groups,
+- memberships,
+- join verification,
+- warning counters,
+- moderation history.
+
+Without `DATABASE_URL`, the bot intentionally falls back to in-memory storage for development. Referral and moderation state can then be lost on restart.
+
+## Optional AI replies
+
+AI replies are disabled by default.
+
+Configuration:
+
+```env
+AI_REPLY_ENABLED=false
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+AI_RANDOM_REPLY_RATE=0.08
+```
+
+The AI safety prompt requires English replies, prohibits requesting seed phrases/private keys and prohibits guaranteed financial outcomes.
+
+## Core environment
+
+```env
+BOT_ENABLED=false
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_USERNAME=
+
+ADMIN_TELEGRAM_IDS=
+TARGET_CHAT_IDS=
+COMMUNITY_FEATURES_ENABLED=true
+JOIN_VERIFICATION_ENABLED=true
+MIN_CRYPTO_SCORE=60
+
+FLOOD_LIMIT=5
+FLOOD_WINDOW_SECONDS=10
+SOFT_PROMO_HOURS=8
+ARTICLE_HOUR_UTC=2
+
+DATABASE_URL=
+
+ATH_RPC_URL=https://bsc-testnet-rpc.publicnode.com
+ATH_CHAIN_ID=97
+ATH_MINING_ADDRESS=
+AETHER_APP_URL=
+AETHER_COMMUNITY_URL=
+AETHER_WEBSITE_URL=
+```
+
+## Security boundaries
+
+- Never commit `.env`.
+- Keep BotFather tokens in Railway secrets only.
+- Never copy ATH deployment private keys into this service.
+- Never request a seed phrase or private key.
+- Keep bot permissions limited to the permissions required for moderation and join approval.
+- No aggressive mass invite behavior.
+- Broadcasts target only users who started the bot and have not opted out.
+- Telegram attribution does not manufacture an ATH reward.
+- Mainnet deployment controls remain separate from this bot.
 
 ## Railway
 
-Recommended deployment is a separate Railway service rooted at:
+Recommended root directory:
 
 `/telegram-bot`
 
-Keep `BOT_ENABLED=false` until the BotFather token, username, durable storage, official links and ATH contract address are ready.
+Build command:
 
-Do not copy `PRIVATE_KEY` from the ATH smart-contract deployment service into this Telegram service.
+`npm install --no-audit --no-fund && npm test`
+
+Start command:
+
+`npm start`
+
+Healthcheck:
+
+`/health`
+
+The health response reports community readiness, persistent-storage readiness, optional AI readiness, and ATH referral readiness.
