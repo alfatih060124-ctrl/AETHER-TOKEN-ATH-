@@ -2,22 +2,23 @@
 
 Date: 2026-09-28
 
-## Latest validated commit
+## Latest validated code commit
 
-`6591dcd75ea8d8080cdfb261c0f9b85a34265347`
+`86b30e4611b0829398210f1e4f2c507b9a73010a`
 
-Railway latest-main validation deployment:
+Railway validation deployment:
 
-`5e722129-39ba-4cd6-94f2-588975191451`
+`c5e1a309-fa60-4070-acc5-aabaea956786`
 
 Result: **SUCCESS**
 
-## Latest-main build evidence
+## Build / readiness evidence
 
 - Zero-dependency source self-check: **PASSED**
 - Deployment-script syntax check: **PASSED**
 - BSC Testnet RPC check: **PASSED**
 - Observed BSC chain ID: **97**
+- Testnet single-wallet mode: **ENABLED**
 - Safe Testnet configuration: **READY**
 - Mainnet gates: **all CLOSED**
 - Solidity compiler: **0.8.20**
@@ -25,14 +26,18 @@ Result: **SUCCESS**
 - Solidity compile result: **18 files compiled successfully**
 - EVM target: **paris**
 - Automated test result: **13 passing**
-- Railway validation server: **SUCCESS**
+- Railway validation service: **SUCCESS**
 
-The readiness report intentionally remains:
+## Operator gates
 
-- `deploymentConfig: BLOCKED`
-- `verificationConfig: BLOCKED`
+The new Testnet-only single-wallet mode derives Owner, Treasury, Team Beneficiary, Liquidity Wallet and Marketing Wallet from the dedicated Testnet deployer address. It is ignored on Mainnet.
 
-because operator-controlled Testnet values have not been invented or committed. Missing deployment values are `PRIVATE_KEY`, `OWNER_ADDRESS`, `TREASURY_ADDRESS`, `TEAM_BENEFICIARY`, `LIQUIDITY_WALLET`, and `MARKETING_WALLET`. `BSCSCAN_API_KEY` is a separate later verification gate.
+Current readiness now reports only:
+
+- Deployment configuration missing: `PRIVATE_KEY`
+- Verification configuration missing: `BSCSCAN_API_KEY`
+
+The deployer private key remains operator-controlled and must be stored only as a Railway secret. It is not committed to GitHub and must not be pasted into chat.
 
 ## Covered behaviors
 
@@ -43,7 +48,7 @@ because operator-controlled Testnet values have not been invented or committed. 
 5. Booster applies x2 reward and adds 100 Hash.
 6. First vesting tranche releases 10% after 30 days.
 7. New mining rewards stop after the 180-day mining window.
-8. Power + Booster BNB revenue is forwarded to the configured Treasury.
+8. Power + Booster BNB revenue is forwarded to Treasury.
 9. Self-referral is rejected.
 10. Inactive referrer is not credited.
 11. Emergency pause blocks mining actions until owner unpauses.
@@ -52,16 +57,6 @@ because operator-controlled Testnet values have not been invented or committed. 
 14. TeamTokenLock holds 50,000,000 ATH before the cliff.
 15. TeamTokenLock releases the full team allocation only after the cliff.
 16. Display price starts at $3.00 reference value.
-
-## Compiler findings fixed during validation
-
-### Finding 1 — NatSpec parsing
-
-Solidity rejected `@30d`, `@60d`, `@90d`, and `@180d` inside the contract NatSpec comment. The text was changed to ordinary prose.
-
-### Finding 2 — Stack depth
-
-`MiningAirdrop.getUserInfo` exceeded the legacy compiler stack-depth limit. Optimizer + IR compilation was enabled, preserving the contract ABI while allowing the current interface to compile successfully.
 
 ## Deployment boundary
 
