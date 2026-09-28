@@ -213,6 +213,14 @@ class MemoryStorage {
       .reverse();
   }
 
+  async membershipCountSince(chatId, sinceIso) {
+    const since = Date.parse(sinceIso);
+    return [...this.memberships.values()].filter((row) => {
+      if (String(row.chatId) !== String(chatId)) return false;
+      return Date.parse(row.joinedAt || row.updatedAt || 0) >= since;
+    }).length;
+  }
+
   async stats() {
     const users = [...this.users.values()];
     return {
@@ -581,6 +589,16 @@ class PostgresStorage {
       [String(chatId), max]
     );
     return rows.map(mapModerationRow);
+  }
+
+  async membershipCountSince(chatId, sinceIso) {
+    const { rows } = await this.pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM ath_bot_memberships
+       WHERE chat_id=$1 AND joined_at >= $2::timestamptz`,
+      [String(chatId), sinceIso]
+    );
+    return rows[0]?.count || 0;
   }
 
   async stats() {
