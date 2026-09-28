@@ -21,6 +21,19 @@ The private key must never be committed to GitHub and must not be pasted into ch
 
 The Testnet wallet must hold enough **Testnet BNB** for deployment gas.
 
+## One-shot transaction gate
+
+The repository also contains `npm run deploy:once:testnet`.
+
+It refuses to deploy unless:
+- `TESTNET_DEPLOY_APPROVED=true`
+- `PRIVATE_KEY` exists
+- no existing `ATH_TOKEN_ADDRESS`, `ATH_MINING_ADDRESS`, or `ATH_TEAM_LOCK_ADDRESS` is configured
+
+The command always runs `preflight:testnet` first. If any safety check fails, no contract deployment starts.
+
+Keep `TESTNET_DEPLOY_APPROVED=false` until the Testnet key is stored and funded. After a successful deployment, store the generated contract addresses and return this flag to `false`.
+
 ## Safe Testnet values
 
 Keep:
@@ -28,20 +41,21 @@ Keep:
 - `ATH_CHAIN_ID=97`
 - `TEAM_LOCK_DAYS=365` for Testnet validation
 - `TESTNET_USE_DEPLOYER_ROLES=true`
+- `TESTNET_DEPLOY_APPROVED=false` until the deploy moment
 - all four Mainnet release gates = `false`
 
-Then run:
+Run preflight before deployment:
 
 ```bash
 npm run preflight:testnet
 ```
 
 Preflight validates:
-- BSC chain ID 97,
-- private-key validity without printing the key,
-- deployer Testnet BNB balance,
-- Team lock range,
-- Mainnet gates remain closed.
+- BSC chain ID 97
+- private-key validity without printing the key
+- deployer Testnet BNB balance
+- Team lock range
+- Mainnet gates remain closed
 
 ## Explicit-address Testnet path
 
@@ -67,4 +81,4 @@ When Testnet single-wallet mode is enabled, verification and post-deployment che
 
 ## Production boundary
 
-The Testnet single-wallet shortcut is ignored for Mainnet. Mainnet always requires explicit role addresses and remains blocked until audit, production multisig, exact Team lock selection and ATH/USDT liquidity-lock decisions are complete.
+The Testnet single-wallet shortcut and one-shot Testnet approval are not Mainnet authorization. Mainnet always requires explicit role addresses and remains blocked until audit, production multisig, exact Team lock selection and ATH/USDT liquidity-lock decisions are complete.
