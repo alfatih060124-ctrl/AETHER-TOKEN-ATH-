@@ -7,9 +7,20 @@ function walletConflictError(currentWallet) {
   return err;
 }
 
+function joinKey(userId, chatId) {
+  return String(userId) + ":" + String(chatId);
+}
+
+function warningKey(chatId, userId) {
+  return String(chatId) + ":" + String(userId);
+}
+
 class MemoryStorage {
   constructor() {
     this.users = new Map();
+    this.joinRequests = new Map();
+    this.warningCounts = new Map();
+    this.moderationLogs = [];
   }
 
   async init() {}
@@ -81,6 +92,78 @@ class MemoryStorage {
     return user;
   }
 
+  async saveJoinRequest(state) {
+    const key = joinKey(state.userId, state.chatId);
+    const existing = this.joinRequests.get(key);
+    const now = new Date().toISOString();
+    const next = {
+      userId: String(state.userId),
+      chatId: String(state.chatId),
+      interests: [...(state.interests || existing?.interests || [])],
+      experience: state.experience || existing?.experience || "beginner",
+      hasWallet: Boolean(state.hasWallet ?? existing?.hasWallet ?? false),
+      stage: state.stage || existing?.stage || "start",
+      status: state.status || existing?.status || "pending",
+      score: state.score ?? existing?.score ?? null,
+      createdAt: existing?.createdAt || state.createdAt || now,
+      updatedAt: now,
+    };
+    this.joinRequests.set(key, next);
+    return next;
+  }
+
+  async getJoinRequest(userId, chatId) {
+    return this.joinRequests.get(joinKey(userId, chatId)) || null;
+  }
+
+  async updateJoinRequest(userId, chatId, patch) {
+    const current = await this.getJoinRequest(userId, chatId);
+    if (!current) return null;
+    return this.saveJoinRequest({ ...current, ...patch, userId, chatId });
+  }
+
+  async completeJoinRequest(userId, chatId, { status, score = null } = {}) {
+    return this.updateJoinRequest(userId, chatId, {
+      status: status || "completed",
+      score,
+      stage: "completed",
+    });
+  }
+
+  async addWarning(chatId, userId) {
+    const key = warningKey(chatId, userId);
+    const count = Number(this.warningCounts.get(key) || 0) + 1;
+    this.warningCounts.set(key, count);
+    return count;
+  }
+
+  async getWarnings(chatId, userId) {
+    return Number(this.warningCounts.get(warningKey(chatId, userId)) || 0);
+  }
+
+  async logModeration(entry) {
+    const row = {
+      chatId: String(entry.chatId),
+      targetUserId: entry.targetUserId ? String(entry.targetUserId) : null,
+      actorUserId: entry.actorUserId ? String(entry.actorUserId) : null,
+      action: String(entry.action || "unknown"),
+      reason: entry.reason || null,
+      metadata: entry.metadata || {},
+      createdAt: new Date().toISOString(),
+    };
+    this.moderationLogs.push(row);
+    if (this.moderationLogs.length > 1000) this.moderationLogs.shift();
+    return row;
+  }
+
+  async recentModerationLogs(chatId, limit = 10) {
+    const max = Math.max(1, Math.min(Number(limit) || 10, 50));
+    return this.moderationLogs
+      .filter((row) => String(row.chatId) === String(chatId))
+      .slice(-max)
+      .reverse();
+  }
+
   async stats() {
     const users = [...this.users.values()];
     return {
@@ -88,6 +171,8 @@ class MemoryStorage {
       linkedWallets: users.filter((u) => u.walletAddress).length,
       referrals: users.filter((u) => u.referrerId).length,
       optedIn: users.filter((u) => !u.optedOut).length,
+      joinRequests: this.joinRequests.size,
+      moderationLogs: this.moderationLogs.length,
     };
   }
 
@@ -124,6 +209,43 @@ class PostgresStorage {
       );
       CREATE INDEX IF NOT EXISTS idx_ath_bot_users_referrer
         ON ath_bot_users(referrer_id);
+
+      CREATE TABLE IF NOT EXISTS ath_bot_join_requests (
+        telegram_id BIGINT NOT NULL,
+        chat_id BIGINT NOT NULL,
+        interests JSONB NOT NULL DEFAULT '[]'::jsonb,
+        experience TEXT NOT NULL DEFAULT 'beginner',
+        has_wallet BOOLEAN NOT NULL DEFAULT FALSE,
+        stage TEXT NOT NULL DEFAULT 'start',
+        status TEXT NOT NULL DEFAULT 'pending',
+        score INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (telegram_id, chat_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_ath_bot_join_requests_status
+        ON ath_bot_join_requests(status, updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS ath_bot_warnings (
+        chat_id BIGINT NOT NULL,
+        telegram_id BIGINT NOT NULL,
+        warning_count INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (chat_id, telegram_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS ath_bot_moderation_logs (
+        id BIGSERIAL PRIMARY KEY,
+        chat_id BIGINT NOT NULL,
+        target_user_id BIGINT,
+        actor_user_id BIGINT,
+        action TEXT NOT NULL,
+        reason TEXT,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ath_bot_moderation_logs_chat_created
+        ON ath_bot_moderation_logs(chat_id, created_at DESC);
     `);
   }
 
@@ -225,21 +347,128 @@ class PostgresStorage {
     return rows[0] ? mapRow(rows[0]) : null;
   }
 
+  async saveJoinRequest(state) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO ath_bot_join_requests
+        (telegram_id, chat_id, interests, experience, has_wallet, stage, status, score, created_at, updated_at)
+       VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, NOW(), NOW())
+       ON CONFLICT (telegram_id, chat_id) DO UPDATE SET
+         interests = EXCLUDED.interests,
+         experience = EXCLUDED.experience,
+         has_wallet = EXCLUDED.has_wallet,
+         stage = EXCLUDED.stage,
+         status = EXCLUDED.status,
+         score = EXCLUDED.score,
+         updated_at = NOW()
+       RETURNING *`,
+      [
+        String(state.userId),
+        String(state.chatId),
+        JSON.stringify(state.interests || []),
+        state.experience || "beginner",
+        Boolean(state.hasWallet),
+        state.stage || "start",
+        state.status || "pending",
+        state.score == null ? null : Number(state.score),
+      ]
+    );
+    return mapJoinRow(rows[0]);
+  }
+
+  async getJoinRequest(userId, chatId) {
+    const { rows } = await this.pool.query(
+      "SELECT * FROM ath_bot_join_requests WHERE telegram_id=$1 AND chat_id=$2",
+      [String(userId), String(chatId)]
+    );
+    return rows[0] ? mapJoinRow(rows[0]) : null;
+  }
+
+  async updateJoinRequest(userId, chatId, patch) {
+    const current = await this.getJoinRequest(userId, chatId);
+    if (!current) return null;
+    return this.saveJoinRequest({ ...current, ...patch, userId, chatId });
+  }
+
+  async completeJoinRequest(userId, chatId, { status, score = null } = {}) {
+    return this.updateJoinRequest(userId, chatId, {
+      status: status || "completed",
+      score,
+      stage: "completed",
+    });
+  }
+
+  async addWarning(chatId, userId) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO ath_bot_warnings (chat_id, telegram_id, warning_count, updated_at)
+       VALUES ($1, $2, 1, NOW())
+       ON CONFLICT (chat_id, telegram_id) DO UPDATE SET
+         warning_count = ath_bot_warnings.warning_count + 1,
+         updated_at = NOW()
+       RETURNING warning_count`,
+      [String(chatId), String(userId)]
+    );
+    return Number(rows[0].warning_count);
+  }
+
+  async getWarnings(chatId, userId) {
+    const { rows } = await this.pool.query(
+      "SELECT warning_count FROM ath_bot_warnings WHERE chat_id=$1 AND telegram_id=$2",
+      [String(chatId), String(userId)]
+    );
+    return rows[0] ? Number(rows[0].warning_count) : 0;
+  }
+
+  async logModeration(entry) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO ath_bot_moderation_logs
+        (chat_id, target_user_id, actor_user_id, action, reason, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+       RETURNING *`,
+      [
+        String(entry.chatId),
+        entry.targetUserId ? String(entry.targetUserId) : null,
+        entry.actorUserId ? String(entry.actorUserId) : null,
+        String(entry.action || "unknown"),
+        entry.reason || null,
+        JSON.stringify(entry.metadata || {}),
+      ]
+    );
+    return mapModerationRow(rows[0]);
+  }
+
+  async recentModerationLogs(chatId, limit = 10) {
+    const max = Math.max(1, Math.min(Number(limit) || 10, 50));
+    const { rows } = await this.pool.query(
+      `SELECT * FROM ath_bot_moderation_logs
+       WHERE chat_id=$1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [String(chatId), max]
+    );
+    return rows.map(mapModerationRow);
+  }
+
   async stats() {
-    const { rows } = await this.pool.query(`
-      SELECT
-        COUNT(*)::int AS users,
-        COUNT(*) FILTER (WHERE wallet_address IS NOT NULL)::int AS linked_wallets,
-        COUNT(*) FILTER (WHERE referrer_id IS NOT NULL)::int AS referrals,
-        COUNT(*) FILTER (WHERE opted_out=FALSE)::int AS opted_in
-      FROM ath_bot_users
-    `);
-    const r = rows[0];
+    const [{ rows: userRows }, { rows: joinRows }, { rows: modRows }] = await Promise.all([
+      this.pool.query(`
+        SELECT
+          COUNT(*)::int AS users,
+          COUNT(*) FILTER (WHERE wallet_address IS NOT NULL)::int AS linked_wallets,
+          COUNT(*) FILTER (WHERE referrer_id IS NOT NULL)::int AS referrals,
+          COUNT(*) FILTER (WHERE opted_out=FALSE)::int AS opted_in
+        FROM ath_bot_users
+      `),
+      this.pool.query("SELECT COUNT(*)::int AS join_requests FROM ath_bot_join_requests"),
+      this.pool.query("SELECT COUNT(*)::int AS moderation_logs FROM ath_bot_moderation_logs"),
+    ]);
+    const r = userRows[0];
     return {
       users: r.users,
       linkedWallets: r.linked_wallets,
       referrals: r.referrals,
       optedIn: r.opted_in,
+      joinRequests: joinRows[0].join_requests,
+      moderationLogs: modRows[0].moderation_logs,
     };
   }
 
@@ -267,6 +496,34 @@ function mapRow(row) {
     referralCount: Number(row.referral_count || 0),
     createdAt: row.created_at,
     lastSeenAt: row.last_seen_at,
+  };
+}
+
+function mapJoinRow(row) {
+  return {
+    userId: String(row.telegram_id),
+    chatId: String(row.chat_id),
+    interests: Array.isArray(row.interests) ? row.interests : [],
+    experience: row.experience || "beginner",
+    hasWallet: Boolean(row.has_wallet),
+    stage: row.stage || "start",
+    status: row.status || "pending",
+    score: row.score == null ? null : Number(row.score),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapModerationRow(row) {
+  return {
+    id: row.id == null ? null : String(row.id),
+    chatId: String(row.chat_id),
+    targetUserId: row.target_user_id ? String(row.target_user_id) : null,
+    actorUserId: row.actor_user_id ? String(row.actor_user_id) : null,
+    action: row.action,
+    reason: row.reason || null,
+    metadata: row.metadata || {},
+    createdAt: row.created_at,
   };
 }
 
