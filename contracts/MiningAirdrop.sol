@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  *  - 180 mining-day window
  *  - referral reward multiplier +10% through +50%
  *  - Booster: 0.001 BNB adds 100 Hash and enables a 2x reward multiplier
- *  - each daily reward is vested: 10% @30d, 5% @60d, 5% @90d, 80% @180d
+ *  - each daily reward is vested: 10% after 30d, 5% after 60d, 5% after 90d, 80% after 180d
  *  - display price: $3.00 + $0.001 for every 10,000 ATH allocated by mining
  *
  * @dev This contract allocates rewards into vesting positions. It does not mint ATH.
