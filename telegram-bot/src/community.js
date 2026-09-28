@@ -1,6 +1,7 @@
 const { FloodGuard, containsForbidden, detectTopic } = require("./services/moderation");
 const { calculateCryptoScore, isEligible } = require("./services/scoring");
 const { EDUCATION, educationKeyboard } = require("./content/education");
+const { articleForDate } = require("./content/articles");
 const { PromotionService } = require("./services/promotion");
 
 function createCommunity({ telegram, storage, config, send, escapeHtml }) {
@@ -9,15 +10,14 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     windowSeconds: config.floodWindowSeconds,
   });
   const promotion = new PromotionService({ cooldownHours: config.softPromoHours });
-  const joinStates = new Map();
-  const warnings = new Map();
 
   function isAdmin(userId) {
     return config.admins.has(String(userId));
   }
 
-  function joinKey(userId, chatId) {
-    return String(userId) + ":" + String(chatId);
+  function isTargetChat(chatId) {
+    if (!config.targetChats.length) return false;
+    return config.targetChats.includes(String(chatId));
   }
 
   function parseCommand(text = "") {
@@ -33,28 +33,45 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           message.reply_to_message.from.first_name ||
           message.reply_to_message.from.username ||
           String(message.reply_to_message.from.id),
+        viaReply: true,
       };
     }
 
     const first = String(args).trim().split(/\s+/)[0];
-    if (/^\d+$/.test(first)) return { id: first, name: first };
+    if (/^\d+$/.test(first)) return { id: first, name: first, viaReply: false };
     return null;
+  }
+
+  function muteMinutes(message, args = "", target) {
+    const tokens = String(args).trim().split(/\s+/).filter(Boolean);
+    const candidate = target?.viaReply ? tokens[0] : tokens[1];
+    if (!/^\d+$/.test(candidate || "")) return 60;
+    return Math.max(1, Math.min(Number(candidate), 10080));
   }
 
   async function handleJoinRequest(request) {
     if (!config.communityFeaturesEnabled || !config.joinVerificationEnabled) return false;
     if (!request?.from?.id || !request?.chat?.id) return false;
+    if (!isTargetChat(request.chat.id)) return false;
 
     const userId = String(request.from.id);
     const chatId = String(request.chat.id);
-    joinStates.set(joinKey(userId, chatId), {
+
+    await storage.upsertUser({
+      telegramId: userId,
+      username: request.from.username || null,
+      firstName: request.from.first_name || null,
+      lastName: request.from.last_name || null,
+    });
+
+    await storage.saveJoinRequest({
       userId,
       chatId,
       interests: [],
       experience: "beginner",
       hasWallet: false,
       stage: "start",
-      createdAt: Date.now(),
+      status: "pending",
     });
 
     try {
@@ -74,6 +91,9 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         chat_id: chatId,
         user_id: Number(userId),
       }).catch(() => {});
+      await storage.completeJoinRequest(userId, chatId, {
+        status: "declined_dm_unreachable",
+      });
     }
 
     return true;
@@ -86,16 +106,17 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     const userId = String(query.from.id);
     const parts = data.split(":");
     const action = parts[1];
+    const chatId = parts[2];
+    if (!chatId || !isTargetChat(chatId)) return true;
+
+    const state = await storage.getJoinRequest(userId, chatId);
+    if (!state || state.status !== "pending") {
+      await send(query.message.chat.id, "This verification request has expired or has already been completed.");
+      return true;
+    }
 
     if (action === "start") {
-      const chatId = parts[2];
-      const key = joinKey(userId, chatId);
-      const state = joinStates.get(key);
-      if (!state) {
-        await send(query.message.chat.id, "This verification request has expired.");
-        return true;
-      }
-      state.stage = "interests";
+      await storage.updateJoinRequest(userId, chatId, { stage: "interests" });
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
@@ -118,11 +139,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "interest") {
-      const chatId = parts[2];
       const value = parts[3];
-      const key = joinKey(userId, chatId);
-      const state = joinStates.get(key);
-      if (!state) return true;
 
       if (value === "done") {
         if (!state.interests.length) {
@@ -134,7 +151,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           return true;
         }
 
-        state.stage = "experience";
+        await storage.updateJoinRequest(userId, chatId, { stage: "experience" });
         await telegram("editMessageText", {
           chat_id: query.message.chat.id,
           message_id: query.message.message_id,
@@ -150,7 +167,8 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         return true;
       }
 
-      if (!state.interests.includes(value)) state.interests.push(value);
+      const interests = [...new Set([...(state.interests || []), value])];
+      await storage.updateJoinRequest(userId, chatId, { interests, stage: "interests" });
       await telegram("answerCallbackQuery", {
         callback_query_id: query.id,
         text: "Added: " + value,
@@ -159,12 +177,11 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "exp") {
-      const chatId = parts[2];
-      const exp = parts[3];
-      const state = joinStates.get(joinKey(userId, chatId));
-      if (!state) return true;
-      state.experience = exp;
-      state.stage = "wallet";
+      const experience = parts[3];
+      await storage.updateJoinRequest(userId, chatId, {
+        experience,
+        stage: "wallet",
+      });
 
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
@@ -181,16 +198,16 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     }
 
     if (action === "wallet") {
-      const chatId = parts[2];
       const hasWallet = parts[3] === "yes";
-      const key = joinKey(userId, chatId);
-      const state = joinStates.get(key);
-      if (!state) return true;
+      const latest = await storage.updateJoinRequest(userId, chatId, {
+        hasWallet,
+        stage: "scoring",
+      });
+      if (!latest) return true;
 
-      state.hasWallet = hasWallet;
       const score = calculateCryptoScore({
-        interests: state.interests,
-        experience: state.experience,
+        interests: latest.interests,
+        experience: latest.experience,
         hasWallet,
       });
       const eligible = isEligible(score, config.minCryptoScore);
@@ -199,13 +216,18 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         await telegram("approveChatJoinRequest", {
           chat_id: chatId,
           user_id: Number(userId),
-        }).catch(() => {});
+        });
       } else {
         await telegram("declineChatJoinRequest", {
           chat_id: chatId,
           user_id: Number(userId),
-        }).catch(() => {});
+        });
       }
+
+      await storage.completeJoinRequest(userId, chatId, {
+        status: eligible ? "approved" : "declined_score",
+        score,
+      });
 
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
@@ -215,8 +237,6 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           : `Crypto score: <b>${score}/100</b>. The current community minimum is <b>${config.minCryptoScore}</b>. Please review the crypto education materials and try again later.`,
         parse_mode: "HTML",
       });
-
-      joinStates.delete(key);
       return true;
     }
 
@@ -229,6 +249,10 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       "<b>Crypto & ATH Education Center</b>\n\nChoose a topic:",
       { reply_markup: educationKeyboard() }
     );
+  }
+
+  async function articleCommand(message) {
+    return send(message.chat.id, articleForDate());
   }
 
   async function educationCallback(query) {
@@ -250,6 +274,17 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     return true;
   }
 
+  async function writeModerationLog(message, target, action, reason = null, metadata = {}) {
+    return storage.logModeration({
+      chatId: message.chat.id,
+      targetUserId: target?.id || null,
+      actorUserId: message.from?.id || null,
+      action,
+      reason,
+      metadata,
+    });
+  }
+
   async function moderationAdmin(message, command, args) {
     if (!isAdmin(message.from?.id)) return false;
 
@@ -258,8 +293,13 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     const inGroup = groupType === "group" || groupType === "supergroup";
 
     if (command === "promo") {
+      if (!isTargetChat(groupId)) {
+        await send(groupId, "This chat is not configured as an ATH target community.");
+        return true;
+      }
       const body = promotion.pick();
       await send(groupId, `<b>ATH Community Update</b>\n\n${escapeHtml(body)}`);
+      await writeModerationLog(message, null, "manual_promo");
       return true;
     }
 
@@ -269,11 +309,26 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         await send(groupId, "Reply to a user or use /warnings <user_id>");
         return true;
       }
-      await send(groupId, `Warnings for <code>${target.id}</code>: <b>${warnings.get(target.id) || 0}</b>`);
+      const count = await storage.getWarnings(groupId, target.id);
+      await send(groupId, `Warnings for <code>${target.id}</code>: <b>${count}</b>`);
       return true;
     }
 
-    if (!inGroup) return false;
+    if (command === "modlog") {
+      const logs = await storage.recentModerationLogs(groupId, 10);
+      if (!logs.length) {
+        await send(groupId, "No moderation events have been recorded for this chat yet.");
+        return true;
+      }
+      const lines = logs.map((row) => {
+        const target = row.targetUserId ? ` target=${row.targetUserId}` : "";
+        return `• ${row.action}${target} — ${new Date(row.createdAt).toISOString()}`;
+      });
+      await send(groupId, "<b>Recent Moderation Log</b>\n" + lines.join("\n"));
+      return true;
+    }
+
+    if (!inGroup || !isTargetChat(groupId)) return false;
 
     if (["warn", "mute", "unmute", "kick", "ban", "unban"].includes(command)) {
       const target = targetFromMessage(message, args);
@@ -283,8 +338,8 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       }
 
       if (command === "warn") {
-        const count = (warnings.get(target.id) || 0) + 1;
-        warnings.set(target.id, count);
+        const count = await storage.addWarning(groupId, target.id);
+        await writeModerationLog(message, target, "warn", null, { warningCount: count });
         await send(
           groupId,
           `Warning issued to <code>${target.id}</code>. Total warnings: <b>${count}</b>.`
@@ -293,9 +348,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       }
 
       if (command === "mute") {
-        let minutes = 60;
-        const first = String(args).trim().split(/\s+/)[0];
-        if (/^\d+$/.test(first)) minutes = Math.max(1, Math.min(Number(first), 10080));
+        const minutes = muteMinutes(message, args, target);
         const until = Math.floor(Date.now() / 1000) + minutes * 60;
         await telegram("restrictChatMember", {
           chat_id: groupId,
@@ -318,6 +371,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
             can_manage_topics: false,
           },
         });
+        await writeModerationLog(message, target, "mute", null, { minutes });
         await send(groupId, `User <code>${target.id}</code> has been muted for ${minutes} minutes.`);
         return true;
       }
@@ -343,6 +397,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
             can_manage_topics: false,
           },
         });
+        await writeModerationLog(message, target, "unmute");
         await send(groupId, `User <code>${target.id}</code> has been unmuted.`);
         return true;
       }
@@ -354,12 +409,14 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           user_id: Number(target.id),
           only_if_banned: true,
         });
+        await writeModerationLog(message, target, "kick");
         await send(groupId, `User <code>${target.id}</code> has been removed from the group.`);
         return true;
       }
 
       if (command === "ban") {
         await telegram("banChatMember", { chat_id: groupId, user_id: Number(target.id) });
+        await writeModerationLog(message, target, "ban");
         await send(groupId, `User <code>${target.id}</code> has been banned from the group.`);
         return true;
       }
@@ -370,6 +427,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           user_id: Number(target.id),
           only_if_banned: true,
         });
+        await writeModerationLog(message, target, "unban");
         await send(groupId, `User <code>${target.id}</code> has been unbanned.`);
         return true;
       }
@@ -382,6 +440,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     if (!config.communityFeaturesEnabled) return false;
     if (!message?.text || message.from?.is_bot) return false;
     if (!["group", "supergroup"].includes(message.chat?.type)) return false;
+    if (!isTargetChat(message.chat.id)) return false;
 
     const text = String(message.text);
 
@@ -390,6 +449,13 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         chat_id: message.chat.id,
         message_id: message.message_id,
       }).catch(() => {});
+      await storage.logModeration({
+        chatId: message.chat.id,
+        targetUserId: message.from.id,
+        actorUserId: null,
+        action: "auto_delete_risky",
+        reason: "forbidden_pattern",
+      });
       await send(
         message.chat.id,
         `A message from ${escapeHtml(message.from.first_name || "member")} was removed because it was detected as risky or spam.`
@@ -402,6 +468,13 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         chat_id: message.chat.id,
         message_id: message.message_id,
       }).catch(() => {});
+      await storage.logModeration({
+        chatId: message.chat.id,
+        targetUserId: message.from.id,
+        actorUserId: null,
+        action: "auto_delete_flood",
+        reason: "flood_limit",
+      });
       return true;
     }
 
@@ -423,6 +496,9 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       if (parsed.command === "education" || parsed.command === "aether") {
         return educationCommand(message);
       }
+      if (parsed.command === "article") {
+        return articleCommand(message);
+      }
     }
 
     return groupMessage(message);
@@ -435,6 +511,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   }
 
   async function sendScheduledPromotion(chatId) {
+    if (!isTargetChat(chatId)) return false;
     if (!promotion.canSend(chatId)) return false;
     await send(
       chatId,
@@ -448,6 +525,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     handleMessage,
     handleCallback,
     sendScheduledPromotion,
+    articleCommand,
   };
 }
 
