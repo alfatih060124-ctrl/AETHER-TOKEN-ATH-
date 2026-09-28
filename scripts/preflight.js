@@ -7,6 +7,8 @@ const MAINNET_GATES = [
   "LIQUIDITY_LOCK_CONFIRMED",
 ];
 
+const MIN_TESTNET_BNB = "0.02";
+
 function required(name) {
   const value = process.env[name];
   if (!value) throw new Error("Missing required env: " + name);
@@ -90,7 +92,12 @@ async function main() {
     provider.getBlockNumber(),
   ]);
 
-  if (balance <= 0n) {
+  if (isTestnet && balance < ethers.parseEther(MIN_TESTNET_BNB)) {
+    throw new Error(
+      `Deployer needs at least ${MIN_TESTNET_BNB} Testnet BNB before ATH deployment; current balance: ${ethers.formatEther(balance)}`
+    );
+  }
+  if (!isTestnet && balance <= 0n) {
     throw new Error("Deployer has zero BNB balance on target chain");
   }
 
@@ -99,6 +106,7 @@ async function main() {
   console.log("latestBlock:", blockNumber);
   console.log("deployer:", wallet.address);
   console.log("deployerBNB:", ethers.formatEther(balance));
+  console.log("testnetMinBNB:", isTestnet ? MIN_TESTNET_BNB : "n/a");
   console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("owner:", owner);
   console.log("treasury:", treasury);
