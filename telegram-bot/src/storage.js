@@ -21,6 +21,8 @@ class MemoryStorage {
     this.joinRequests = new Map();
     this.warningCounts = new Map();
     this.moderationLogs = [];
+    this.groups = new Map();
+    this.memberships = new Map();
   }
 
   async init() {}
@@ -32,6 +34,10 @@ class MemoryStorage {
       referrerId: null,
       referralCount: 0,
       walletAddress: null,
+      countryCode: "",
+      cryptoScore: 0,
+      isVerified: false,
+      status: "active",
       optedOut: false,
       createdAt: new Date().toISOString(),
     };
@@ -92,6 +98,41 @@ class MemoryStorage {
     return user;
   }
 
+  async recordGroup(group) {
+    const chatId = String(group.chatId);
+    const existing = this.groups.get(chatId) || {
+      chatId,
+      createdAt: new Date().toISOString(),
+    };
+    const next = {
+      ...existing,
+      title: group.title || existing.title || null,
+      type: group.type || existing.type || "group",
+      isActive: group.isActive !== false,
+      updatedAt: new Date().toISOString(),
+    };
+    this.groups.set(chatId, next);
+    return next;
+  }
+
+  async recordMembership({ userId, chatId, role = "member", joinMethod = "unknown", joinScore = 0 }) {
+    const key = joinKey(userId, chatId);
+    const existing = this.memberships.get(key) || {
+      userId: String(userId),
+      chatId: String(chatId),
+      joinedAt: new Date().toISOString(),
+    };
+    const next = {
+      ...existing,
+      role,
+      joinMethod,
+      joinScore: Number(joinScore || 0),
+      updatedAt: new Date().toISOString(),
+    };
+    this.memberships.set(key, next);
+    return next;
+  }
+
   async saveJoinRequest(state) {
     const key = joinKey(state.userId, state.chatId);
     const existing = this.joinRequests.get(key);
@@ -124,11 +165,18 @@ class MemoryStorage {
   }
 
   async completeJoinRequest(userId, chatId, { status, score = null } = {}) {
-    return this.updateJoinRequest(userId, chatId, {
+    const completed = await this.updateJoinRequest(userId, chatId, {
       status: status || "completed",
       score,
       stage: "completed",
     });
+    const user = this.users.get(String(userId));
+    if (user && completed) {
+      user.countryCode = completed.countryCode || user.countryCode || "";
+      user.cryptoScore = Number(score || 0);
+      user.isVerified = status === "approved";
+    }
+    return completed;
   }
 
   async addWarning(chatId, userId) {
@@ -174,6 +222,8 @@ class MemoryStorage {
       optedIn: users.filter((u) => !u.optedOut).length,
       joinRequests: this.joinRequests.size,
       moderationLogs: this.moderationLogs.length,
+      groups: this.groups.size,
+      memberships: this.memberships.size,
     };
   }
 
@@ -204,12 +254,41 @@ class PostgresStorage {
         last_name TEXT,
         referrer_id BIGINT REFERENCES ath_bot_users(telegram_id),
         wallet_address TEXT,
+        country_code TEXT,
+        crypto_score INTEGER NOT NULL DEFAULT 0,
+        is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+        status TEXT NOT NULL DEFAULT 'active',
         opted_out BOOLEAN NOT NULL DEFAULT FALSE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      ALTER TABLE ath_bot_users ADD COLUMN IF NOT EXISTS country_code TEXT;
+      ALTER TABLE ath_bot_users ADD COLUMN IF NOT EXISTS crypto_score INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE ath_bot_users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE ath_bot_users ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
       CREATE INDEX IF NOT EXISTS idx_ath_bot_users_referrer
         ON ath_bot_users(referrer_id);
+
+      CREATE TABLE IF NOT EXISTS ath_bot_groups (
+        chat_id BIGINT PRIMARY KEY,
+        title TEXT,
+        type TEXT NOT NULL DEFAULT 'group',
+        settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS ath_bot_memberships (
+        telegram_id BIGINT NOT NULL REFERENCES ath_bot_users(telegram_id) ON DELETE CASCADE,
+        chat_id BIGINT NOT NULL REFERENCES ath_bot_groups(chat_id) ON DELETE CASCADE,
+        role TEXT NOT NULL DEFAULT 'member',
+        join_method TEXT NOT NULL DEFAULT 'unknown',
+        join_score INTEGER NOT NULL DEFAULT 0,
+        joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (telegram_id, chat_id)
+      );
 
       CREATE TABLE IF NOT EXISTS ath_bot_join_requests (
         telegram_id BIGINT NOT NULL,
@@ -351,6 +430,42 @@ class PostgresStorage {
     return rows[0] ? mapRow(rows[0]) : null;
   }
 
+  async recordGroup(group) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO ath_bot_groups (chat_id, title, type, is_active, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       ON CONFLICT (chat_id) DO UPDATE SET
+         title = EXCLUDED.title,
+         type = EXCLUDED.type,
+         is_active = EXCLUDED.is_active,
+         updated_at = NOW()
+       RETURNING *`,
+      [
+        String(group.chatId),
+        group.title || null,
+        group.type || "group",
+        group.isActive !== false,
+      ]
+    );
+    return rows[0];
+  }
+
+  async recordMembership({ userId, chatId, role = "member", joinMethod = "unknown", joinScore = 0 }) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO ath_bot_memberships
+        (telegram_id, chat_id, role, join_method, join_score, joined_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+       ON CONFLICT (telegram_id, chat_id) DO UPDATE SET
+         role = EXCLUDED.role,
+         join_method = EXCLUDED.join_method,
+         join_score = EXCLUDED.join_score,
+         updated_at = NOW()
+       RETURNING *`,
+      [String(userId), String(chatId), role, joinMethod, Number(joinScore || 0)]
+    );
+    return rows[0];
+  }
+
   async saveJoinRequest(state) {
     const { rows } = await this.pool.query(
       `INSERT INTO ath_bot_join_requests
@@ -396,11 +511,25 @@ class PostgresStorage {
   }
 
   async completeJoinRequest(userId, chatId, { status, score = null } = {}) {
-    return this.updateJoinRequest(userId, chatId, {
+    const completed = await this.updateJoinRequest(userId, chatId, {
       status: status || "completed",
       score,
       stage: "completed",
     });
+    if (completed) {
+      await this.pool.query(
+        `UPDATE ath_bot_users
+         SET country_code=$2, crypto_score=$3, is_verified=$4
+         WHERE telegram_id=$1`,
+        [
+          String(userId),
+          completed.countryCode || null,
+          Number(score || 0),
+          status === "approved",
+        ]
+      );
+    }
+    return completed;
   }
 
   async addWarning(chatId, userId) {
@@ -455,7 +584,13 @@ class PostgresStorage {
   }
 
   async stats() {
-    const [{ rows: userRows }, { rows: joinRows }, { rows: modRows }] = await Promise.all([
+    const [
+      { rows: userRows },
+      { rows: joinRows },
+      { rows: modRows },
+      { rows: groupRows },
+      { rows: membershipRows },
+    ] = await Promise.all([
       this.pool.query(`
         SELECT
           COUNT(*)::int AS users,
@@ -466,6 +601,8 @@ class PostgresStorage {
       `),
       this.pool.query("SELECT COUNT(*)::int AS join_requests FROM ath_bot_join_requests"),
       this.pool.query("SELECT COUNT(*)::int AS moderation_logs FROM ath_bot_moderation_logs"),
+      this.pool.query("SELECT COUNT(*)::int AS groups FROM ath_bot_groups WHERE is_active=TRUE"),
+      this.pool.query("SELECT COUNT(*)::int AS memberships FROM ath_bot_memberships"),
     ]);
     const r = userRows[0];
     return {
@@ -475,6 +612,8 @@ class PostgresStorage {
       optedIn: r.opted_in,
       joinRequests: joinRows[0].join_requests,
       moderationLogs: modRows[0].moderation_logs,
+      groups: groupRows[0].groups,
+      memberships: membershipRows[0].memberships,
     };
   }
 
@@ -498,6 +637,10 @@ function mapRow(row) {
     lastName: row.last_name || null,
     referrerId: row.referrer_id ? String(row.referrer_id) : null,
     walletAddress: row.wallet_address || null,
+    countryCode: row.country_code || "",
+    cryptoScore: Number(row.crypto_score || 0),
+    isVerified: Boolean(row.is_verified),
+    status: row.status || "active",
     optedOut: Boolean(row.opted_out),
     referralCount: Number(row.referral_count || 0),
     createdAt: row.created_at,
