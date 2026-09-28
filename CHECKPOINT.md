@@ -86,3 +86,41 @@ No real BNB is required for this Testnet deployment.
 26. Add `BSCSCAN_API_KEY`, verify contracts, then test Power → Daily Claim → Booster → Vesting Claim.
 27. Freeze verified Testnet addresses + ABI and connect them to Aether Wallet Mining.
 28. Keep Mainnet blocked until audit, production multisig, exact Team lock period and ATH/USDT liquidity-lock decisions are complete.
+
+## ATH TELEGRAM BOT — LIVE CHECKPOINT
+
+The Telegram community/promotion bot is live on Railway as `@Aetther_bot` and is connected to the target group `ATH AIRDROP MINER`.
+
+Current validated bot source commit:
+
+`8a702cb831c758f208086bb3ed3d3405b7a4a255`
+
+Validation evidence:
+
+- English-only runtime gate: `PASSED`
+- Bot self-check: `PASSED`
+- Railway validation deployment: `8f213e3e-29d0-43d4-b956-7941950183fe` — `SUCCESS`
+- Railway live deployment: `b79f90ce-036d-47b7-aac4-59d048d7e571` — `SUCCESS`
+- Telegram bot identity: `@Aetther_bot`
+- Target chat admin readiness: `ready=true`
+- Delete permission: enabled
+- Restrict/Ban permission: enabled
+- Invite/Approve permission: enabled
+- Community scheduler: active for one target chat
+- Soft promotion interval: 8 hours
+- Daily education article: 09:00 UTC
+- Join verification + crypto-interest scoring: enabled
+- Country scoring, group/member records, warnings and moderation-history storage: implemented
+- ATH referral attribution: first-attribution protection and self-referral protection implemented
+- Blockchain referral bridge: read-only and remains inactive until a verified `ATH_MINING_ADDRESS` is available
+- Optional AI replies: implemented but fail-closed unless `AI_REPLY_ENABLED=true` and `OPENAI_API_KEY` is configured
+- Mainnet deployment/configuration: untouched
+
+### Telegram Bot Remaining Production Dependency
+
+`DATABASE_URL` is not configured on the live Railway bot service. The bot therefore currently falls back to in-memory storage; records can be lost on restart/redeploy.
+
+Production persistence requires a durable PostgreSQL service and a Railway `DATABASE_URL` reference. This is the only infrastructure dependency currently preventing the bot from being marked fully production-persistent.
+
+The Railway automation agent could not provision PostgreSQL because the Railway Agent usage limit was reached. No credentials were exposed and no temporary database was created.
+
