@@ -28,33 +28,55 @@
 
 ## GREEN VALIDATION EVIDENCE
 
-- Commit: `a181c715753ad686839a9aac33e4276e32be1289`
-- Railway deployment: `2e4ff2ac-c7a6-4c6d-9d1b-7f0c5dbbd87e`
-- Result: `SUCCESS`
-- Solidity files compiled: 18
-- Automated tests: 13 passing
-- No BSC deployment performed during validation.
+- Base validated commit: `a181c715753ad686839a9aac33e4276e32be1289`
+- Base Railway deployment: `2e4ff2ac-c7a6-4c6d-9d1b-7f0c5dbbd87e`
+- Expanded Testnet-readiness deployment: `df8d0e22-4406-4eef-bc60-0d9587acfde2`
+- Expanded deployment result: `SUCCESS`
+- BSC Testnet RPC check: `PASSED`
+- BSC chain ID observed: `97`
+- Safe Testnet config: `READY`
+- Mainnet gates: all `CLOSED`
+- Solidity files compiled: `18`
+- Automated tests: `13 passing`
+- Railway healthcheck: `SUCCESS`
+- No BSC contract deployment was performed during validation.
 
 ## CURRENT STEP — 24: BSC TESTNET PREFLIGHT
 
-The code gate is green. Safe non-sensitive Testnet defaults are now loaded in Railway: `BSC_TESTNET_RPC`, `ATH_CHAIN_ID=97`, `TEAM_LOCK_DAYS=365` (testnet-only), and every Mainnet release gate remains `false`.
+### Step 24A — DONE
 
-BSC Testnet deployment still requires operator-controlled configuration that must not be invented or committed:
+- Railway can reach BSC Testnet successfully.
+- RPC returned chain ID 97.
+- Safe Testnet configuration is loaded.
+- Mainnet release gates are confirmed CLOSED.
+- Deployment scripts now validate the target chain, operator addresses, private-key format, deployer BNB balance, exact tokenomics destinations and Team-lock range.
+- Post-deployment invariant checker is prepared for 70/20/5/5 distribution, owner, treasury, Team lock and initial ATH reference price.
+- A syntax-validation stage was added for all deployment scripts; its latest Railway rollout is queued and does not authorize any blockchain transaction.
 
-- `PRIVATE_KEY` — dedicated funded BSC Testnet deployer key, stored only as a secret.
-- `OWNER_ADDRESS` — intended testnet owner/admin address.
-- `TREASURY_ADDRESS` — ATH Power/Booster revenue recipient.
-- `TEAM_BENEFICIARY`.
-- `LIQUIDITY_WALLET`.
-- `MARKETING_WALLET`.
-- `TEAM_LOCK_DAYS` — production choice remains 365–550; Railway currently uses 365 for Testnet validation only.
-- `BSCSCAN_API_KEY` — required for automatic verification after deploy.
+### Step 24B — BLOCKED ON OPERATOR-CONTROLLED TESTNET CONFIG
 
-The deployer must also hold enough BSC Testnet BNB to pay deployment gas.
+The readiness runner reports these values are still absent:
+
+- `PRIVATE_KEY` — dedicated funded BSC Testnet deployer secret. Never commit or paste it into project files.
+- `OWNER_ADDRESS`
+- `TREASURY_ADDRESS`
+- `TEAM_BENEFICIARY`
+- `LIQUIDITY_WALLET`
+- `MARKETING_WALLET`
+- `BSCSCAN_API_KEY`
+
+Safe defaults already loaded:
+
+- `BSC_TESTNET_RPC`
+- `ATH_CHAIN_ID=97`
+- `TEAM_LOCK_DAYS=365` for Testnet validation only
+- all Mainnet release gates = `false`
+
+The deployer must hold Testnet BNB before `npm run preflight:testnet` can pass.
 
 ## NEXT — Steps 24–28
 
-24. Load testnet-only secret/address configuration and run `npm run preflight:testnet`.
+24. Load the operator-controlled Testnet secret/address configuration and run `npm run preflight:testnet`.
 25. Deploy ATHToken + MiningAirdrop + TeamTokenLock to BSC Testnet only.
 26. Verify contracts on BscScan and run real Web3 test flow: Power → Daily Claim → Booster → Vesting Claim.
 27. Freeze verified Testnet contract addresses + ABI and connect them to the Aether Wallet Mining menu.
