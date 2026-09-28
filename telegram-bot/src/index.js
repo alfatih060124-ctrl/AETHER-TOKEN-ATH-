@@ -383,7 +383,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates" +
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates" +
       (config.admins.has(String(message.from.id))
         ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
         : "")
@@ -419,10 +419,7 @@ async function handleCallback(query) {
 
   if (community) {
     const handled = await community.handleCallback(query);
-    if (handled) {
-      await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
-      return;
-    }
+    if (handled) return;
   }
 
   await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
@@ -437,6 +434,7 @@ async function configureTelegramProfile() {
     { command: "wallet", description: "Link your public BSC/EVM wallet" },
     { command: "stats", description: "View your ATH campaign stats" },
     { command: "education", description: "Open crypto and ATH education" },
+    { command: "aether", description: "Open AETHER Wallet education" },
     { command: "article", description: "Read the daily ATH education article" },
     { command: "myid", description: "Show your Telegram user ID" },
     { command: "chatid", description: "Show the current chat or group ID" },
