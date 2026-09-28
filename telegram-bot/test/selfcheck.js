@@ -99,6 +99,19 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
   const ids = await storage.optedInChatIds();
   assert.deepStrictEqual(ids, ["100"]);
 
+  await storage.recordGroup({
+    chatId: "-1001",
+    title: "ATH AIRDROP MINER",
+    type: "supergroup",
+  });
+  await storage.recordMembership({
+    userId: "200",
+    chatId: "-1001",
+    role: "member",
+    joinMethod: "verified_join_request",
+    joinScore: 80,
+  });
+
   await storage.saveJoinRequest({
     userId: "200",
     chatId: "-1001",
@@ -140,6 +153,8 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
     optedIn: 1,
     joinRequests: 1,
     moderationLogs: 1,
+    groups: 1,
+    memberships: 1,
   });
 
   console.log("ATH Telegram bot self-check PASSED");
