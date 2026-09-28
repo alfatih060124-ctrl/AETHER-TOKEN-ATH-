@@ -4,9 +4,9 @@
   "private": true,
   "description": "AETHER TOKEN (ATH) Mining Engine aligned to Mining System Blueprint v3.1",
   "scripts": {
-    "start": "node scripts/ci-server.js",
+    "start": "node scripts/service-start.js",
     "source:selfcheck": "node scripts/source-selfcheck.js",
-    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/deploy-once-testnet.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js",
+    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/deploy-once-testnet.js && node --check scripts/service-start.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js",
     "rpc:check:testnet": "node scripts/rpc-check.js",
     "readiness:testnet": "node scripts/readiness-report.js",
     "preflight:testnet": "node scripts/preflight.js testnet",
