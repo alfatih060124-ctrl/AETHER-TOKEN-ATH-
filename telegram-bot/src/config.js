@@ -34,4 +34,9 @@ module.exports = {
   websiteUrl: url("AETHER_WEBSITE_URL"),
   admins: new Set(list("ADMIN_TELEGRAM_IDS")),
   databaseUrl: (process.env.DATABASE_URL || "").trim(),
+
+  // ATH referral bridge: read-only blockchain access only.
+  athRpcUrl: url("ATH_RPC_URL") || url("BSC_TESTNET_RPC"),
+  athMiningAddress: (process.env.ATH_MINING_ADDRESS || "").trim(),
+  athChainId: Number(process.env.ATH_CHAIN_ID || 97),
 };
