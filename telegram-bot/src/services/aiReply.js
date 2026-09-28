@@ -23,7 +23,7 @@ function createAIReplyService(config) {
       const message = String(userMessage || "").trim();
       if (!message) return null;
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const response = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -31,17 +31,12 @@ function createAIReplyService(config) {
         },
         body: JSON.stringify({
           model,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            {
-              role: "user",
-              content:
-                `User name: ${userName || "member"}\n` +
-                `Chat: ${groupName || "ATH Community"}\n` +
-                `Message: ${message}`,
-            },
-          ],
-          max_tokens: 300,
+          instructions: SYSTEM_PROMPT,
+          input:
+            `User name: ${userName || "member"}\n` +
+            `Chat: ${groupName || "ATH Community"}\n` +
+            `Message: ${message}`,
+          max_output_tokens: 300,
           temperature: 0.75,
         }),
       });
@@ -52,8 +47,18 @@ function createAIReplyService(config) {
         throw new Error(`OpenAI reply failed: ${detail}`);
       }
 
-      const text = payload?.choices?.[0]?.message?.content;
-      return typeof text === "string" && text.trim() ? text.trim() : null;
+      const direct = typeof payload?.output_text === "string" ? payload.output_text.trim() : "";
+      if (direct) return direct;
+
+      const text = (payload?.output || [])
+        .flatMap((item) => item?.content || [])
+        .filter((part) => part?.type === "output_text" && typeof part.text === "string")
+        .map((part) => part.text.trim())
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+
+      return text || null;
     },
   };
 }
