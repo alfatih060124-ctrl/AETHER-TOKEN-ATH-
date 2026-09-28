@@ -25,6 +25,10 @@ function gateOpen(name) {
   return process.env[name] === "true";
 }
 
+function testnetSingleWalletEnabled(target) {
+  return target === "testnet" && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
+}
+
 async function main() {
   const target = (process.argv[2] || "testnet").toLowerCase();
   if (!["testnet", "mainnet"].includes(target)) {
@@ -32,17 +36,6 @@ async function main() {
   }
 
   const privateKey = required("PRIVATE_KEY");
-  const owner = address("OWNER_ADDRESS");
-  const treasury = address("TREASURY_ADDRESS");
-  const teamBeneficiary = address("TEAM_BENEFICIARY");
-  const liquidityWallet = address("LIQUIDITY_WALLET");
-  const marketingWallet = address("MARKETING_WALLET");
-
-  const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
-  if (!Number.isInteger(teamLockDays) || teamLockDays < 365 || teamLockDays > 550) {
-    throw new Error("TEAM_LOCK_DAYS must be an integer from 365 to 550");
-  }
-
   const isTestnet = target === "testnet";
   const rpcUrl = required(isTestnet ? "BSC_TESTNET_RPC" : "BSC_MAINNET_RPC");
   const expectedChainId = isTestnet ? 97 : 56;
@@ -78,6 +71,20 @@ async function main() {
     throw new Error("PRIVATE_KEY is not a valid EVM private key");
   }
 
+  const singleWalletMode = testnetSingleWalletEnabled(target);
+  const roleAddress = (name) => singleWalletMode ? wallet.address : address(name);
+
+  const owner = roleAddress("OWNER_ADDRESS");
+  const treasury = roleAddress("TREASURY_ADDRESS");
+  const teamBeneficiary = roleAddress("TEAM_BENEFICIARY");
+  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const marketingWallet = roleAddress("MARKETING_WALLET");
+
+  const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
+  if (!Number.isInteger(teamLockDays) || teamLockDays < 365 || teamLockDays > 550) {
+    throw new Error("TEAM_LOCK_DAYS must be an integer from 365 to 550");
+  }
+
   const [balance, blockNumber] = await Promise.all([
     provider.getBalance(wallet.address),
     provider.getBlockNumber(),
@@ -92,6 +99,7 @@ async function main() {
   console.log("latestBlock:", blockNumber);
   console.log("deployer:", wallet.address);
   console.log("deployerBNB:", ethers.formatEther(balance));
+  console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("owner:", owner);
   console.log("treasury:", treasury);
   console.log("teamBeneficiary:", teamBeneficiary);
