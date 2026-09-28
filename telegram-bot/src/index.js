@@ -282,7 +282,7 @@ async function handleAdmin(message, command, args) {
     const s = await storage.stats();
     await send(
       message.chat.id,
-      `<b>ATH Bot Stats</b>\nUsers: ${s.users}\nOpted-in: ${s.optedIn}\nLinked wallets: ${s.linkedWallets}\nAttributed Telegram referrals: ${s.referrals}\nJoin requests: ${s.joinRequests || 0}\nModeration events: ${s.moderationLogs || 0}\nStorage: ${config.databaseUrl ? "PostgreSQL" : "memory"}`
+      `<b>ATH Bot Stats</b>\nUsers: ${s.users}\nOpted-in: ${s.optedIn}\nLinked wallets: ${s.linkedWallets}\nAttributed Telegram referrals: ${s.referrals}\nJoin requests: ${s.joinRequests || 0}\nGroups: ${s.groups || 0}\nMemberships: ${s.memberships || 0}\nModeration events: ${s.moderationLogs || 0}\nStorage: ${config.databaseUrl ? "PostgreSQL" : "memory"}`
     );
     return true;
   }
@@ -383,7 +383,10 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates"
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates" +
+      (config.admins.has(String(message.from.id))
+        ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
+        : "")
     );
   }
 
@@ -562,6 +565,8 @@ async function boot() {
           config.admins.size > 0 &&
           config.targetChats.length > 0 &&
           config.communityFeaturesEnabled,
+        aiReplyEnabled: config.aiReplyEnabled,
+        aiReplyReady: Boolean(config.aiReplyEnabled && config.openAiApiKey),
         productionReady:
           config.enabled &&
           config.admins.size > 0 &&
