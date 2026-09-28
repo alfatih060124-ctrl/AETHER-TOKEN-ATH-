@@ -93,14 +93,14 @@ The Telegram community/promotion bot is live on Railway as `@Aetther_bot` and is
 
 Current validated bot source commit:
 
-`8a702cb831c758f208086bb3ed3d3405b7a4a255`
+`53c2c902d871e5380de0135ff56b80bf15504055`
 
 Validation evidence:
 
 - English-only runtime gate: `PASSED`
 - Bot self-check: `PASSED`
-- Railway validation deployment: `8f213e3e-29d0-43d4-b956-7941950183fe` — `SUCCESS`
-- Railway live deployment: `b79f90ce-036d-47b7-aac4-59d048d7e571` — `SUCCESS`
+- Railway validation deployment: `fec661ff-4f1e-4ea3-b743-0dbbacaa3d9a` — `SUCCESS`
+- Railway live deployment: `3d9586d9-c415-4f75-9b0e-7b96573e29c9` — `SUCCESS`
 - Telegram bot identity: `@Aetther_bot`
 - Target chat admin readiness: `ready=true`
 - Delete permission: enabled
@@ -111,6 +111,8 @@ Validation evidence:
 - Daily education article: 09:00 UTC
 - Join verification + crypto-interest scoring: enabled
 - Country scoring, group/member records, warnings and moderation-history storage: implemented
+- English article center with Airdrop, Mining, Referral, Staking, Trading, Security and AETHER Wallet categories: implemented
+- Dedicated `/aether` education route: implemented
 - ATH referral attribution: first-attribution protection and self-referral protection implemented
 - Blockchain referral bridge: read-only and remains inactive until a verified `ATH_MINING_ADDRESS` is available
 - Optional AI replies: implemented but fail-closed unless `AI_REPLY_ENABLED=true` and `OPENAI_API_KEY` is configured
