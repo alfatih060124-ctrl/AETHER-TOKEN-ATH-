@@ -4,6 +4,9 @@
   "private": true,
   "description": "AETHER TOKEN (ATH) Mining Engine aligned to Mining System Blueprint v3.1",
   "scripts": {
+    "source:selfcheck": "node scripts/source-selfcheck.js",
+    "preflight:testnet": "node scripts/preflight.js testnet",
+    "preflight:mainnet": "node scripts/preflight.js mainnet",
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
