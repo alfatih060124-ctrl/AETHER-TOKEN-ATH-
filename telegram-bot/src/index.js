@@ -5,6 +5,7 @@ const { createStorage } = require("./storage");
 const { createATHReferralService, isAddress } = require("./services/athReferral");
 const { createCommunity } = require("./community");
 const { startScheduler } = require("./scheduler");
+const { GrowthCampaign } = require("./services/growthCampaign");
 
 const API = config.token ? `https://api.telegram.org/bot${config.token}` : "";
 const storage = createStorage(config.databaseUrl);
@@ -13,6 +14,7 @@ const athReferral = createATHReferralService(config);
 let offset = 0;
 let stopping = false;
 let community = null;
+let growthCampaign = null;
 let stopScheduler = () => {};
 
 function sleep(ms) {
@@ -287,6 +289,19 @@ async function handleAdmin(message, command, args) {
     return true;
   }
 
+  if (command === "growthstatus") {
+    if (!growthCampaign) {
+      await send(message.chat.id, "ATH growth campaign is not initialized.");
+      return true;
+    }
+    const g = await growthCampaign.status();
+    await send(
+      message.chat.id,
+      `<b>ATH Growth Campaign</b>\nMode: opt-in community posts only\nEnabled: ${g.enabled ? "yes" : "no"}\nApproved source chats: ${g.sourceChats}\nJoined today: ${g.joinedToday}\nDaily target: ${g.min}-${g.max}\nPriority country codes: ${g.priorityCountries.join(", ")}\n\nThe bot does not scrape users or send unsolicited direct messages.`
+    );
+    return true;
+  }
+
   if (command === "broadcast") {
     const text = (args || "").trim();
     if (!text) {
@@ -385,7 +400,7 @@ async function handleMessage(message) {
       message.chat.id,
       "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates" +
       (config.admins.has(String(message.from.id))
-        ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
+        ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/growthstatus — opt-in acquisition status\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
         : "")
     );
   }
@@ -540,6 +555,12 @@ async function boot() {
     escapeHtml,
   });
 
+  growthCampaign = new GrowthCampaign({
+    config,
+    storage,
+    send,
+  });
+
   const server = http.createServer(async (req, res) => {
     if (req.url === "/health") {
       const s = await storage.stats().catch(() => null);
@@ -567,6 +588,11 @@ async function boot() {
           config.communityFeaturesEnabled,
         aiReplyEnabled: config.aiReplyEnabled,
         aiReplyReady: Boolean(config.aiReplyEnabled && config.openAiApiKey),
+        growthCampaignEnabled: config.growthCampaignEnabled,
+        growthCampaignReady: Boolean(growthCampaign?.enabled()),
+        growthSourceChats: config.growthSourceChats.length,
+        growthDailyTargetMin: config.growthDailyTargetMin,
+        growthDailyTargetMax: config.growthDailyTargetMax,
         productionReady:
           config.enabled &&
           config.admins.size > 0 &&
@@ -605,6 +631,7 @@ async function boot() {
     config,
     community,
     send,
+    growthCampaign,
   });
 
   pollingLoop().catch((err) => {
