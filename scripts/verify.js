@@ -31,17 +31,20 @@ async function main() {
   const token = requiredAddress("ATH_TOKEN");
   const mining = requiredAddress("MINING_AIRDROP");
   const teamLock = requiredAddress("TEAM_TOKEN_LOCK");
-  const owner = requiredAddress("OWNER_ADDRESS");
-  const treasury = requiredAddress("TREASURY_ADDRESS");
-  const teamBeneficiary = requiredAddress("TEAM_BENEFICIARY");
   const deployerAddress = requiredAddress("DEPLOYER_ADDRESS");
-  const teamReleaseAt = Number(required("TEAM_RELEASE_AT"));
 
+  const singleWalletMode = isTestnet && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
+  const owner = singleWalletMode ? deployerAddress : requiredAddress("OWNER_ADDRESS");
+  const treasury = singleWalletMode ? deployerAddress : requiredAddress("TREASURY_ADDRESS");
+  const teamBeneficiary = singleWalletMode ? deployerAddress : requiredAddress("TEAM_BENEFICIARY");
+
+  const teamReleaseAt = Number(required("TEAM_RELEASE_AT"));
   if (!Number.isInteger(teamReleaseAt) || teamReleaseAt <= 0) {
     throw new Error("TEAM_RELEASE_AT must be a positive Unix timestamp");
   }
 
   console.log("Verifying ATH contracts on", hre.network.name, "chain", chainId);
+  console.log("Testnet single-wallet mode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("ATH token:", token);
   console.log("Mining:", mining);
   console.log("Team lock:", teamLock);
