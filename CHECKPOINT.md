@@ -1,6 +1,6 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
-## DONE — Steps 1–23
+## DONE — Steps 1–23 + Step 24A
 
 1. Blueprint v3.1 converted into an explicit ATH engine architecture.
 2. Fixed-supply ATH token retained at 1,000,000,000.
@@ -24,60 +24,49 @@
 20. GitHub Actions runner issue isolated: jobs ended before runner assignment; no Solidity result was produced there.
 21. Railway fallback build runner created and connected to `main`.
 22. Real compiler validation completed. NatSpec and stack-depth findings were fixed.
-23. Full validation is GREEN on Railway: source self-check PASSED, 18 Solidity files compiled, and 13 automated tests passed.
+23. Full validation is GREEN on Railway.
+24A. Latest `main` HEAD was revalidated on a fresh Railway service without any blockchain transaction.
 
 ## GREEN VALIDATION EVIDENCE
 
-- Base validated commit: `a181c715753ad686839a9aac33e4276e32be1289`
-- Base Railway deployment: `2e4ff2ac-c7a6-4c6d-9d1b-7f0c5dbbd87e`
-- Expanded Testnet-readiness deployment: `df8d0e22-4406-4eef-bc60-0d9587acfde2`
-- Expanded deployment result: `SUCCESS`
+- Latest validated source commit: `6591dcd75ea8d8080cdfb261c0f9b85a34265347`
+- Railway validation deployment: `5e722129-39ba-4cd6-94f2-588975191451`
+- Result: `SUCCESS`
+- Source self-check: `PASSED`
+- Deployment-script syntax check: `PASSED`
 - BSC Testnet RPC check: `PASSED`
 - BSC chain ID observed: `97`
 - Safe Testnet config: `READY`
 - Mainnet gates: all `CLOSED`
 - Solidity files compiled: `18`
 - Automated tests: `13 passing`
-- Railway healthcheck: `SUCCESS`
 - No BSC contract deployment was performed during validation.
 
-## CURRENT STEP — 24: BSC TESTNET PREFLIGHT
+## CURRENT STEP — 24B: OPERATOR TESTNET PREFLIGHT
 
-### Step 24A — DONE
+The remaining Testnet deployment gate is intentionally operator-controlled. These values are still absent and must not be invented or committed:
 
-- Railway can reach BSC Testnet successfully.
-- RPC returned chain ID 97.
-- Safe Testnet configuration is loaded.
-- Mainnet release gates are confirmed CLOSED.
-- Deployment scripts now validate the target chain, operator addresses, private-key format, deployer BNB balance, exact tokenomics destinations and Team-lock range.
-- Post-deployment invariant checker is prepared for 70/20/5/5 distribution, owner, treasury, Team lock and initial ATH reference price.
-- A syntax-validation stage was added for all deployment scripts; its latest Railway rollout is queued and does not authorize any blockchain transaction.
-
-### Step 24B — BLOCKED ON OPERATOR-CONTROLLED TESTNET CONFIG
-
-The readiness runner reports these values are still absent:
-
-- `PRIVATE_KEY` — dedicated funded BSC Testnet deployer secret. Never commit or paste it into project files.
+- `PRIVATE_KEY` — dedicated funded BSC Testnet deployer secret; store only as a Railway secret.
 - `OWNER_ADDRESS`
 - `TREASURY_ADDRESS`
 - `TEAM_BENEFICIARY`
 - `LIQUIDITY_WALLET`
 - `MARKETING_WALLET`
 
-Safe defaults already loaded:
+Safe values already loaded in the Railway Testnet validation service:
 
 - `BSC_TESTNET_RPC`
 - `ATH_CHAIN_ID=97`
 - `TEAM_LOCK_DAYS=365` for Testnet validation only
-- all Mainnet release gates = `false`
+- all four Mainnet release gates = `false`
 
 The deployer must hold Testnet BNB before `npm run preflight:testnet` can pass.
 
-`BSCSCAN_API_KEY` is now separated from deployment readiness and is required only for the later BscScan verification step.
+`BSCSCAN_API_KEY` remains separate and is required only for Step 26 contract verification.
 
-## NEXT — Steps 24–28
+## NEXT — Steps 24B–28
 
-24. Load the operator-controlled Testnet secret/address configuration and run `npm run preflight:testnet`.
+24B. Load the operator-controlled Testnet secret/address configuration and run `npm run preflight:testnet`.
 25. Deploy ATHToken + MiningAirdrop + TeamTokenLock to BSC Testnet only.
 26. Verify contracts on BscScan and run real Web3 test flow: Power → Daily Claim → Booster → Vesting Claim.
 27. Freeze verified Testnet contract addresses + ABI and connect them to the Aether Wallet Mining menu.
