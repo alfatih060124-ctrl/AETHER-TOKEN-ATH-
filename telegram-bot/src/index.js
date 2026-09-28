@@ -412,9 +412,44 @@ async function handleCallback(query) {
   }
 }
 
+async function checkTargetChatAccess(me) {
+  if (!config.targetChats.length) return;
+
+  for (const chatId of config.targetChats) {
+    try {
+      const chat = await telegram("getChat", { chat_id: chatId });
+      const member = await telegram("getChatMember", {
+        chat_id: chatId,
+        user_id: me.id,
+      });
+
+      const isAdmin = member.status === "administrator" || member.status === "creator";
+      const canDelete = member.status === "creator" || Boolean(member.can_delete_messages);
+      const canRestrict = member.status === "creator" || Boolean(member.can_restrict_members);
+      const canInvite = member.status === "creator" || Boolean(member.can_invite_users);
+      const ready = isAdmin && canDelete && canRestrict && canInvite;
+
+      console.log(
+        `ATH target chat ${chatId} (${chat.title || "untitled"}): status=${member.status}; ` +
+        `delete=${canDelete}; restrict=${canRestrict}; invite/approve=${canInvite}; ready=${ready}`
+      );
+
+      if (!ready) {
+        console.warn(
+          `ATH target chat ${chatId} is not fully ready. Make @${me.username} an admin with ` +
+          "Delete Messages, Restrict/Ban Members, and Invite/Approve permissions."
+        );
+      }
+    } catch (err) {
+      console.error(`ATH target chat ${chatId} readiness check failed: ${err.message}`);
+    }
+  }
+}
+
 async function pollingLoop() {
   const me = await telegram("getMe");
   console.log(`ATH Telegram bot connected as @${me.username}`);
+  await checkTargetChatAccess(me);
 
   while (!stopping) {
     try {
