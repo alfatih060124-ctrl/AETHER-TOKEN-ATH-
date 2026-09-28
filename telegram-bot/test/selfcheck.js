@@ -1,6 +1,10 @@
 const assert = require("assert");
 const { MemoryStorage } = require("../src/storage");
 const { buildAetherReferralUrl } = require("../src/services/athReferral");
+const { calculateCryptoScore, isEligible } = require("../src/services/scoring");
+const { FloodGuard, containsForbidden, detectTopic } = require("../src/services/moderation");
+const { PromotionService } = require("../src/services/promotion");
+const { msUntilNextUtcHour } = require("../src/scheduler");
 
 (async () => {
   const storage = new MemoryStorage();
@@ -48,6 +52,37 @@ const { buildAetherReferralUrl } = require("../src/services/athReferral");
     parsed.searchParams.get("ath_wallet").toLowerCase(),
     "0x1111111111111111111111111111111111111111"
   );
+
+  assert.strictEqual(
+    calculateCryptoScore({
+      interests: ["airdrop", "trading", "mining"],
+      experience: "intermediate",
+      hasWallet: true,
+    }),
+    90
+  );
+  assert.strictEqual(isEligible(60, 60), true);
+  assert.strictEqual(isEligible(59, 60), false);
+
+  assert.strictEqual(containsForbidden("please send your seed phrase"), true);
+  assert.strictEqual(containsForbidden("hello ATH community"), false);
+  assert.strictEqual(detectTopic("bagaimana mining ATH?"), "mining");
+
+  const flood = new FloodGuard({ limit: 2, windowSeconds: 10 });
+  assert.strictEqual(flood.isFlooding("100", 1000), false);
+  assert.strictEqual(flood.isFlooding("100", 2000), false);
+  assert.strictEqual(flood.isFlooding("100", 3000), true);
+
+  const promo = new PromotionService({ cooldownHours: 8 });
+  assert.strictEqual(promo.canSend("-100", 1000), true);
+  assert.strictEqual(promo.canSend("-100", 2000), false);
+  assert.strictEqual(
+    promo.canSend("-100", 1000 + 8 * 60 * 60 * 1000 + 1),
+    true
+  );
+
+  const wait = msUntilNextUtcHour(9);
+  assert.ok(wait > 0 && wait <= 24 * 60 * 60 * 1000);
 
   await storage.setOptOut("200", true);
   const ids = await storage.optedInChatIds();
