@@ -6,8 +6,11 @@
   "scripts": {
     "start": "node scripts/ci-server.js",
     "source:selfcheck": "node scripts/source-selfcheck.js",
+    "rpc:check:testnet": "node scripts/rpc-check.js",
+    "readiness:testnet": "node scripts/readiness-report.js",
     "preflight:testnet": "node scripts/preflight.js testnet",
     "preflight:mainnet": "node scripts/preflight.js mainnet",
+    "postdeploy:testnet": "node scripts/postdeploy-check.js",
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
