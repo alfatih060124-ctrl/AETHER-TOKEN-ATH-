@@ -66,7 +66,7 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
 
   assert.strictEqual(containsForbidden("please send your seed phrase"), true);
   assert.strictEqual(containsForbidden("hello ATH community"), false);
-  assert.strictEqual(detectTopic("bagaimana mining ATH?"), "mining");
+  assert.strictEqual(detectTopic("how does ATH mining work?"), "mining");
 
   const flood = new FloodGuard({ limit: 2, windowSeconds: 10 });
   assert.strictEqual(flood.isFlooding("100", 1000), false);
@@ -88,12 +88,45 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
   const ids = await storage.optedInChatIds();
   assert.deepStrictEqual(ids, ["100"]);
 
+  await storage.saveJoinRequest({
+    userId: "200",
+    chatId: "-1001",
+    interests: ["mining", "airdrop"],
+    experience: "intermediate",
+    hasWallet: true,
+    stage: "wallet",
+    status: "pending",
+  });
+  const join = await storage.getJoinRequest("200", "-1001");
+  assert.deepStrictEqual(join.interests, ["mining", "airdrop"]);
+  assert.strictEqual(join.status, "pending");
+  await storage.completeJoinRequest("200", "-1001", { status: "approved", score: 80 });
+  const completedJoin = await storage.getJoinRequest("200", "-1001");
+  assert.strictEqual(completedJoin.status, "approved");
+  assert.strictEqual(completedJoin.score, 80);
+
+  assert.strictEqual(await storage.addWarning("-1001", "200"), 1);
+  assert.strictEqual(await storage.addWarning("-1001", "200"), 2);
+  assert.strictEqual(await storage.getWarnings("-1001", "200"), 2);
+
+  await storage.logModeration({
+    chatId: "-1001",
+    targetUserId: "200",
+    actorUserId: "100",
+    action: "warn",
+  });
+  const modlog = await storage.recentModerationLogs("-1001", 10);
+  assert.strictEqual(modlog.length, 1);
+  assert.strictEqual(modlog[0].action, "warn");
+
   const stats = await storage.stats();
   assert.deepStrictEqual(stats, {
     users: 2,
     linkedWallets: 2,
     referrals: 1,
     optedIn: 1,
+    joinRequests: 1,
+    moderationLogs: 1,
   });
 
   console.log("ATH Telegram bot self-check PASSED");
