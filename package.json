@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node scripts/ci-server.js",
     "source:selfcheck": "node scripts/source-selfcheck.js",
-    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js",
+    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/deploy-once-testnet.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js",
     "rpc:check:testnet": "node scripts/rpc-check.js",
     "readiness:testnet": "node scripts/readiness-report.js",
     "preflight:testnet": "node scripts/preflight.js testnet",
@@ -15,6 +15,7 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
+    "deploy:once:testnet": "node scripts/deploy-once-testnet.js",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network bscMainnet",
     "verify:testnet": "hardhat run scripts/verify.js --network bscTestnet",
     "verify:mainnet": "hardhat run scripts/verify.js --network bscMainnet"
