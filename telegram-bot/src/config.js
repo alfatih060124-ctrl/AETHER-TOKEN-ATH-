@@ -40,6 +40,12 @@ module.exports = {
   admins: new Set(list("ADMIN_TELEGRAM_IDS")),
   databaseUrl: (process.env.DATABASE_URL || "").trim(),
 
+  // Optional AI reply integration.
+  aiReplyEnabled: bool("AI_REPLY_ENABLED", false),
+  openAiApiKey: (process.env.OPENAI_API_KEY || "").trim(),
+  openAiModel: (process.env.OPENAI_MODEL || "gpt-4o-mini").trim(),
+  aiRandomReplyRate: Math.max(0, Math.min(number("AI_RANDOM_REPLY_RATE", 0.08), 1)),
+
   // ATH referral bridge: read-only blockchain access only.
   athRpcUrl: url("ATH_RPC_URL") || url("BSC_TESTNET_RPC"),
   athMiningAddress: (process.env.ATH_MINING_ADDRESS || "").trim(),
