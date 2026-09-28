@@ -1,0 +1,10 @@
+[build]
+builder = "RAILPACK"
+buildCommand = "npm install --no-audit --no-fund && npm run source:selfcheck && npm run compile && npm test"
+
+[deploy]
+startCommand = "node scripts/ci-server.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 1
