@@ -61,6 +61,17 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
     }),
     90
   );
+  assert.strictEqual(
+    calculateCryptoScore(
+      {
+        interests: ["airdrop", "trading", "mining"],
+        experience: "intermediate",
+        hasWallet: true,
+      },
+      "BR"
+    ),
+    100
+  );
   assert.strictEqual(isEligible(60, 60), true);
   assert.strictEqual(isEligible(59, 60), false);
 
@@ -94,11 +105,13 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
     interests: ["mining", "airdrop"],
     experience: "intermediate",
     hasWallet: true,
+    countryCode: "BR",
     stage: "wallet",
     status: "pending",
   });
   const join = await storage.getJoinRequest("200", "-1001");
   assert.deepStrictEqual(join.interests, ["mining", "airdrop"]);
+  assert.strictEqual(join.countryCode, "BR");
   assert.strictEqual(join.status, "pending");
   await storage.completeJoinRequest("200", "-1001", { status: "approved", score: 80 });
   const completedJoin = await storage.getJoinRequest("200", "-1001");
