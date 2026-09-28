@@ -30,12 +30,12 @@ function startScheduler({ config, community, send, escapeHtml }) {
   const articleText = [
     "<b>ATH Education — Referral & Security</b>",
     "",
-    "Referral Telegram membantu membawa member baru ke ekosistem.",
-    "Referral mining resmi hanya tercatat setelah Power diaktifkan melalui smart contract dengan sponsor yang valid.",
+    "Telegram referrals help bring new members into the ecosystem.",
+    "Official mining referral credit is recorded only after Power is activated through the smart contract with a valid sponsor.",
     "",
-    "Jangan pernah memberikan seed phrase atau private key kepada bot/admin.",
+    "Never provide a seed phrase or private key to the bot or an admin.",
     "",
-    "Gunakan /edukasi untuk materi lainnya.",
+    "Use /education for more learning materials.",
   ].join("\n");
 
   const scheduleArticle = () => {
