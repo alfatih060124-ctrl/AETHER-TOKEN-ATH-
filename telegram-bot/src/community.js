@@ -65,6 +65,12 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       firstName: request.from.first_name || null,
       lastName: request.from.last_name || null,
     });
+    await storage.recordGroup({
+      chatId,
+      title: request.chat.title || null,
+      type: request.chat.type || "group",
+      isActive: true,
+    });
 
     await storage.saveJoinRequest({
       userId,
@@ -265,6 +271,16 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         status: eligible ? "approved" : "declined_score",
         score,
       });
+
+      if (eligible) {
+        await storage.recordMembership({
+          userId,
+          chatId,
+          role: "member",
+          joinMethod: "verified_join_request",
+          joinScore: score,
+        });
+      }
 
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
@@ -563,7 +579,27 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       message.new_chat_members.length
     ) {
       const humans = message.new_chat_members.filter((member) => !member.is_bot);
+      await storage.recordGroup({
+        chatId: message.chat.id,
+        title: message.chat.title || null,
+        type: message.chat.type || "group",
+        isActive: true,
+      });
       for (const member of humans) {
+        await storage.upsertUser({
+          telegramId: String(member.id),
+          username: member.username || null,
+          firstName: member.first_name || null,
+          lastName: member.last_name || null,
+        });
+        const profile = await storage.getUser(member.id);
+        await storage.recordMembership({
+          userId: member.id,
+          chatId: message.chat.id,
+          role: "member",
+          joinMethod: profile?.isVerified ? "verified_join_request" : "telegram_join",
+          joinScore: profile?.cryptoScore || 0,
+        });
         await storage.logModeration({
           chatId: message.chat.id,
           targetUserId: member.id,
