@@ -13,8 +13,14 @@ class PromotionService {
 
   canSend(chatId, now = Date.now()) {
     const key = String(chatId);
-    const last = this.lastSent.get(key) || 0;
+    if (!this.lastSent.has(key)) {
+      this.lastSent.set(key, now);
+      return true;
+    }
+
+    const last = this.lastSent.get(key);
     if (now - last < this.cooldownMs) return false;
+
     this.lastSent.set(key, now);
     return true;
   }
