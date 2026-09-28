@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node scripts/ci-server.js",
     "source:selfcheck": "node scripts/source-selfcheck.js",
+    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js",
     "rpc:check:testnet": "node scripts/rpc-check.js",
     "readiness:testnet": "node scripts/readiness-report.js",
     "preflight:testnet": "node scripts/preflight.js testnet",
