@@ -9,7 +9,7 @@ function msUntilNextUtcHour(hour) {
   return next.getTime() - now.getTime();
 }
 
-function startScheduler({ config, community, send }) {
+function startScheduler({ config, community, send, growthCampaign = null }) {
   const timers = [];
 
   if (!config.communityFeaturesEnabled || !config.targetChats.length) {
@@ -52,8 +52,26 @@ function startScheduler({ config, community, send }) {
   }, articleDelay);
   timers.push(initial);
 
+  if (growthCampaign?.enabled()) {
+    const pulseMs = Math.max(4, Number(config.growthPulseHours || 4)) * 60 * 60 * 1000;
+    const runGrowthPulse = async () => {
+      try {
+        const result = await growthCampaign.pulse();
+        console.log(
+          `ATH growth pulse: status=${result.status}; joined=${result.joined ?? 0}; target=${result.min ?? config.growthDailyTargetMin}-${result.max ?? config.growthDailyTargetMax}.`
+        );
+      } catch (err) {
+        console.error("ATH growth pulse failed:", err.message);
+      }
+    };
+
+    const growthInitial = setTimeout(runGrowthPulse, 60 * 1000);
+    const growthInterval = setInterval(runGrowthPulse, pulseMs);
+    timers.push(growthInitial, growthInterval);
+  }
+
   console.log(
-    `Community scheduler active for ${config.targetChats.length} chat(s); soft promo every ${Math.max(6, Number(config.softPromoHours))}h; article at UTC hour ${config.articleHourUtc}.`
+    `Community scheduler active for ${config.targetChats.length} chat(s); soft promo every ${Math.max(6, Number(config.softPromoHours))}h; article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
   );
 
   return () => {
