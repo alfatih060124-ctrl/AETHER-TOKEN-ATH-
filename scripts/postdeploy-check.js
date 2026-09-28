@@ -76,8 +76,6 @@ async function main() {
     lockToken,
     teamBeneficiary,
     releaseTime,
-    liquidityBalance,
-    marketingBalance,
     teamLockBalance,
   ] = await Promise.all([
     token.totalSupply(),
@@ -91,8 +89,6 @@ async function main() {
     lock.token(),
     lock.beneficiary(),
     lock.releaseTime(),
-    token.balanceOf(liquidityWallet),
-    token.balanceOf(marketingWallet),
     token.balanceOf(teamLockAddress),
   ]);
 
@@ -107,12 +103,29 @@ async function main() {
   if (!eqAddr(miningOwner, ownerExpected)) throw new Error("Mining owner mismatch");
   if (!eqAddr(treasury, treasuryExpected)) throw new Error("Treasury mismatch");
   if (miningBalance !== sevenHundredM || miningAllocation !== sevenHundredM) throw new Error("Mining 70% allocation mismatch");
-  if (liquidityBalance !== twoHundredM) throw new Error("Liquidity 20% allocation mismatch");
   if (teamLockBalance !== fiftyM) throw new Error("Team 5% allocation mismatch");
-  if (marketingBalance !== fiftyM) throw new Error("Marketing 5% allocation mismatch");
   if (!eqAddr(lockToken, tokenAddress)) throw new Error("Team lock token mismatch");
   if (!eqAddr(teamBeneficiary, teamExpected)) throw new Error("Team beneficiary mismatch");
   if (currentPrice !== 3_000_000n) throw new Error("ATH initial display price mismatch");
+
+  const expectedByAddress = new Map();
+  function addExpected(address, amount) {
+    const key = address.toLowerCase();
+    expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
+  }
+  addExpected(liquidityWallet, twoHundredM);
+  addExpected(marketingWallet, fiftyM);
+
+  const destinationBalances = {};
+  for (const [addressKey, expected] of expectedByAddress.entries()) {
+    const actual = await token.balanceOf(addressKey);
+    if (actual !== expected) {
+      throw new Error(
+        `ATH destination allocation mismatch for ${addressKey}: got ${actual}, expected ${expected}`
+      );
+    }
+    destinationBalances[addressKey] = ethers.formatEther(actual);
+  }
 
   const report = {
     chainId: 97,
@@ -126,9 +139,8 @@ async function main() {
     teamReleaseAt: Number(releaseTime),
     totalSupplyATH: ethers.formatEther(totalSupply),
     miningPoolATH: ethers.formatEther(miningBalance),
-    liquidityATH: ethers.formatEther(liquidityBalance),
     teamLockedATH: ethers.formatEther(teamLockBalance),
-    marketingATH: ethers.formatEther(marketingBalance),
+    allocationDestinationsATH: destinationBalances,
     initialDisplayPriceUSD: (Number(currentPrice) / 1_000_000).toFixed(3),
     checkedAt: new Date().toISOString(),
   };
