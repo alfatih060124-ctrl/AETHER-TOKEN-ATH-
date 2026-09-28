@@ -58,6 +58,6 @@ module.exports = {
   floodLimit: number("FLOOD_LIMIT", 5),
   floodWindowSeconds: number("FLOOD_WINDOW_SECONDS", 10),
   softPromoHours: number("SOFT_PROMO_HOURS", 8),
-  articleHourUtc: number("ARTICLE_HOUR_UTC", 2),
+  articleHourUtc: number("ARTICLE_HOUR_UTC", 9),
   communityFeaturesEnabled: bool("COMMUNITY_FEATURES_ENABLED", true),
 };
