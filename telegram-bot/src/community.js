@@ -65,18 +65,9 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     const chatId = String(request.chat.id);
     const verificationChatId = String(request.user_chat_id || request.from.id);
 
-    // Telegram's newer join-request guard-bot flow requires an answer within
-    // 10 seconds. Queue the request immediately so interactive verification
-    // can continue without Telegram showing a processing error.
-    if (request.query_id) {
-      await telegram("answerChatJoinRequestQuery", {
-        chat_join_request_query_id: request.query_id,
-        result: "queue",
-      }).catch((error) => {
-        console.error("Unable to queue Telegram join-request query:", error?.message || error);
-      });
-    }
-
+    // Do not resolve a guard-bot query before sending the verification DM.
+    // Telegram only guarantees temporary access to user_chat_id while the
+    // join request is still unprocessed.
     await storage.upsertUser({
       telegramId: userId,
       username: request.from.username || null,
@@ -112,14 +103,29 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           },
         }
       );
+
+      if (request.query_id) {
+        await telegram("answerChatJoinRequestQuery", {
+          chat_join_request_query_id: request.query_id,
+          result: "queue",
+        });
+      }
     } catch (error) {
-      console.warn("ATH join verification DM could not be delivered:", error?.message || error);
-      await telegram("declineChatJoinRequest", {
-        chat_id: chatId,
-        user_id: Number(userId),
-      }).catch(() => {});
-      await storage.completeJoinRequest(userId, chatId, {
-        status: "declined_dm_unreachable",
+      console.warn(
+        "ATH join verification could not start:",
+        error?.message || error,
+        `query=${Boolean(request.query_id)} temporaryChat=${Boolean(request.user_chat_id)}`
+      );
+
+      if (request.query_id) {
+        await telegram("answerChatJoinRequestQuery", {
+          chat_join_request_query_id: request.query_id,
+          result: "queue",
+        }).catch(() => {});
+      }
+
+      await storage.updateJoinRequest(userId, chatId, {
+        status: "pending_start_required",
       });
     }
 
