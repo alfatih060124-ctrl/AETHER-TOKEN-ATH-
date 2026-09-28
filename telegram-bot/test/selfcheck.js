@@ -5,6 +5,12 @@ const { calculateCryptoScore, isEligible } = require("../src/services/scoring");
 const { FloodGuard, containsForbidden, detectTopic } = require("../src/services/moderation");
 const { PromotionService } = require("../src/services/promotion");
 const { msUntilNextUtcHour } = require("../src/scheduler");
+const {
+  articleForDate,
+  articlesByCategory,
+  articleById,
+  articleKeyboard,
+} = require("../src/content/articles");
 
 (async () => {
   const storage = new MemoryStorage();
@@ -94,6 +100,11 @@ const { msUntilNextUtcHour } = require("../src/scheduler");
 
   const wait = msUntilNextUtcHour(9);
   assert.ok(wait > 0 && wait <= 24 * 60 * 60 * 1000);
+
+  assert.ok(articleForDate(new Date("2026-09-29T00:00:00Z")).includes("<b>"));
+  assert.strictEqual(articlesByCategory("security").length, 1);
+  assert.strictEqual(articleById("wallet-security").category, "security");
+  assert.ok(articleKeyboard().inline_keyboard.length >= 4);
 
   await storage.setOptOut("200", true);
   const ids = await storage.optedInChatIds();
