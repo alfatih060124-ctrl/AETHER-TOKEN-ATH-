@@ -60,4 +60,14 @@ module.exports = {
   softPromoHours: number("SOFT_PROMO_HOURS", 8),
   articleHourUtc: number("ARTICLE_HOUR_UTC", 9),
   communityFeaturesEnabled: bool("COMMUNITY_FEATURES_ENABLED", true),
+
+  // Opt-in growth campaign. This never scrapes members or sends unsolicited DMs.
+  growthCampaignEnabled: bool("GROWTH_CAMPAIGN_ENABLED", false),
+  growthSourceChats: list("GROWTH_SOURCE_CHAT_IDS"),
+  growthCountryCodes: list("GROWTH_COUNTRY_CODES").length
+    ? list("GROWTH_COUNTRY_CODES")
+    : ["BR", "NG", "IN", "ID", "VN", "PH", "UA", "TH", "ZA", "TR", "US", "JP", "KR", "MX", "CA"],
+  growthDailyTargetMin: Math.max(1, number("GROWTH_DAILY_TARGET_MIN", 15)),
+  growthDailyTargetMax: Math.max(1, number("GROWTH_DAILY_TARGET_MAX", 25)),
+  growthPulseHours: Math.max(4, number("GROWTH_PULSE_HOURS", 4)),
 };
