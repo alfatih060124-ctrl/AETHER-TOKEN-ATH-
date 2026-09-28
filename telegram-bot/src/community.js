@@ -296,16 +296,6 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         score,
       });
 
-      if (eligible) {
-        await storage.recordMembership({
-          userId,
-          chatId,
-          role: "member",
-          joinMethod: "verified_join_request",
-          joinScore: score,
-        });
-      }
-
       await telegram("editMessageText", {
         chat_id: query.message.chat.id,
         message_id: query.message.message_id,
