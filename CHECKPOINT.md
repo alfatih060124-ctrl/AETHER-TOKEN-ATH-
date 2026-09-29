@@ -149,3 +149,16 @@ The Railway automation agent could not provision PostgreSQL because the Railway 
 - Public HTTPS check: `https://mining.aether.boats` returns HTTP 200
 - Health check: `https://mining.aether.boats/health` returns `ok=true`
 - Mining contract configured: `false` (expected until BSC Testnet deployment).
+
+### Premium Mining Web UI — LIVE
+
+- Official AETHER visual identity applied from the v3.1 blueprint: gold monogram/wordmark on black, primary gold `#C9A227`.
+- Premium black-gold responsive interface deployed with hero branding, mining status, Power, Daily Claim, Booster, vesting, referral tiers and fail-closed security status.
+- UI commit: `f14b8a45136034582a82edb74d56186db999044d`.
+- Mining-web Railway config isolated from the engine build pipeline: `88eef77b45b9ec104766cd6dd6fae4f2f16354be`.
+- Railway deployment: `d6d1ad75-40d5-48b4-9c51-50247640bbd9` — `SUCCESS`.
+- Public homepage: HTTP 200.
+- Stylesheet and application JavaScript: HTTP 200.
+- Health endpoint: `ok=true`, `networkMode=TESTNET`, `contractConfigured=false`, `mainnetEnabled=false`.
+- Service watch path restored to `mining-web/**`.
+
