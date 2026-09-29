@@ -310,3 +310,13 @@ athPublicInfoScript.addEventListener("load", () => {
   document.head.appendChild(athLuxuryPolish);
 });
 document.head.appendChild(athPublicInfoScript);
+
+const aetherAiStyle = document.createElement("link");
+aetherAiStyle.rel = "stylesheet";
+aetherAiStyle.href = "/aether-ai.css";
+document.head.appendChild(aetherAiStyle);
+
+const aetherAiScript = document.createElement("script");
+aetherAiScript.src = "/aether-ai.js";
+aetherAiScript.defer = true;
+document.head.appendChild(aetherAiScript);
