@@ -1,4 +1,5 @@
 const { articleForDate } = require("./content/articles");
+const { CryptoNewsService } = require("./services/newsUpdate");
 
 function msUntilNextUtcHour(hour) {
   const now = new Date();
@@ -11,40 +12,56 @@ function msUntilNextUtcHour(hour) {
 
 function startScheduler({ config, community, send, growthCampaign = null }) {
   const timers = [];
+  const news = new CryptoNewsService();
 
   if (!config.communityFeaturesEnabled || !config.targetChats.length) {
     return () => {};
   }
 
-  const promoHours = Math.max(4, Number(config.softPromoHours || 4));
-  const promoEveryMs = promoHours * 60 * 60 * 1000;
+  const updateHours = Math.max(1, Number(config.softPromoHours || 1));
+  const updateEveryMs = updateHours * 60 * 60 * 1000;
 
-  const sendCommunityPulse = async (label = "scheduled") => {
+  const sendHourlyUpdate = async (label = "scheduled") => {
+    let item = null;
+    try {
+      item = await news.latest();
+    } catch (err) {
+      console.error("Crypto news fetch failed:", err.message);
+    }
+
     for (const chatId of config.targetChats) {
       try {
-        const sent = await community.sendScheduledPromotion(chatId);
-        console.log(
-          `ATH community pulse: label=${label}; chat=${chatId}; sent=${Boolean(sent)}.`
-        );
+        if (item) {
+          const text = news.format(item, config.appUrl);
+          await send(chatId, text);
+          console.log(
+            `ATH hourly update: label=${label}; chat=${chatId}; source=${item.source}; mode=news.`
+          );
+        } else {
+          const sent = await community.sendScheduledPromotion(chatId);
+          console.log(
+            `ATH hourly update: label=${label}; chat=${chatId}; sent=${Boolean(sent)}; mode=fallback.`
+          );
+        }
       } catch (err) {
-        console.error("Scheduled promo failed:", chatId, err.message);
+        console.error("Hourly community update failed:", chatId, err.message);
       }
     }
   };
 
-  const startupPromo = setTimeout(() => {
-    sendCommunityPulse("startup").catch((err) => {
-      console.error("Startup community pulse failed:", err.message);
+  const startupUpdate = setTimeout(() => {
+    sendHourlyUpdate("startup").catch((err) => {
+      console.error("Startup hourly update failed:", err.message);
     });
   }, 45 * 1000);
 
-  const promoTimer = setInterval(() => {
-    sendCommunityPulse("interval").catch((err) => {
-      console.error("Community pulse failed:", err.message);
+  const hourlyTimer = setInterval(() => {
+    sendHourlyUpdate("interval").catch((err) => {
+      console.error("Hourly community update failed:", err.message);
     });
-  }, promoEveryMs);
+  }, updateEveryMs);
 
-  timers.push(startupPromo, promoTimer);
+  timers.push(startupUpdate, hourlyTimer);
 
   const articleDelay = msUntilNextUtcHour(config.articleHourUtc);
 
@@ -91,7 +108,7 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
   }
 
   console.log(
-    `Community scheduler active for ${config.targetChats.length} chat(s); startup pulse in 45s; soft promo every ${promoHours}h; article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
+    `Community scheduler active for ${config.targetChats.length} chat(s); first crypto/AETHER update in 45s; hourly update every ${updateHours}h; daily article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
   );
 
   return () => {
