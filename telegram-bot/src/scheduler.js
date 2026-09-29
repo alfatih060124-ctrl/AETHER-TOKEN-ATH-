@@ -1,5 +1,6 @@
 const { articleForDate } = require("./content/articles");
 const { CryptoNewsService } = require("./services/newsUpdate");
+const { featureForHour, featureText } = require("./content/aetherFeatures");
 
 function msUntilNextUtcHour(hour) {
   const now = new Date();
@@ -31,16 +32,21 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
 
     for (const chatId of config.targetChats) {
       try {
+        const feature = featureForHour(new Date());
+        const featureSpotlight = featureText(feature, config.appUrl);
         if (item) {
-          const text = news.format(item, config.appUrl);
+          const text = `${news.format(item, config.appUrl)}\n\n────────────\n\n<b>AETHER Feature Spotlight</b>\n${featureSpotlight}`;
           await send(chatId, text);
           console.log(
-            `ATH hourly update: label=${label}; chat=${chatId}; source=${item.source}; mode=news.`
+            `ATH hourly update: label=${label}; chat=${chatId}; source=${item.source}; feature=${feature.id}; mode=news+feature.`
           );
         } else {
-          const sent = await community.sendScheduledPromotion(chatId);
+          await send(
+            chatId,
+            `<b>AETHER Hourly Update</b>\n\nFresh external crypto news is temporarily unavailable, so here is an AETHER feature spotlight instead.\n\n${featureSpotlight}`
+          );
           console.log(
-            `ATH hourly update: label=${label}; chat=${chatId}; sent=${Boolean(sent)}; mode=fallback.`
+            `ATH hourly update: label=${label}; chat=${chatId}; feature=${feature.id}; mode=feature-fallback.`
           );
         }
       } catch (err) {
