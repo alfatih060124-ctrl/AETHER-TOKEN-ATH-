@@ -6,6 +6,7 @@ const { createATHReferralService, isAddress } = require("./services/athReferral"
 const { createCommunity } = require("./community");
 const { startScheduler } = require("./scheduler");
 const { GrowthCampaign } = require("./services/growthCampaign");
+const { overview: aetherFeatureOverview, featureKeyboard, getFeature, featureText } = require("./content/aetherFeatures");
 
 const API = config.token ? `https://api.telegram.org/bot${config.token}` : "";
 const storage = createStorage(config.databaseUrl);
@@ -62,9 +63,10 @@ function mainKeyboard() {
     { text: "🔗 ATH Referral", callback_data: "referral" },
   ]);
   rows.push([
-    { text: "👥 Invite Friends", callback_data: "invite" },
+    { text: "🧩 AETHER Features", callback_data: "features:all" },
     { text: "📚 Education", callback_data: "edu:aether" },
   ]);
+  rows.push([{ text: "👥 Invite Friends", callback_data: "invite" }]);
   if (config.communityUrl) rows.push([{ text: "💬 Community", url: config.communityUrl }]);
   if (config.websiteUrl) rows.push([{ text: "🌐 Official Website", url: config.websiteUrl }]);
   return { inline_keyboard: rows };
@@ -97,6 +99,15 @@ async function showHome(message, referrerId = null) {
     `<b>AETHER ATH</b>\n\nWelcome to the official ATH community and referral bot.${linked}\n\n<b>AETHER Wallet — Official Web3 Gateway</b>\n${escapeHtml(config.appUrl || "https://wallet.aether.boats/")}\nUse the official AETHER Wallet to explore supported Web3 features and ATH routes.\n\nTelegram attribution is recorded when a new user starts the bot from a referral link. The official ATH on-chain referral is finalized only when Power is purchased through the ATH mining contract with an eligible sponsor wallet.\n\nThis bot never asks for a seed phrase or private key.`,
     { reply_markup: mainKeyboard() }
   );
+}
+
+async function showFeatures(chatId, featureId = "all") {
+  const walletUrl = config.appUrl || "https://wallet.aether.boats/";
+  const body =
+    featureId === "all"
+      ? aetherFeatureOverview(walletUrl)
+      : featureText(getFeature(featureId), walletUrl);
+  return send(chatId, body, { reply_markup: featureKeyboard() });
 }
 
 async function showAirdrop(chatId) {
@@ -362,6 +373,7 @@ async function handleMessage(message) {
 
   if (command && await handleAdmin(message, command, args)) return;
 
+  if (command === "features") return showFeatures(message.chat.id);
   if (command === "airdrop") return showAirdrop(message.chat.id);
   if (command === "invite") return showInvite(message.chat.id, user.telegramId);
   if (command === "referral") return showReferral(message.chat.id, user.telegramId);
@@ -398,7 +410,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/features — AETHER Wallet features & services\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
       (config.admins.has(String(message.from.id))
         ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/growthstatus — opt-in acquisition status\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
         : "")
@@ -431,6 +443,11 @@ async function handleCallback(query) {
     await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
     return showReferral(query.message.chat.id, String(query.from.id));
   }
+  if (String(query.data || "").startsWith("features:")) {
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+    const featureId = String(query.data).split(":")[1] || "all";
+    return showFeatures(query.message.chat.id, featureId);
+  }
 
   if (community) {
     const handled = await community.handleCallback(query);
@@ -450,6 +467,7 @@ async function configureTelegramProfile() {
     { command: "stats", description: "View your ATH campaign stats" },
     { command: "education", description: "Open crypto and ATH education" },
     { command: "aether", description: "Open AETHER Wallet education" },
+    { command: "features", description: "Explore AETHER Wallet features and services" },
     { command: "article", description: "Read the daily ATH education article" },
     { command: "myid", description: "Show your Telegram user ID" },
     { command: "chatid", description: "Show the current chat or group ID" },
@@ -462,12 +480,12 @@ async function configureTelegramProfile() {
   });
   await telegram("setMyDescription", {
     description:
-      "Official AETHER ATH community, education, referral and security bot. Never share a seed phrase or private key.",
+      "Official AETHER ecosystem bot for Wallet features, crypto education, hourly updates, ATH community and security. Never share a seed phrase or private key.",
   }).catch((err) => {
     console.warn("Unable to set bot description:", err.message);
   });
   await telegram("setMyShortDescription", {
-    short_description: "Official AETHER ATH community and referral bot.",
+    short_description: "AETHER Wallet features, crypto updates and ATH community.",
   }).catch((err) => {
     console.warn("Unable to set short bot description:", err.message);
   });
