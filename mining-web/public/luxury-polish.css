@@ -1,0 +1,232 @@
+/* AETHER ATH premium layout refinement */
+:root{
+  --radius:22px;
+  --radius-lg:28px;
+  --radius-sm:14px;
+  --section-gap:28px;
+  --card-gap:18px;
+  --shadow:0 24px 70px rgba(0,0,0,.42);
+}
+.shell{width:min(1240px,calc(100% - 56px))}
+.topbar{background:rgba(6,5,3,.82);border-bottom-color:rgba(219,170,45,.12)}
+.nav-wrap{height:74px;gap:34px}
+.brand img{width:50px;height:50px}
+.main-nav{gap:24px}
+.main-nav a{padding:27px 0;font-size:11px;letter-spacing:.02em}
+.network-select{border-radius:14px;padding:11px 15px}
+.btn{border-radius:13px;padding:12px 18px}
+.btn-large{min-width:174px;padding:14px 20px}
+
+.hero-stage{min-height:440px;border-bottom-color:rgba(214,164,41,.18)}
+.hero-grid{min-height:440px;grid-template-columns:1.02fr .98fr;gap:58px;padding:58px 0}
+.hero-copy{padding-left:8px}
+.hero-eyebrow{margin-bottom:16px}
+.hero-copy h1{font-size:clamp(46px,5vw,70px);line-height:1.02}
+.hero-copy h2{margin:16px 0 10px;font-size:26px}
+.hero-copy p{max-width:610px;font-size:13px;line-height:1.72}
+.hero-buttons{gap:12px;margin-top:26px;flex-wrap:wrap}
+.hero-logo-wrap{height:330px}
+.hero-logo-halo{left:48%;width:258px;height:258px}
+.planet-ring{left:39%;width:400px;height:400px}
+.hero-motto{right:2%;top:52px;line-height:1.85}
+
+.feature-strip{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:stretch;
+  gap:18px;
+  margin-top:30px;
+  margin-bottom:28px;
+}
+.feature-card{
+  flex:1 1 250px;
+  max-width:296px;
+  min-width:230px;
+  min-height:286px;
+  padding:22px 20px 20px;
+  border-radius:24px 24px 24px 10px;
+  border-color:rgba(236,190,75,.18);
+  background:
+    radial-gradient(circle at 20% 0%,rgba(230,175,47,.08),transparent 36%),
+    linear-gradient(155deg,rgba(27,23,16,.96),rgba(9,8,6,.97));
+  box-shadow:0 20px 55px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.025);
+}
+.feature-card:after{background:linear-gradient(145deg,rgba(255,205,80,.055),transparent 38%)}
+.feature-icon{width:46px;height:46px;margin-bottom:16px}
+.feature-card h3{font-size:18px;margin-bottom:10px}
+.feature-card>strong{font-size:22px;margin-bottom:10px}
+.feature-card p{font-size:10px;line-height:1.6;min-height:48px;margin:0 0 10px}
+.feature-card .btn-card{margin-top:13px;padding:11px 8px;border-radius:12px}
+.feature-card small{margin-top:9px}
+.mini-label{margin:8px 0 5px}
+.mini-input{border-radius:11px;padding:9px 10px}
+
+.dashboard-row{
+  grid-template-columns:1fr 1fr 1fr;
+  gap:18px;
+  margin-top:0;
+  margin-bottom:28px;
+}
+.dash-panel{
+  min-height:255px;
+  padding:22px;
+  border-radius:24px 24px 24px 10px;
+  border-color:rgba(237,192,79,.18);
+  background:
+    radial-gradient(circle at 95% 0%,rgba(211,154,31,.07),transparent 34%),
+    linear-gradient(160deg,rgba(20,18,14,.96),rgba(7,7,6,.98));
+  box-shadow:0 20px 55px rgba(0,0,0,.36);
+}
+.panel-title{gap:13px}
+.round-icon{width:42px;height:42px}
+.miner-stats{gap:10px;margin-top:20px}
+.miner-stats div{padding:14px;border-radius:13px}
+.status-cta{width:64%;margin-top:18px}
+.status-foot{margin-top:14px}
+.timeline{margin-top:30px}
+.claim-unlocked{margin-top:20px;border-radius:12px}
+.network-list{margin-top:20px}
+.network-list div{padding:12px 0}
+
+.referral-box{
+  grid-template-columns:1.55fr .85fr;
+  gap:18px;
+  margin-top:0;
+  margin-bottom:28px;
+}
+.referral-main,.referral-art{
+  padding:22px;
+  border-radius:24px 24px 24px 10px;
+  border-color:rgba(237,192,79,.18);
+  box-shadow:0 20px 55px rgba(0,0,0,.36);
+}
+.referral-body{gap:16px;margin-top:20px}
+.ref-status-row{padding:11px 12px;border-radius:12px;margin-top:8px}
+.referral-kpis{gap:10px}
+.referral-kpis div{padding:13px;border-radius:12px}
+.referral-art{gap:22px}
+.referral-art img{width:38%}
+
+.bonus-scale{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  margin-top:0;
+  margin-bottom:34px;
+}
+.bonus-scale span{
+  flex:1 1 105px;
+  max-width:128px;
+  padding:12px 10px;
+  border-radius:14px;
+  border-color:rgba(235,187,69,.13);
+  background:linear-gradient(180deg,#0f0c08,#090705);
+}
+.bonus-scale b{margin-top:6px;font-size:12px}
+
+.security-note{
+  margin:0 auto 42px;
+  padding:24px 26px;
+  gap:28px;
+  border-radius:24px 24px 24px 10px;
+  border-color:rgba(237,192,79,.14);
+  background:linear-gradient(155deg,#0e0b07,#080604);
+}
+.security-note h3{margin:7px 0 8px;font-size:22px}
+.security-note p{font-size:9.5px;line-height:1.65}
+.security-tags{gap:10px}
+.security-tags span{padding:11px;border-radius:12px}
+
+footer{margin-top:10px}
+.footer-grid{height:82px}
+
+/* Public whitepaper / roadmap / team refinements */
+.content-section{margin:44px auto 54px}
+.section-head{max-width:760px;margin-bottom:26px}
+.section-head h2,.whitepaper-copy h2{margin:10px 0 12px}
+.section-head p,.whitepaper-copy p{font-size:11px;line-height:1.75}
+.whitepaper-panel{
+  gap:30px;
+  padding:32px;
+  border-radius:28px 28px 28px 12px;
+  border-color:rgba(237,192,79,.2);
+  box-shadow:0 24px 70px rgba(0,0,0,.38);
+}
+.whitepaper-actions{gap:12px;margin-top:22px}
+.doc-note{margin-top:18px}
+.whitepaper-metrics{gap:12px}
+.doc-metric{padding:17px;border-radius:16px}
+.roadmap-grid{grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+.roadmap-card{
+  min-height:230px;
+  padding:21px;
+  border-radius:22px 22px 22px 10px;
+  border-color:rgba(235,187,69,.15);
+  box-shadow:0 18px 48px rgba(0,0,0,.34);
+}
+.roadmap-card>b{margin:18px 0 6px}
+.roadmap-card h3{font-size:18px;margin-bottom:10px}
+.roadmap-card p{font-size:9.5px;line-height:1.65}
+.team-grid{grid-template-columns:repeat(4,1fr);gap:16px}
+.team-card{
+  padding:18px;
+  border-radius:24px 24px 24px 10px;
+  border-color:rgba(237,192,79,.16);
+  box-shadow:0 18px 48px rgba(0,0,0,.34);
+}
+.team-portrait{height:205px;border-radius:18px 18px 18px 8px}
+.team-card h3{margin:12px 0 5px;font-size:20px}
+.team-card>strong{font-size:9.5px}
+.team-card>p{font-size:9px;line-height:1.65;margin-top:12px}
+.alias-pill{margin-top:12px;padding:5px 8px}
+
+@media(max-width:1180px){
+  .shell{width:min(1080px,calc(100% - 44px))}
+  .main-nav{gap:14px}
+  .feature-card{flex-basis:235px;max-width:calc(33.333% - 12px)}
+  .dashboard-row{grid-template-columns:1fr 1fr}
+  .network-panel{grid-column:1/-1}
+  .roadmap-grid{grid-template-columns:repeat(2,1fr)}
+  .team-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:860px){
+  .shell{width:min(100% - 28px,760px)}
+  .hero-grid{gap:18px;padding:34px 0 42px}
+  .hero-logo-wrap{height:260px}
+  .hero-copy{padding-left:0}
+  .feature-strip{gap:14px;margin-top:22px}
+  .feature-card{flex:1 1 calc(50% - 7px);max-width:none;min-width:0}
+  .dashboard-row,.referral-box{gap:14px}
+  .whitepaper-panel{padding:24px;gap:22px}
+  .content-section{margin:34px auto 42px}
+}
+@media(max-width:560px){
+  .shell{width:min(100% - 22px,1320px)}
+  .nav-wrap{height:62px}
+  .hero-stage{min-height:auto}
+  .hero-grid{min-height:auto;padding:26px 0 34px}
+  .hero-logo-wrap{height:190px}
+  .hero-copy h1{font-size:38px}
+  .hero-copy h2{font-size:20px}
+  .hero-copy p{font-size:11px;line-height:1.65}
+  .hero-buttons{gap:10px;margin-top:20px}
+  .feature-strip{display:grid;grid-template-columns:1fr;gap:13px;margin:18px auto 22px}
+  .feature-card{max-width:none;min-height:0;padding:19px 18px;border-radius:20px 20px 20px 9px}
+  .feature-card p{min-height:0}
+  .dashboard-row{gap:13px;margin-bottom:22px}
+  .dash-panel{min-height:0;padding:19px;border-radius:20px 20px 20px 9px}
+  .referral-box{gap:13px;margin-bottom:22px}
+  .referral-main,.referral-art{padding:19px;border-radius:20px 20px 20px 9px}
+  .referral-kpis{grid-template-columns:1fr 1fr 1fr}
+  .bonus-scale{gap:8px;margin-bottom:28px}
+  .bonus-scale span{flex:1 1 calc(33.333% - 8px);max-width:none}
+  .security-note{padding:20px;margin-bottom:32px;border-radius:20px 20px 20px 9px}
+  .content-section{margin:28px auto 36px}
+  .whitepaper-panel{padding:20px;border-radius:22px 22px 22px 10px}
+  .roadmap-grid,.team-grid{gap:13px}
+  .roadmap-card,.team-card{border-radius:20px 20px 20px 9px}
+  .team-portrait{height:180px}
+  .footer-grid{height:72px}
+}
