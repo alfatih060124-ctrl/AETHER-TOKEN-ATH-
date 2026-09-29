@@ -16,17 +16,35 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
     return () => {};
   }
 
-  const promoEveryMs = Math.max(6, Number(config.softPromoHours)) * 60 * 60 * 1000;
-  const promoTimer = setInterval(async () => {
+  const promoHours = Math.max(4, Number(config.softPromoHours || 4));
+  const promoEveryMs = promoHours * 60 * 60 * 1000;
+
+  const sendCommunityPulse = async (label = "scheduled") => {
     for (const chatId of config.targetChats) {
       try {
-        await community.sendScheduledPromotion(chatId);
+        const sent = await community.sendScheduledPromotion(chatId);
+        console.log(
+          `ATH community pulse: label=${label}; chat=${chatId}; sent=${Boolean(sent)}.`
+        );
       } catch (err) {
         console.error("Scheduled promo failed:", chatId, err.message);
       }
     }
+  };
+
+  const startupPromo = setTimeout(() => {
+    sendCommunityPulse("startup").catch((err) => {
+      console.error("Startup community pulse failed:", err.message);
+    });
+  }, 45 * 1000);
+
+  const promoTimer = setInterval(() => {
+    sendCommunityPulse("interval").catch((err) => {
+      console.error("Community pulse failed:", err.message);
+    });
   }, promoEveryMs);
-  timers.push(promoTimer);
+
+  timers.push(startupPromo, promoTimer);
 
   const articleDelay = msUntilNextUtcHour(config.articleHourUtc);
 
@@ -36,6 +54,7 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
     for (const chatId of config.targetChats) {
       try {
         await send(chatId, articleText);
+        console.log(`ATH daily article sent: chat=${chatId}.`);
       } catch (err) {
         console.error("Scheduled article failed:", chatId, err.message);
       }
@@ -72,7 +91,7 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
   }
 
   console.log(
-    `Community scheduler active for ${config.targetChats.length} chat(s); soft promo every ${Math.max(6, Number(config.softPromoHours))}h; article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
+    `Community scheduler active for ${config.targetChats.length} chat(s); startup pulse in 45s; soft promo every ${promoHours}h; article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
   );
 
   return () => {
