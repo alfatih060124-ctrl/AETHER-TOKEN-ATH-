@@ -5,6 +5,78 @@ const DEFAULT_BOT_URL = "https://t.me/Aetther_bot";
 
 const KNOWLEDGE = [
   {
+    keys: ["features", "services", "facilities", "fitur", "layanan", "what can aether do", "all aether"],
+    answer: () => [
+      "<b>AETHER Ecosystem — Features & Services</b>",
+      "",
+      "AETHER is designed as a multi-service Web3 ecosystem. Holder guidance covers:",
+      "• Create / Import Wallet and Watch-Only",
+      "• Multi-wallet and supported multi-chain access",
+      "• Assets, balances and token views",
+      "• Send / Receive and QR workflows",
+      "• Import Custom Token",
+      "• Swap / DEX and market data where supported",
+      "• Discover / DApps / Web3 connections",
+      "• Custom Network / RPC health and fallback",
+      "• Staking & Earn through supported providers",
+      "• ATH Mining and referral routes",
+      "• AI-Trade access where product gates allow it",
+      "• Security Center and cold/watch-only workflows",
+      "• AETHER Pay where provider/production gates are connected",
+      "• Automatic refresh on supported wallet and market views",
+      "",
+      "Some services are network-, provider-, version-, or gate-dependent. I will tell you when a feature is not universally available.",
+      "",
+      `AETHER Wallet: ${DEFAULT_WALLET_URL}`,
+      `ATH Mining: ${DEFAULT_MINING_URL}`
+    ].join("\n"),
+  },
+  {
+    keys: ["asset", "assets", "balance", "portfolio", "token list"],
+    answer: () => [
+      "<b>Assets & Balances</b>",
+      "",
+      "AETHER Wallet can show supported native coins and tokens, balances, and portfolio information. Availability depends on the selected network and data providers.",
+      "If a token does not appear automatically, verify the network and use Import Custom Token when supported."
+    ].join("\n"),
+  },
+  {
+    keys: ["custom token", "import token", "contract token", "token contract"],
+    answer: () => [
+      "<b>Import Custom Token</b>",
+      "",
+      "Use the token's verified smart-contract address on the correct network. Confirm the contract from a trusted explorer or official project source before importing.",
+      "Never import a token based only on an unsolicited DM or unknown link."
+    ].join("\n"),
+  },
+  {
+    keys: ["cold", "cold qr", "cold signer", "unsigned", "signed qr", "offline signer"],
+    answer: () => [
+      "<b>Cold / Watch-Only QR Workflow</b>",
+      "",
+      "The advanced AETHER workflow can prepare an unsigned request from Watch-Only, review and sign it on the signer side, then return signed data for broadcast where supported.",
+      "This is an advanced workflow and availability depends on the wallet release and selected network."
+    ].join("\n"),
+  },
+  {
+    keys: ["aether pay", "pay", "payment", "payments"],
+    answer: () => [
+      "<b>AETHER Pay</b>",
+      "",
+      "AETHER Pay is provider-gated. Payment services can be enabled only when the required provider and production gates are connected.",
+      "If the Pay option is not available in your current wallet version, do not use unofficial payment links claiming to be AETHER Pay."
+    ].join("\n"),
+  },
+  {
+    keys: ["refresh", "auto refresh", "automatic refresh"],
+    answer: () => [
+      "<b>Automatic Refresh</b>",
+      "",
+      "Supported AETHER wallet and market views refresh automatically so holders do not need to depend on a manual refresh button.",
+      "Refresh speed can vary with RPC, network and data-provider availability."
+    ].join("\n"),
+  },
+  {
     keys: ["mining", "mine", "miner", "power", "booster", "claim"],
     answer: ({ cfg }) => [
       "<b>ATH Mining Guide</b>",
