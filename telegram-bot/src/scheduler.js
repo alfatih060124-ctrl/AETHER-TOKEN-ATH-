@@ -11,9 +11,16 @@ function msUntilNextUtcHour(hour) {
   return next.getTime() - now.getTime();
 }
 
-function startScheduler({ config, community, send, growthCampaign = null }) {
+function startScheduler({ config, community, send, growthCampaign = null, publishUpdate = null }) {
   const timers = [];
   const news = new CryptoNewsService();
+  const publish = async (text) => {
+    if (publishUpdate) return publishUpdate(text);
+    for (const chatId of config.targetChats) {
+      await send(chatId, text);
+    }
+    return { mode: "group-fallback" };
+  };
 
   if (!config.communityFeaturesEnabled || !config.targetChats.length) {
     return () => {};
@@ -30,28 +37,18 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
       console.error("Crypto news fetch failed:", err.message);
     }
 
-    for (const chatId of config.targetChats) {
-      try {
-        const feature = featureForHour(new Date());
-        const featureSpotlight = featureText(feature, config.appUrl);
-        if (item) {
-          const text = `${news.format(item, config.appUrl)}\n\n────────────\n\n<b>AETHER Feature Spotlight</b>\n${featureSpotlight}`;
-          await send(chatId, text);
-          console.log(
-            `ATH hourly update: label=${label}; chat=${chatId}; source=${item.source}; feature=${feature.id}; mode=news+feature.`
-          );
-        } else {
-          await send(
-            chatId,
-            `<b>AETHER Hourly Update</b>\n\nFresh external crypto news is temporarily unavailable, so here is an AETHER feature spotlight instead.\n\n${featureSpotlight}`
-          );
-          console.log(
-            `ATH hourly update: label=${label}; chat=${chatId}; feature=${feature.id}; mode=feature-fallback.`
-          );
-        }
-      } catch (err) {
-        console.error("Hourly community update failed:", chatId, err.message);
-      }
+    try {
+      const feature = featureForHour(new Date());
+      const featureSpotlight = featureText(feature, config.appUrl);
+      const text = item
+        ? `${news.format(item, config.appUrl)}\n\n────────────\n\n<b>AETHER Feature Spotlight</b>\n${featureSpotlight}`
+        : `<b>AETHER Hourly Update</b>\n\nFresh external crypto news is temporarily unavailable, so here is an AETHER feature spotlight instead.\n\n${featureSpotlight}`;
+      const result = await publish(text);
+      console.log(
+        `ATH hourly update: label=${label}; source=${item?.source || "internal"}; feature=${feature.id}; route=${result.mode}.`
+      );
+    } catch (err) {
+      console.error("Hourly community update failed:", err.message);
     }
   };
 
@@ -74,13 +71,11 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
   const sendDailyArticle = async () => {
     const walletCta = config.appUrl ? `\n\n<b>AETHER Wallet — Official Web3 Gateway</b>\n${config.appUrl}\nUse official links only. Never share your seed phrase or private key.` : "";
     const articleText = `${articleForDate(new Date())}${walletCta}`;
-    for (const chatId of config.targetChats) {
-      try {
-        await send(chatId, articleText);
-        console.log(`ATH daily article sent: chat=${chatId}.`);
-      } catch (err) {
-        console.error("Scheduled article failed:", chatId, err.message);
-      }
+    try {
+      const result = await publish(articleText);
+      console.log(`ATH daily article sent: route=${result.mode}.`);
+    } catch (err) {
+      console.error("Scheduled article failed:", err.message);
     }
   };
 
