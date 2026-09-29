@@ -98,6 +98,36 @@ const FEATURES = [
     body: "Supported wallet and market views refresh automatically so users do not need to rely on a manual refresh button.",
   },
   {
+    id: "walletconnect",
+    title: "WalletConnect & Web3 Connection",
+    status: "network-dependent",
+    body: "Connect AETHER Wallet to supported Web3 applications and networks through the available wallet-connection flow. Compatibility depends on the DApp and network.",
+  },
+  {
+    id: "backup",
+    title: "Backup & Restore",
+    status: "available",
+    body: "Securely back up and restore supported wallet accounts using the wallet's protected recovery workflow. Recovery secrets must never be shared with the Telegram bot or admins.",
+  },
+  {
+    id: "buy",
+    title: "Buy Crypto",
+    status: "provider-gated",
+    body: "Fiat-to-crypto purchase access can be shown when an approved payment/on-ramp provider is connected. Availability depends on provider, country and production readiness.",
+  },
+  {
+    id: "nft",
+    title: "NFT Support",
+    status: "version-dependent",
+    body: "NFT viewing and related functionality can be available on supported networks and wallet versions. Availability depends on release version and network support.",
+  },
+  {
+    id: "bridge",
+    title: "Bridge",
+    status: "network-dependent",
+    body: "Cross-network bridge access can be offered where a supported route/provider is enabled. Users must verify destination network, fees and bridge risk before signing.",
+  },
+  {
     id: "pay",
     title: "AETHER Pay",
     status: "provider-gated",
@@ -122,6 +152,7 @@ function statusLabel(status) {
     gated: "Gated",
     advanced: "Advanced workflow",
     "provider-gated": "Provider gated",
+    "version-dependent": "Version dependent",
   };
   return labels[status] || status;
 }
