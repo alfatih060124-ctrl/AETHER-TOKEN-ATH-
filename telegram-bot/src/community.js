@@ -373,7 +373,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
     let body = "";
     if (data === "article:latest") {
-      body = articleForDate();
+      body = `${articleForDate()}${aetherWalletCta()}`;
     } else if (data.startsWith("article:cat:")) {
       const category = data.split(":")[2];
       const items = articlesByCategory(category);
@@ -385,11 +385,11 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         }).catch(() => {});
         return true;
       }
-      body = items[0].body;
+      body = `${items[0].body}${aetherWalletCta()}`;
     } else if (data.startsWith("article:id:")) {
       const article = articleById(data.split(":").slice(2).join(":"));
       if (!article) return true;
-      body = article.body;
+      body = `${article.body}${aetherWalletCta()}`;
     } else {
       return true;
     }
@@ -411,8 +411,9 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     if (!data.startsWith("edu:")) return false;
     await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
     const topic = data.split(":")[1];
-    const body = EDUCATION[topic];
-    if (!body) return true;
+    const rawBody = EDUCATION[topic];
+    if (!rawBody) return true;
+    const body = `${rawBody}${aetherWalletCta()}`;
 
     await telegram("editMessageText", {
       chat_id: query.message.chat.id,
