@@ -507,6 +507,46 @@ async function checkTargetChatAccess(me) {
   }
 }
 
+async function handleUpdate(update) {
+  if (!update || typeof update !== "object") return;
+  if (typeof update.update_id === "number") {
+    offset = Math.max(offset, update.update_id + 1);
+  }
+  if (update.chat_join_request && community) {
+    await community.handleJoinRequest(update.chat_join_request);
+  }
+  if (update.message) await handleMessage(update.message);
+  if (update.callback_query) await handleCallback(update.callback_query);
+}
+
+function webhookSecurity() {
+  const digest = crypto.createHash("sha256").update(config.token).digest("hex");
+  return {
+    path: `/telegram/webhook/${digest.slice(0, 32)}`,
+    secret: digest.slice(32, 64),
+  };
+}
+
+async function startWebhook() {
+  if (!config.webhookBaseUrl) {
+    throw new Error("WEBHOOK_ENABLED=true but WEBHOOK_BASE_URL is missing");
+  }
+
+  const { path, secret } = webhookSecurity();
+  const base = config.webhookBaseUrl.replace(/\/+$/, "");
+  const url = `${base}${path}`;
+
+  await telegram("setWebhook", {
+    url,
+    secret_token: secret,
+    drop_pending_updates: false,
+    allowed_updates: ["message", "callback_query", "chat_join_request"],
+    max_connections: 40,
+  });
+
+  console.log(`ATH Telegram webhook active at ${base}/telegram/webhook/[redacted]`);
+}
+
 async function pollingLoop() {
   await telegram("deleteWebhook", { drop_pending_updates: false }).catch(() => {});
   const me = await telegram("getMe");
@@ -523,12 +563,7 @@ async function pollingLoop() {
       });
 
       for (const update of updates) {
-        offset = update.update_id + 1;
-        if (update.chat_join_request && community) {
-          await community.handleJoinRequest(update.chat_join_request);
-        }
-        if (update.message) await handleMessage(update.message);
-        if (update.callback_query) await handleCallback(update.callback_query);
+        await handleUpdate(update);
       }
     } catch (err) {
       console.error("Telegram polling error:", err.message);
@@ -562,6 +597,41 @@ async function boot() {
   });
 
   const server = http.createServer(async (req, res) => {
+    if (config.webhookEnabled && req.method === "POST") {
+      const { path, secret } = webhookSecurity();
+      if (req.url === path) {
+        if (req.headers["x-telegram-bot-api-secret-token"] !== secret) {
+          res.writeHead(403, { "content-type": "text/plain" });
+          res.end("Forbidden");
+          return;
+        }
+
+        let raw = "";
+        req.setEncoding("utf8");
+        req.on("data", (chunk) => {
+          raw += chunk;
+          if (raw.length > 1024 * 1024) req.destroy();
+        });
+        req.on("end", () => {
+          let update;
+          try {
+            update = JSON.parse(raw || "{}");
+          } catch {
+            res.writeHead(400, { "content-type": "text/plain" });
+            res.end("Bad Request");
+            return;
+          }
+
+          res.writeHead(200, { "content-type": "text/plain" });
+          res.end("OK");
+          handleUpdate(update).catch((err) => {
+            console.error("Telegram webhook update error:", err.message);
+          });
+        });
+        return;
+      }
+    }
+
     if (req.url === "/health") {
       const s = await storage.stats().catch(() => null);
       const referralHealth = await athReferral.health().catch(() => ({
@@ -573,6 +643,8 @@ async function boot() {
       res.end(JSON.stringify({
         ok: Boolean(s),
         botEnabled: config.enabled,
+        transport: config.webhookEnabled ? "webhook" : "polling",
+        webhookConfigured: Boolean(config.webhookEnabled && config.webhookBaseUrl),
         storage: config.databaseUrl ? "postgres" : "memory",
         communityFeatures: config.communityFeaturesEnabled,
         joinVerification: config.joinVerificationEnabled,
@@ -634,10 +706,18 @@ async function boot() {
     growthCampaign,
   });
 
-  pollingLoop().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  if (config.webhookEnabled) {
+    const me = await telegram("getMe");
+    console.log(`ATH Telegram bot connected as @${me.username}`);
+    await configureTelegramProfile();
+    await checkTargetChatAccess(me);
+    await startWebhook();
+  } else {
+    pollingLoop().catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+  }
 }
 
 async function shutdown() {
