@@ -3,6 +3,14 @@ const DEFAULT_FEEDS = [
     name: "Cointelegraph",
     url: "https://cointelegraph.com/?format=rss",
   },
+  {
+    name: "Decrypt",
+    url: "https://decrypt.co/feed",
+  },
+  {
+    name: "Bitcoin Magazine",
+    url: "https://bitcoinmagazine.com/.rss/full/",
+  },
 ];
 
 const PRIORITY =
