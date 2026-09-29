@@ -177,6 +177,33 @@ footer{margin-top:10px}
   box-shadow:0 18px 48px rgba(0,0,0,.34);
 }
 .team-portrait{height:205px;border-radius:18px 18px 18px 8px}
+.team-photo{
+  height:auto!important;
+  aspect-ratio:4/5;
+  display:block;
+  background-color:#0b0906;
+  background-image:var(--ath-team-sprite,linear-gradient(155deg,#1b160e,#080705));
+  background-size:400% 100%;
+  background-repeat:no-repeat;
+  border:1px solid rgba(239,190,68,.32);
+  box-shadow:inset 0 0 0 1px rgba(255,222,135,.035),0 18px 42px rgba(0,0,0,.36);
+  isolation:isolate;
+}
+.team-photo:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(180deg,transparent 62%,rgba(4,3,2,.12) 78%,rgba(4,3,2,.42));
+}
+.team-photo span{z-index:3}
+.team-photo-ethan{background-position:0% 50%}
+.team-photo-maya{background-position:33.333% 50%}
+.team-photo-noah{background-position:66.667% 50%}
+.team-photo-riven{background-position:100% 50%}
+.ath-team-photos-ready .team-photo{transition:filter .35s ease,transform .35s ease}
+.ath-team-photos-ready .team-card:hover .team-photo{filter:brightness(1.035) contrast(1.025);transform:translateY(-2px)}
 .team-card h3{margin:12px 0 5px;font-size:20px}
 .team-card>strong{font-size:9.5px}
 .team-card>p{font-size:9px;line-height:1.65;margin-top:12px}
@@ -230,5 +257,6 @@ footer{margin-top:10px}
   .roadmap-grid,.team-grid{grid-template-columns:1fr;gap:13px}
   .roadmap-card,.team-card{border-radius:20px 20px 20px 9px}
   .team-portrait{height:180px}
+  .team-photo{height:auto!important;aspect-ratio:4/5}
   .footer-grid{height:72px}
 }
