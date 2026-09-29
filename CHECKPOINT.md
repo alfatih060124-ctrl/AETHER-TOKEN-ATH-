@@ -38,16 +38,17 @@
 
 ## LATEST GREEN EVIDENCE
 
-- Current deployment-runner code commit: `9b7d57e12551b5e4be7fb82cdf72cb4521d894ac`
-- Railway deployer service: `ath-testnet-deployer`
-- Initial Railway deployment: `ac0ee8d2-12ed-4346-a58f-def732649935`
+- Current validated code commit: `4fd3751af389c15b0f5cbcf5844a38b71ab08b15`
+- Railway deployer/validator service: `ath-testnet-deployer`
+- Latest full validator deployment: `c83260a9-a4c1-46cd-8c1c-fcc21c68297f`
 - Source self-check: `PASSED`
 - BSC Testnet RPC: `PASSED`
 - BSC chain ID: `97`
 - Safe config: `READY`
 - Deployment config: `READY`
 - Solidity files compiled: `18`
-- Automated tests: `13 passing`
+- Automated tests: `16 passing`
+- Admin safety tests: treasury authorization, token emergency pause, excess-reserve liability protection — `PASSED`
 - Mainnet gates: all `CLOSED`
 
 ## STEP 24B — PREFLIGHT REACHED GAS CHECK
@@ -167,6 +168,8 @@ The Railway automation agent could not provision PostgreSQL because the Railway 
 - UI commit: `f14b8a45136034582a82edb74d56186db999044d`.
 - Mining-web Railway config isolated from the engine build pipeline: `88eef77b45b9ec104766cd6dd6fae4f2f16354be`.
 - Railway deployment: `d6d1ad75-40d5-48b4-9c51-50247640bbd9` — `SUCCESS`.
+- ATH Control Panel deployment: `48d2b9ff-517b-4003-902c-382edcd651cc` — `SUCCESS`.
+- Admin route: `/admin` with owner-wallet authorization and fail-closed Mainnet writes.
 - Public homepage: HTTP 200.
 - Stylesheet and application JavaScript: HTTP 200.
 - Health endpoint: `ok=true`, `networkMode=TESTNET`, `contractConfigured=false`, `mainnetEnabled=false`.
