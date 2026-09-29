@@ -17,6 +17,15 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   });
   const promotion = new PromotionService({ cooldownHours: config.softPromoHours });
   const aiReply = createAIReplyService(config);
+  const greetingReplyAt = new Map();
+
+  function canReplyGreeting(chatId, now = Date.now()) {
+    const key = String(chatId);
+    const last = greetingReplyAt.get(key) || 0;
+    if (now - last < 30 * 60 * 1000) return false;
+    greetingReplyAt.set(key, now);
+    return true;
+  }
 
   function isAdmin(userId) {
     return config.admins.has(String(userId));
@@ -624,6 +633,18 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     const topic = detectTopic(text);
     if (topic && EDUCATION[topic]) {
       await send(message.chat.id, `${EDUCATION[topic]}${aetherWalletCta()}`);
+      return true;
+    }
+
+    const trimmed = text.trim();
+    if (
+      /^(hi|hello|hey|halo|hallo|hai|good morning|good afternoon|good evening)[!. ]*$/i.test(trimmed) &&
+      canReplyGreeting(message.chat.id)
+    ) {
+      await send(
+        message.chat.id,
+        `Hello ${escapeHtml(message.from.first_name || "there")}! Welcome to the ATH community. Use /education for ATH learning, /aether for AETHER Wallet information, and /help for commands.${aetherWalletCta()}`
+      );
       return true;
     }
 
