@@ -59,7 +59,7 @@ module.exports = {
   minCryptoScore: number("MIN_CRYPTO_SCORE", 60),
   floodLimit: number("FLOOD_LIMIT", 5),
   floodWindowSeconds: number("FLOOD_WINDOW_SECONDS", 10),
-  softPromoHours: number("SOFT_PROMO_HOURS", 8),
+  softPromoHours: Math.max(1, number("SOFT_PROMO_HOURS", 1)),
   articleHourUtc: number("ARTICLE_HOUR_UTC", 9),
   communityFeaturesEnabled: bool("COMMUNITY_FEATURES_ENABLED", true),
 
