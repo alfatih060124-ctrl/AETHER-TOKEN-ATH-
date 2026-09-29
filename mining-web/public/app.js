@@ -303,9 +303,10 @@ boot();
 const athPublicInfoScript = document.createElement("script");
 athPublicInfoScript.src = "/ath-info.js";
 athPublicInfoScript.defer = true;
+athPublicInfoScript.addEventListener("load", () => {
+  const athLuxuryPolish = document.createElement("link");
+  athLuxuryPolish.rel = "stylesheet";
+  athLuxuryPolish.href = "/luxury-polish.css";
+  document.head.appendChild(athLuxuryPolish);
+});
 document.head.appendChild(athPublicInfoScript);
-
-const athLuxuryPolish = document.createElement("link");
-athLuxuryPolish.rel = "stylesheet";
-athLuxuryPolish.href = "/luxury-polish.css";
-document.head.appendChild(athLuxuryPolish);
