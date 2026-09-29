@@ -45,8 +45,8 @@ function contractReady() {
 
 function setSystemStatus() {
   const ready = contractReady();
-  $("networkBadge").textContent = cfg?.networkMode || "TESTNET";
-  $("networkBadge").className = `badge ${ready ? "badge-good" : "badge-warn"}`;
+  $("networkBadge").textContent = `◆ ${cfg?.chainName || "BSC Testnet"} ⌄`;
+  $("networkBadge").className = `network-select ${ready ? "network-good" : "network-warn"}`;
   $("contractDot").classList.toggle("live", ready);
 
   if (!ready) {
