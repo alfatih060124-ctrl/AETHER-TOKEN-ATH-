@@ -2,9 +2,54 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { streamWhitepaper } = require("./whitepaper");
+const { answerQuestion, cleanQuestion } = require("./assistant");
 
 const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = path.join(__dirname, "public");
+const aiRate = new Map();
+
+function clientIp(req) {
+  return String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown")
+    .split(",")[0]
+    .trim();
+}
+
+function aiAllowed(req) {
+  const key = clientIp(req);
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const max = 20;
+  const state = aiRate.get(key) || { start: now, count: 0 };
+  if (now - state.start >= windowMs) {
+    state.start = now;
+    state.count = 0;
+  }
+  state.count += 1;
+  aiRate.set(key, state);
+  return state.count <= max;
+}
+
+function readJson(req, maxBytes = 24 * 1024) {
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => {
+      raw += chunk;
+      if (Buffer.byteLength(raw) > maxBytes) {
+        reject(new Error("Payload too large"));
+        req.destroy();
+      }
+    });
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(raw || "{}"));
+      } catch {
+        reject(new Error("Invalid JSON"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -77,9 +122,56 @@ const server = http.createServer((req, res) => {
         networkMode: cfg.networkMode,
         contractConfigured: Boolean(cfg.miningAddress),
         mainnetEnabled: cfg.mainnetEnabled,
+        aiAssistant: {
+          available: true,
+          providerConfigured: Boolean(
+            process.env.AI_API_KEY && process.env.AI_API_URL && process.env.AI_MODEL
+          ),
+          fallback: "aether-knowledge",
+        },
       }),
       MIME[".json"]
     );
+  }
+
+  if (req.url === "/api/assistant" && req.method === "POST") {
+    if (!aiAllowed(req)) {
+      return send(
+        res,
+        429,
+        JSON.stringify({ ok: false, error: "Too many requests. Please try again shortly." }),
+        MIME[".json"]
+      );
+    }
+
+    return readJson(req)
+      .then(async (body) => {
+        const question = cleanQuestion(body?.question || "");
+        if (!question) {
+          return send(
+            res,
+            400,
+            JSON.stringify({ ok: false, error: "Please enter a question." }),
+            MIME[".json"]
+          );
+        }
+
+        const result = await answerQuestion(question, configPayload());
+        return send(
+          res,
+          200,
+          JSON.stringify({ ok: true, ...result }),
+          MIME[".json"]
+        );
+      })
+      .catch((error) =>
+        send(
+          res,
+          error.message === "Payload too large" ? 413 : 400,
+          JSON.stringify({ ok: false, error: error.message || "Invalid request." }),
+          MIME[".json"]
+        )
+      );
   }
 
   if (req.url === "/ATH-Whitepaper-v1.0.pdf" || req.url === "/whitepaper.pdf") {
