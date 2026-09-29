@@ -42,8 +42,8 @@ function toast(message,isError=false){
   const el=$("toast"); el.textContent=message; el.classList.toggle("error",isError); el.classList.add("show");
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove("show"),3600);
 }
-function short(v){return v?\`${v.slice(0,6)}…${v.slice(-4)}\`:"—"}
-function ath(v){try{return \`${Number(ethers.formatEther(v)).toLocaleString(undefined,{maximumFractionDigits:3})} ATH\`}catch{return "0 ATH"}}
+function short(v){return v?`${v.slice(0,6)}…${v.slice(-4)}`:"—"}
+function ath(v){try{return `${Number(ethers.formatEther(v)).toLocaleString(undefined,{maximumFractionDigits:3})} ATH`}catch{return "0 ATH"}}
 function addr(v){return Boolean(v&&ethers.isAddress(v))}
 function mainnetWriteAllowed(){return cfg?.networkMode!=="MAINNET"||cfg?.adminMainnetWritesEnabled===true}
 function miningAuthorized(){return account&&state.miningOwner&&account.toLowerCase()===state.miningOwner.toLowerCase()&&mainnetWriteAllowed()}
@@ -74,7 +74,7 @@ function paintAccess(){
 
 async function ensureChain(){
   if(!window.ethereum)return;
-  const wanted=\`0x${Number(cfg.chainId).toString(16)}\`;
+  const wanted=`0x${Number(cfg.chainId).toString(16)}`;
   const current=await window.ethereum.request({method:"eth_chainId"});
   if(current.toLowerCase()===wanted.toLowerCase())return;
   try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:wanted}]});}
@@ -137,8 +137,8 @@ async function refresh(){
     $("totalMined").textContent=ath(totalMined);
     $("liability").textContent=ath(liability);
     $("reserve").textContent=ath(reserve);
-    $("sales").textContent=\`${Number(totalPower).toLocaleString()} / ${Number(totalBooster).toLocaleString()}\`;
-    $("revenue").textContent=\`${((Number(totalPower)+Number(totalBooster))*0.001).toFixed(3)} BNB revenue basis\`;
+    $("sales").textContent=`${Number(totalPower).toLocaleString()} / ${Number(totalBooster).toLocaleString()}`;
+    $("revenue").textContent=`${((Number(totalPower)+Number(totalBooster))*0.001).toFixed(3)} BNB revenue basis`;
     $("miningOwner").textContent=miningOwner;
     $("tokenOwner").textContent=tokenOwner;
     $("treasury").textContent=treasury;
@@ -165,13 +165,13 @@ async function refresh(){
 
 async function runTx(label,fn){
   try{
-    toast(\`${label}: confirm in your wallet.\`);
+    toast(`${label}: confirm in your wallet.`);
     const tx=await fn();
-    toast(\`${label}: submitted ${short(tx.hash)}\`);
+    toast(`${label}: submitted ${short(tx.hash)}`);
     await tx.wait();
-    toast(\`${label}: confirmed.\`);
+    toast(`${label}: confirmed.`);
     await refresh();
-  }catch(err){toast(err?.shortMessage||err?.reason||err?.message||\`${label} failed.\`,true)}
+  }catch(err){toast(err?.shortMessage||err?.reason||err?.message||`${label} failed.`,true)}
 }
 
 async function loadActivity(){
@@ -189,7 +189,7 @@ async function loadActivity(){
     const groups=await Promise.all(defs.map(async([label,filter])=>(await miningRead.queryFilter(filter,from,latest)).map(e=>({label,e}))));
     const events=groups.flat().sort((a,b)=>b.e.blockNumber-a.e.blockNumber).slice(0,20);
     if(!events.length){box.innerHTML='<div class="empty">No recent ATH Mining events in the latest 2,500 blocks.</div>';return}
-    box.innerHTML=events.map(({label,e})=>\`<div class="event"><strong>${label}</strong><code>${e.transactionHash}</code><small>Block ${e.blockNumber}</small></div>\`).join("");
+    box.innerHTML=events.map(({label,e})=>`<div class="event"><strong>${label}</strong><code>${e.transactionHash}</code><small>Block ${e.blockNumber}</small></div>`).join("");
   }catch(err){console.error(err);box.innerHTML='<div class="empty">Event history is temporarily unavailable; contract metrics remain readable.</div>'}
 }
 
