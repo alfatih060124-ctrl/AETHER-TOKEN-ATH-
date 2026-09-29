@@ -32,7 +32,7 @@
 
 ## Gate D — Mainnet prerequisites
 
-- [ ] Choose the exact Team & Dev lock period inside the blueprint's 12–18 month range.
+- [x] Team & Dev lock fixed at exactly 12 months / 365 days.
 - [ ] Choose liquidity lock provider and lock duration for ATH/USDT.
 - [ ] External smart-contract audit completed and issues resolved.
 - [ ] Owner changed to production multisig.

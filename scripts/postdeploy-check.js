@@ -60,6 +60,9 @@ async function main() {
   const network = await provider.getNetwork();
   if (Number(network.chainId) !== 97) throw new Error("Postdeploy check must run on BSC Testnet chain 97");
 
+  const latestBlock = await provider.getBlock("latest");
+  if (!latestBlock) throw new Error("Unable to read latest BSC Testnet block");
+
   const token = new ethers.Contract(tokenAddress, TOKEN_ABI, provider);
   const mining = new ethers.Contract(miningAddress, MINING_ABI, provider);
   const lock = new ethers.Contract(teamLockAddress, LOCK_ABI, provider);
@@ -107,6 +110,13 @@ async function main() {
   if (!eqAddr(lockToken, tokenAddress)) throw new Error("Team lock token mismatch");
   if (!eqAddr(teamBeneficiary, teamExpected)) throw new Error("Team beneficiary mismatch");
   if (currentPrice !== 3_000_000n) throw new Error("ATH initial display price mismatch");
+
+  const remainingLockSeconds = Number(releaseTime) - Number(latestBlock.timestamp);
+  const minExpectedLock = 364 * 24 * 60 * 60;
+  const maxExpectedLock = 365 * 24 * 60 * 60;
+  if (remainingLockSeconds < minExpectedLock || remainingLockSeconds > maxExpectedLock) {
+    throw new Error("Team lock does not match the fixed 365-day ATH policy");
+  }
 
   const expectedByAddress = new Map();
   function addExpected(address, amount) {

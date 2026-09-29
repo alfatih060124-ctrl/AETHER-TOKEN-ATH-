@@ -83,14 +83,18 @@ async function main() {
   const marketingWallet = roleAddress("MARKETING_WALLET");
 
   const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
-  if (!Number.isInteger(teamLockDays) || teamLockDays < 365 || teamLockDays > 550) {
-    throw new Error("TEAM_LOCK_DAYS must be an integer from 365 to 550");
+  if (teamLockDays !== 365) {
+    throw new Error("TEAM_LOCK_DAYS must be exactly 365 per the final ATH tokenomics decision");
   }
 
   const [balance, blockNumber] = await Promise.all([
     provider.getBalance(wallet.address),
     provider.getBlockNumber(),
   ]);
+
+  // Public funding target only. PRIVATE_KEY is never printed.
+  console.log("preflightDeployer:", wallet.address);
+  console.log("preflightDeployerBNB:", ethers.formatEther(balance));
 
   if (isTestnet && balance < ethers.parseEther(MIN_TESTNET_BNB)) {
     throw new Error(

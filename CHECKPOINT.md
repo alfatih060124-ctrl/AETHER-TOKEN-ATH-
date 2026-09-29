@@ -27,6 +27,15 @@
 23. Full validation is GREEN.
 24A. BSC Testnet RPC + single-wallet Testnet mode validated without blockchain deployment.
 
+## FINAL TOKENOMICS LOCK
+
+- Total supply: **1,000,000,000 ATH**.
+- Mining reward reserve: **700,000,000 ATH (70%)**.
+- Liquidity reserve: **200,000,000 ATH (20%)**; held for the later listing phase, not used by the mining engine.
+- Team & Dev: **50,000,000 ATH (5%)**, fixed to an exact **365-day / 12-month lock**.
+- Marketing & promotion: **50,000,000 ATH (5%)**.
+- Mainnet liquidity remains a separate later launch decision; no Mainnet liquidity is opened by the Testnet deployment.
+
 ## LATEST GREEN EVIDENCE
 
 - Current deployment-runner code commit: `9b7d57e12551b5e4be7fb82cdf72cb4521d894ac`
@@ -85,7 +94,7 @@ No real BNB is required for this Testnet deployment.
 25. If preflight passes, temporarily open the Testnet approval gate, run the one-shot deployment, capture addresses, close the gate, and run post-deployment invariants.
 26. Add `BSCSCAN_API_KEY`, verify contracts, then test Power → Daily Claim → Booster → Vesting Claim.
 27. Freeze verified Testnet addresses + ABI and connect them to Aether Wallet Mining.
-28. Keep Mainnet blocked until audit, production multisig, exact Team lock period and ATH/USDT liquidity-lock decisions are complete.
+28. Keep Mainnet blocked until audit, production multisig, and ATH/USDT liquidity-lock decisions are complete. Team lock is already fixed at 365 days.
 
 ## ATH TELEGRAM BOT — LIVE CHECKPOINT
 

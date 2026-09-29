@@ -12,6 +12,7 @@ function must(text, pattern, label) {
 const token = read("contracts/ATHToken.sol");
 const mining = read("contracts/MiningAirdrop.sol");
 const deploy = read("scripts/deploy.js");
+const preflight = read("scripts/preflight.js");
 const env = read(".env.example");
 
 must(token, /TOTAL_SUPPLY\s*=\s*1_000_000_000\s*\*\s*10\s*\*\*\s*18/, "ATH fixed supply is 1,000,000,000");
@@ -47,6 +48,10 @@ for (const expected of [
   if (!mining.includes(expected)) throw new Error("SELF-CHECK FAILED: referral tier missing: " + expected);
 }
 console.log("OK: referral tiers +10% through +50% are present");
+
+must(deploy, /teamLockDays\s*!==\s*365/, "deployment fixes Team & Dev lock to 365 days");
+must(preflight, /teamLockDays\s*!==\s*365/, "preflight fixes Team & Dev lock to 365 days");
+must(env, /TEAM_LOCK_DAYS=365/, "default Team & Dev lock is 365 days");
 
 must(mining, /3_000_000\s*\+\s*\(steps\s*\*\s*1_000\)/, "display-price formula starts at $3.00 and adds $0.001/10,000 ATH");
 must(mining, /setTreasury\(address _treasury\) external onlyOwner/, "treasury update is owner-only");

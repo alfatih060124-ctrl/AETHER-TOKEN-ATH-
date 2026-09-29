@@ -8,7 +8,7 @@ Development package for the AETHER TOKEN (ATH) Mining System, rebuilt from the s
 - Fixed supply: **1,000,000,000 ATH**.
 - Mining Pool: **700,000,000 ATH (70%)**.
 - Liquidity: **200,000,000 ATH (20%)** for ATH/USDT.
-- Team & Dev: **50,000,000 ATH (5%)**, with a required **12–18 month** lock selection before mainnet.
+- Team & Dev: **50,000,000 ATH (5%)**, locked for exactly **12 months / 365 days**.
 - Marketing: **50,000,000 ATH (5%)**.
 - Start Mining Power: **0.001 BNB**.
 - Base reward: **1 ATH/day**, must be claimed each day; missed days are lost.

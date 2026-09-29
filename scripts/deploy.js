@@ -65,8 +65,8 @@ async function main() {
   const marketingWallet = roleAddress("MARKETING_WALLET");
   const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
 
-  if (!Number.isInteger(teamLockDays) || teamLockDays < 365 || teamLockDays > 550) {
-    throw new Error("TEAM_LOCK_DAYS must be an integer from 365 to 550");
+  if (teamLockDays !== 365) {
+    throw new Error("TEAM_LOCK_DAYS must be exactly 365 per the final ATH tokenomics decision");
   }
 
   const deployerBalance = await hre.ethers.provider.getBalance(deployer.address);
