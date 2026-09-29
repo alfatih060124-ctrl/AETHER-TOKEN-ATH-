@@ -1,6 +1,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { streamWhitepaper } = require("./whitepaper");
 
 const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -13,6 +14,7 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".ico": "image/x-icon",
+  ".pdf": "application/pdf",
 };
 
 function configPayload() {
@@ -78,6 +80,10 @@ const server = http.createServer((req, res) => {
       }),
       MIME[".json"]
     );
+  }
+
+  if (req.url === "/ATH-Whitepaper-v1.0.pdf" || req.url === "/whitepaper.pdf") {
+    return streamWhitepaper(res);
   }
 
   if (req.url === "/config") {

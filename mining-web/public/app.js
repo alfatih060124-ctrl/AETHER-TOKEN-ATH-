@@ -298,3 +298,9 @@ async function boot() {
 }
 
 boot();
+
+
+const athPublicInfoScript = document.createElement("script");
+athPublicInfoScript.src = "/ath-info.js";
+athPublicInfoScript.defer = true;
+document.head.appendChild(athPublicInfoScript);

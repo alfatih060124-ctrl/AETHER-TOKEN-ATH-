@@ -1,0 +1,41 @@
+/* ATH public whitepaper, roadmap and developer presentation */
+.content-section{margin:18px auto 32px;scroll-margin-top:86px}
+.section-head{max-width:790px;margin:0 auto 18px;text-align:center}
+.section-kicker{font-size:9px;letter-spacing:.24em;color:#c9a33f;font-weight:800}
+.section-head h2,.whitepaper-copy h2{font-family:Georgia,"Times New Roman",serif;color:#f5d875;font-size:clamp(28px,4vw,42px);font-weight:500;margin:8px 0}
+.section-head p,.whitepaper-copy p{color:#aaa294;font-size:11px;line-height:1.65;margin:0}
+.whitepaper-panel{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;padding:26px;border:1px solid rgba(237,192,79,.28);border-radius:16px;background:radial-gradient(circle at 75% 35%,rgba(218,158,29,.12),transparent 30%),linear-gradient(180deg,rgba(19,16,11,.97),rgba(7,6,4,.98));box-shadow:var(--shadow)}
+.whitepaper-copy{display:flex;flex-direction:column;justify-content:center}
+.whitepaper-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.doc-note{display:block;color:#756e62;font-size:8px;line-height:1.55;margin-top:14px}
+.whitepaper-metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.doc-metric{padding:14px;border-radius:10px;background:#0a0907;border:1px solid rgba(237,192,79,.16)}
+.doc-metric:first-child{grid-column:1/-1}
+.doc-metric span,.doc-metric strong,.doc-metric small{display:block}
+.doc-metric span{font-size:8px;color:#857d70;text-transform:uppercase;letter-spacing:.12em}
+.doc-metric strong{font-family:Georgia,"Times New Roman",serif;color:#f2d16d;font-size:21px;margin:6px 0}
+.doc-metric small{font-size:8px;color:#70695e}
+.roadmap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.roadmap-card{min-height:214px;padding:16px;border:1px solid rgba(235,187,69,.19);border-radius:12px;background:linear-gradient(180deg,rgba(20,17,12,.95),rgba(8,7,5,.98));box-shadow:var(--shadow);position:relative;overflow:hidden}
+.roadmap-card>b{display:block;font-family:Georgia,"Times New Roman",serif;color:rgba(238,195,82,.38);font-size:34px;margin:14px 0 4px}
+.roadmap-card h3{font-family:Georgia,"Times New Roman",serif;color:#f0d274;font-size:17px;margin:0 0 8px}
+.roadmap-card p{font-size:9px;line-height:1.55;color:#9c9486;margin:0}
+.roadmap-status{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:7px;font-weight:900;letter-spacing:.12em;border:1px solid rgba(255,255,255,.1)}
+.roadmap-status.complete{color:#62e58a;background:rgba(42,180,79,.1);border-color:rgba(68,216,104,.25)}
+.roadmap-status.next{color:#ffe08a;background:rgba(218,160,39,.12);border-color:rgba(240,190,73,.3)}
+.roadmap-status.planned{color:#c9c1b2}.roadmap-status.gated{color:#e09b7d;background:rgba(183,80,44,.09)}.roadmap-status.future{color:#9c94c9;background:rgba(89,77,151,.09)}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.team-card{padding:14px;border:1px solid rgba(237,192,79,.2);border-radius:14px;background:linear-gradient(180deg,rgba(20,18,14,.95),rgba(7,7,6,.98));box-shadow:var(--shadow);text-align:center}
+.team-card h3{font-family:Georgia,"Times New Roman",serif;color:#f4d674;font-size:19px;margin:8px 0 4px}
+.team-card>strong{display:block;color:#d5cab7;font-size:9px;min-height:24px}
+.team-card>p{color:#8e867a;font-size:8.5px;line-height:1.55;margin:10px 0 2px}
+.alias-pill{display:inline-block;margin-top:9px;color:#9d8140;border:1px solid rgba(223,174,57,.22);border-radius:999px;padding:4px 7px;font-size:6px;letter-spacing:.14em}
+.team-portrait{width:100%;height:190px;border-radius:10px;position:relative;overflow:hidden;border:1px solid rgba(241,190,65,.2);background:radial-gradient(circle at 50% 30%,rgba(239,190,75,.2),transparent 25%),linear-gradient(150deg,#18140d,#090806 70%);display:grid;place-items:center}
+.portrait-orbit{position:absolute;width:136px;height:136px;border:1px solid rgba(239,188,59,.24);border-radius:50%;top:22px;transform:rotate(-18deg)}
+.portrait-head{position:absolute;width:54px;height:60px;border-radius:48% 48% 44% 44%;top:48px;background:linear-gradient(180deg,#c5a25e,#5e451f);box-shadow:0 0 26px rgba(225,168,44,.15)}
+.portrait-body{position:absolute;width:112px;height:86px;border-radius:55px 55px 10px 10px;top:104px;background:linear-gradient(180deg,#2a241b,#0c0b09);border:1px solid rgba(229,177,57,.16)}
+.team-portrait span{position:absolute;z-index:3;bottom:13px;right:13px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#0c0a07;border:1px solid rgba(239,191,68,.38);color:#e9c65f;font-family:Georgia,"Times New Roman",serif;font-size:10px}
+.ath-public-loaded .main-nav{gap:18px}
+@media(max-width:1180px){.roadmap-grid{grid-template-columns:repeat(2,1fr)}.team-grid{grid-template-columns:repeat(2,1fr)}.ath-public-loaded .main-nav{gap:11px}.ath-public-loaded .main-nav a{font-size:10px}}
+@media(max-width:860px){.whitepaper-panel{grid-template-columns:1fr}.whitepaper-copy{text-align:center}.whitepaper-actions{justify-content:center}}
+@media(max-width:560px){.whitepaper-panel{padding:16px}.whitepaper-metrics{grid-template-columns:1fr}.doc-metric:first-child{grid-column:auto}.roadmap-grid,.team-grid{grid-template-columns:1fr}.team-portrait{height:170px}.content-section{margin-top:12px}}
