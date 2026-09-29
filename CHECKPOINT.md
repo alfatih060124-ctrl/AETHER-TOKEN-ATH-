@@ -143,5 +143,9 @@ The Railway automation agent could not provision PostgreSQL because the Railway 
 - Mining contract configured: `false` (expected until BSC Testnet deployment)
 - Custom domain attached in Railway: `mining.aether.boats`
 - DNS authority for `aether.boats`: Spaceship (`launch1.spaceship.net`, `launch2.spaceship.net`)
-- Current DNS status: `mining.aether.boats` does not resolve yet.
-- Final public activation therefore requires the Railway-provided custom-domain DNS record to be created in Spaceship DNS.
+- DNS CNAME: `PROPAGATED`
+- Railway ownership verification: `VERIFIED`
+- TLS certificate: `VALID`
+- Public HTTPS check: `https://mining.aether.boats` returns HTTP 200
+- Health check: `https://mining.aether.boats/health` returns `ok=true`
+- Mining contract configured: `false` (expected until BSC Testnet deployment).
