@@ -343,7 +343,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
   async function educationCommand(message) {
     return send(
       message.chat.id,
-      "<b>Crypto & ATH Education Center</b>\n\nChoose a topic:",
+      `<b>Crypto & ATH Education Center</b>\n\nChoose a topic:${aetherWalletCta()}`,
       { reply_markup: educationKeyboard() }
     );
   }
@@ -441,7 +441,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         return true;
       }
       const body = promotion.pick();
-      await send(groupId, `<b>ATH Community Update</b>\n\n${escapeHtml(body)}`);
+      await send(groupId, `<b>ATH Community Update</b>\n\n${escapeHtml(body)}${aetherWalletCta()}`);
       await writeModerationLog(message, null, "manual_promo");
       return true;
     }
@@ -717,7 +717,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
         return educationCommand(message);
       }
       if (parsed.command === "aether") {
-        return send(message.chat.id, EDUCATION.aether, {
+        return send(message.chat.id, `${EDUCATION.aether}${aetherWalletCta()}`, {
           reply_markup: educationKeyboard(),
         });
       }
