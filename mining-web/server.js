@@ -25,10 +25,15 @@ function configPayload() {
     explorerUrl: process.env.PUBLIC_EXPLORER_URL || "https://testnet.bscscan.com",
     miningAddress: (process.env.ATH_MINING_ADDRESS || "").trim(),
     tokenAddress: (process.env.ATH_TOKEN_ADDRESS || "").trim(),
+    teamLockAddress: (process.env.ATH_TEAM_LOCK_ADDRESS || "").trim(),
+    liquidityWallet: (process.env.PUBLIC_LIQUIDITY_WALLET || "").trim(),
+    marketingWallet: (process.env.PUBLIC_MARKETING_WALLET || "").trim(),
+    teamBeneficiary: (process.env.PUBLIC_TEAM_BENEFICIARY || "").trim(),
     powerPriceBnb: "0.001",
     boosterPriceBnb: "0.001",
     maxMiningDays: 180,
     mainnetEnabled: process.env.ALLOW_MAINNET_DEPLOY === "true",
+    adminMainnetWritesEnabled: process.env.ADMIN_MAINNET_WRITES_ENABLED === "true",
   };
 }
 
@@ -48,7 +53,11 @@ function send(res, status, body, type) {
 function safePublicPath(urlPath) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const normalized = path.posix.normalize(decoded).replace(/^\.\.(\/|\\|$)/g, "");
-  const relative = normalized === "/" ? "index.html" : normalized.replace(/^\//, "");
+  const relative = normalized === "/"
+    ? "index.html"
+    : normalized === "/admin" || normalized === "/admin/"
+      ? "admin.html"
+      : normalized.replace(/^\//, "");
   const full = path.join(PUBLIC_DIR, relative);
   if (!full.startsWith(PUBLIC_DIR)) return null;
   return full;

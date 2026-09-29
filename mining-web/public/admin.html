@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#070502" />
+  <title>AETHER ATH Control Panel</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">A</span><span>AETHER</span></a>
+    <div class="top-actions">
+      <span id="networkBadge" class="badge">BSC Testnet</span>
+      <button id="connectBtn" class="btn gold">Connect Admin Wallet</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">ATH OPERATIONS</span>
+        <h1>Control Panel</h1>
+        <p>Owner-gated monitoring and emergency controls for AETHER ATH Mining. No private key is stored by this panel.</p>
+      </div>
+      <div id="accessCard" class="access-card pending">
+        <span id="accessDot"></span>
+        <div><strong id="accessTitle">Read-only</strong><small id="accessText">Connect the contract owner wallet to enable admin actions.</small></div>
+      </div>
+    </section>
+
+    <section class="guardrail">
+      <strong>Fail-closed:</strong>
+      <span id="guardrailText">Mainnet admin writes are disabled by default. Blockchain deployment is not triggered from this page.</span>
+    </section>
+
+    <section class="grid metrics">
+      <article><small>Mining Contract</small><strong id="miningState">Pending</strong><span id="miningAddress">—</span></article>
+      <article><small>Mining Status</small><strong id="miningPause">—</strong><span>Owner emergency switch</span></article>
+      <article><small>Token Status</small><strong id="tokenPause">—</strong><span>ATH transfer emergency switch</span></article>
+      <article><small>Total Miners</small><strong id="totalMiners">0</strong><span>On-chain Power holders</span></article>
+      <article><small>ATH Allocated</small><strong id="totalMined">0 ATH</strong><span>Mining vesting allocations</span></article>
+      <article><small>Outstanding Vesting</small><strong id="liability">0 ATH</strong><span>Protected liability</span></article>
+      <article><small>Mining Reserve</small><strong id="reserve">0 ATH</strong><span>Target 700,000,000 ATH</span></article>
+      <article><small>Power / Booster</small><strong id="sales">0 / 0</strong><span id="revenue">0.000 BNB revenue basis</span></article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><span class="eyebrow">TOKENOMICS</span><h2>Locked allocation policy</h2></div>
+        <span class="policy">1,000,000,000 ATH FIXED</span>
+      </div>
+      <div class="allocation-grid">
+        <div><strong>700M</strong><span>70% Mining Reward</span><small>Smart-contract reserve</small></div>
+        <div><strong>200M</strong><span>20% Liquidity</span><small>Held for later listing phase</small></div>
+        <div><strong>50M</strong><span>5% Team & Dev</span><small>365-day cliff lock</small></div>
+        <div><strong>50M</strong><span>5% Marketing</span><small>Promotion allocation</small></div>
+      </div>
+      <div class="listing-rule"><span>Listing policy</span><strong>&gt;15,000 organic/original holders target</strong><small>Current holder count requires an indexer/explorer source; this panel does not fabricate it.</small></div>
+    </section>
+
+    <section class="two-col">
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">MINING ENGINE</span><h2>Emergency control</h2></div></div>
+        <div class="row"><span>Owner</span><code id="miningOwner">—</code></div>
+        <div class="row"><span>Treasury</span><code id="treasury">—</code></div>
+        <div class="button-row">
+          <button id="pauseMiningBtn" class="btn danger" disabled>Pause Mining</button>
+          <button id="unpauseMiningBtn" class="btn" disabled>Unpause Mining</button>
+        </div>
+        <label>New treasury address<input id="treasuryInput" autocomplete="off" placeholder="0x..." /></label>
+        <button id="setTreasuryBtn" class="btn gold full" disabled>Update Treasury</button>
+      </article>
+
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">ATH TOKEN</span><h2>Transfer safety</h2></div></div>
+        <div class="row"><span>Token Owner</span><code id="tokenOwner">—</code></div>
+        <div class="row"><span>Total Supply</span><strong id="totalSupply">1,000,000,000 ATH</strong></div>
+        <p class="muted">Token pause stops ATH transfers globally. Use only for a verified security incident.</p>
+        <div class="button-row">
+          <button id="pauseTokenBtn" class="btn danger" disabled>Pause ATH</button>
+          <button id="unpauseTokenBtn" class="btn" disabled>Unpause ATH</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="two-col">
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">RESERVE SAFETY</span><h2>Excess recovery</h2></div></div>
+        <p class="muted">Only ATH above outstanding vesting liability can be recovered, and only while Mining is paused.</p>
+        <label>Recipient<input id="excessRecipient" autocomplete="off" placeholder="0x..." /></label>
+        <label>Amount ATH<input id="excessAmount" inputmode="decimal" placeholder="0.0" /></label>
+        <label class="check"><input id="excessAck" type="checkbox" /> I verified the recipient, reserve and liability.</label>
+        <button id="withdrawExcessBtn" class="btn danger full" disabled>Recover Excess ATH</button>
+      </article>
+
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">TEAM LOCK</span><h2>365-day vesting lock</h2></div></div>
+        <div class="row"><span>Lock Contract</span><code id="lockAddress">—</code></div>
+        <div class="row"><span>Beneficiary</span><code id="beneficiary">—</code></div>
+        <div class="row"><span>Locked Balance</span><strong id="teamBalance">50,000,000 ATH policy</strong></div>
+        <div class="row"><span>Release</span><strong id="releaseTime">Pending deployment</strong></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><span class="eyebrow">ON-CHAIN ACTIVITY</span><h2>Recent Mining events</h2></div>
+        <button id="refreshBtn" class="btn">Refresh</button>
+      </div>
+      <div id="activity" class="activity"><div class="empty">Contract not deployed yet. Event history will appear here automatically after Testnet deployment.</div></div>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>

@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 /**
  * @title TeamTokenLock
  * @notice Simple cliff lock for the 5% Team & Dev ATH allocation.
- * @dev The blueprint specifies a 12-18 month lock but does not select one exact duration.
- *      releaseTime must therefore be chosen explicitly before mainnet deployment.
+ * @dev Final ATH tokenomics fixes this allocation to a 12-month / 365-day cliff.
+ *      Deployment and post-deployment gates enforce that policy.
  */
 contract TeamTokenLock {
     using SafeERC20 for IERC20;

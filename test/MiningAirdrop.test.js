@@ -142,6 +142,64 @@ describe("AETHER ATH Mining Engine v3.2", function () {
     expect(await token.balanceOf(alice.address)).to.equal(ethers.parseEther("1"));
   });
 
+  it("allows only the mining owner to update treasury and forwards future revenue there", async function () {
+    const { owner, treasury, alice, bob, mining } = await deployFixture();
+
+    await expect(mining.connect(alice).setTreasury(bob.address))
+      .to.be.revertedWithCustomError(mining, "OwnableUnauthorizedAccount");
+
+    await mining.connect(owner).setTreasury(bob.address);
+    expect(await mining.treasury()).to.equal(bob.address);
+
+    const beforeOld = await ethers.provider.getBalance(treasury.address);
+    const beforeNew = await ethers.provider.getBalance(bob.address);
+    await mining.connect(alice).buyPower(ethers.ZeroAddress, { value: ethers.parseEther("0.001") });
+    const afterOld = await ethers.provider.getBalance(treasury.address);
+    const afterNew = await ethers.provider.getBalance(bob.address);
+
+    expect(afterOld - beforeOld).to.equal(0n);
+    expect(afterNew - beforeNew).to.equal(ethers.parseEther("0.001"));
+  });
+
+  it("enforces token emergency pause as an owner-only control", async function () {
+    const { deployer, alice, token } = await deployFixture();
+
+    await expect(token.connect(alice).pause())
+      .to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+
+    await token.connect(deployer).pause();
+    expect(await token.paused()).to.equal(true);
+
+    await expect(token.connect(alice).transfer(deployer.address, 1n))
+      .to.be.revertedWithCustomError(token, "EnforcedPause");
+
+    await token.connect(deployer).unpause();
+    expect(await token.paused()).to.equal(false);
+  });
+
+  it("allows excess ATH recovery only while mining is paused and preserves vesting liabilities", async function () {
+    const { owner, alice, bob, token, mining } = await deployFixture();
+
+    await mining.connect(alice).buyPower(ethers.ZeroAddress, { value: ethers.parseEther("0.001") });
+    await mining.connect(alice).claimDaily();
+
+    const miningAddress = await mining.getAddress();
+    const balance = await token.balanceOf(miningAddress);
+    const liability = await mining.outstandingVestingLiability();
+    const maxExcess = balance - liability;
+
+    await expect(mining.connect(owner).withdrawExcessATH(bob.address, 1n))
+      .to.be.revertedWithCustomError(mining, "ExpectedPause");
+
+    await mining.connect(owner).pause();
+    await expect(mining.connect(owner).withdrawExcessATH(bob.address, maxExcess + 1n))
+      .to.be.revertedWith("Amount exceeds excess reserve");
+
+    await mining.connect(owner).withdrawExcessATH(bob.address, maxExcess);
+    expect(await token.balanceOf(miningAddress)).to.equal(liability);
+    expect(await mining.outstandingVestingLiability()).to.equal(liability);
+  });
+
   it("starts display price at $3.00 in micro-USD", async function () {
     const { mining } = await deployFixture();
     expect(await mining.getCurrentPrice()).to.equal(3_000_000n);

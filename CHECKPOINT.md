@@ -94,6 +94,7 @@ No real BNB is required for this Testnet deployment.
 25. If preflight passes, temporarily open the Testnet approval gate, run the one-shot deployment, capture addresses, close the gate, and run post-deployment invariants.
 26. Add `BSCSCAN_API_KEY`, verify contracts, then test Power → Daily Claim → Booster → Vesting Claim.
 27. Freeze verified Testnet addresses + ABI and connect them to Aether Wallet Mining.
+27A. ATH Control Panel Admin is implemented at `/admin` with owner-wallet authorization, mining/token pause controls, treasury update, reserve monitoring/recovery guardrails, tokenomics monitoring, team-lock visibility, and on-chain event history. It remains read-only until verified contract addresses exist.
 28. Keep Mainnet blocked until audit, production multisig, and ATH/USDT liquidity-lock decisions are complete. Team lock is already fixed at 365 days.
 
 ## ATH TELEGRAM BOT — LIVE CHECKPOINT
@@ -171,3 +172,19 @@ The Railway automation agent could not provision PostgreSQL because the Railway 
 - Health endpoint: `ok=true`, `networkMode=TESTNET`, `contractConfigured=false`, `mainnetEnabled=false`.
 - Service watch path restored to `mining-web/**`.
 
+
+
+## NO-BNB WORK BATCH — CONTROL PANEL / ADMIN QC
+
+Completed without any blockchain deployment transaction:
+
+- ATH Control Panel route: `/admin`.
+- Owner wallet is the write authorization boundary; no private key is stored in the browser UI.
+- Mainnet admin writes are fail-closed behind `ADMIN_MAINNET_WRITES_ENABLED=true`.
+- Read-only metrics prepared for miners, mined allocation, vesting liability, reserve, Power/Booster counts and revenue basis.
+- Tokenomics policy shown as 700M / 200M / 50M / 50M.
+- Listing policy records the >15,000 organic/original holder target without fabricating a live holder count.
+- Admin actions prepared for Mining pause/unpause, ATH token pause/unpause, treasury update, and pause-gated excess reserve recovery.
+- Team lock UI fixed to the 365-day policy.
+- Recent on-chain Mining event viewer prepared for the latest 2,500 blocks after contract deployment.
+- Additional automated tests cover treasury authorization, token emergency pause, and excess reserve liability protection.
