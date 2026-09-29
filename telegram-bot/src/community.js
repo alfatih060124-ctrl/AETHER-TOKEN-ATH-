@@ -49,6 +49,11 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     return null;
   }
 
+  function aetherWalletCta() {
+    if (!config.appUrl) return "";
+    return `\n\n<b>AETHER Wallet — Official Web3 Gateway</b>\n${escapeHtml(config.appUrl)}\nUse the official AETHER Wallet to explore supported Web3 features. Never share your seed phrase or private key.`;
+  }
+
   function muteMinutes(message, args = "", target) {
     const tokens = String(args).trim().split(/\s+/).filter(Boolean);
     const candidate = target?.viaReply ? tokens[0] : tokens[1];
@@ -618,7 +623,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
     const topic = detectTopic(text);
     if (topic && EDUCATION[topic]) {
-      await send(message.chat.id, EDUCATION[topic]);
+      await send(message.chat.id, `${EDUCATION[topic]}${aetherWalletCta()}`);
       return true;
     }
 
@@ -698,7 +703,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           .join(", ");
         await send(
           message.chat.id,
-          `Welcome <b>${names}</b> to the ATH community. Use /education to learn about ATH, mining, referral safety, staking, trading, and wallet security.`
+          `Welcome <b>${names}</b> to the ATH community. Use /education to learn about ATH, mining, referral safety, staking, trading, and wallet security.${aetherWalletCta()}`
         );
         return true;
       }
@@ -726,7 +731,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       if (/^(hi|hello|hey)\b/i.test(text)) {
         await send(
           message.chat.id,
-          `Hello ${escapeHtml(message.from.first_name || "there")}! I am the AETHER ATH community bot. You can ask about airdrops, mining, staking, trading, referrals, AETHER Wallet, or wallet security. Use /help to view commands.`
+          `Hello ${escapeHtml(message.from.first_name || "there")}! I am the AETHER ATH community bot. You can ask about airdrops, mining, staking, trading, referrals, AETHER Wallet, or wallet security. Use /help to view commands.${aetherWalletCta()}`
         );
         return true;
       }
@@ -748,7 +753,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
 
       await send(
         message.chat.id,
-        "I can help with ATH, airdrops, mining, staking, trading, referrals, AETHER Wallet, and wallet security. Use /education to browse topics or /help to view commands."
+        `I can help with ATH, airdrops, mining, staking, trading, referrals, AETHER Wallet, and wallet security. Use /education to browse topics or /help to view commands.${aetherWalletCta()}`
       );
       return true;
     }
@@ -768,7 +773,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
     if (!promotion.canSend(chatId)) return false;
     await send(
       chatId,
-      `<b>ATH Community Update</b>\n\n${escapeHtml(promotion.pick())}`
+      `<b>ATH Community Update</b>\n\n${escapeHtml(promotion.pick())}${aetherWalletCta()}`
     );
     return true;
   }
