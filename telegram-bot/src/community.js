@@ -91,6 +91,20 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
       status: "pending",
     });
 
+    // Bot API join-request queries must be acknowledged quickly. Queue the
+    // decision first, then use the temporary user_chat_id for verification.
+    if (request.query_id) {
+      await telegram("answerChatJoinRequestQuery", {
+        chat_join_request_query_id: request.query_id,
+        result: "queue",
+      }).catch((error) => {
+        console.warn(
+          "ATH join request query acknowledgement failed:",
+          error?.message || error
+        );
+      });
+    }
+
     try {
       await send(
         verificationChatId,
@@ -103,26 +117,12 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
           },
         }
       );
-
-      if (request.query_id) {
-        await telegram("answerChatJoinRequestQuery", {
-          chat_join_request_query_id: request.query_id,
-          result: "queue",
-        });
-      }
     } catch (error) {
       console.warn(
         "ATH join verification could not start:",
         error?.message || error,
         `query=${Boolean(request.query_id)} temporaryChat=${Boolean(request.user_chat_id)}`
       );
-
-      if (request.query_id) {
-        await telegram("answerChatJoinRequestQuery", {
-          chat_join_request_query_id: request.query_id,
-          result: "queue",
-        }).catch(() => {});
-      }
 
       await storage.updateJoinRequest(userId, chatId, {
         status: "pending_start_required",
