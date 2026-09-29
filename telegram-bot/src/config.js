@@ -39,6 +39,8 @@ module.exports = {
   websiteUrl: url("AETHER_WEBSITE_URL"),
   admins: new Set(list("ADMIN_TELEGRAM_IDS")),
   databaseUrl: (process.env.DATABASE_URL || "").trim(),
+  webhookEnabled: bool("WEBHOOK_ENABLED", false),
+  webhookBaseUrl: url("WEBHOOK_BASE_URL"),
 
   // Optional AI reply integration.
   aiReplyEnabled: bool("AI_REPLY_ENABLED", false),
