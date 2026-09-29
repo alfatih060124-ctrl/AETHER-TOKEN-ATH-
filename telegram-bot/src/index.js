@@ -7,6 +7,7 @@ const { createCommunity } = require("./community");
 const { startScheduler } = require("./scheduler");
 const { GrowthCampaign } = require("./services/growthCampaign");
 const { overview: aetherFeatureOverview, featureKeyboard, getFeature, featureText } = require("./content/aetherFeatures");
+const { linksText, linksKeyboard } = require("./content/aetherLinks");
 
 const API = config.token ? `https://api.telegram.org/bot${config.token}` : "";
 const storage = createStorage(config.databaseUrl);
@@ -17,6 +18,10 @@ let stopping = false;
 let community = null;
 let growthCampaign = null;
 let stopScheduler = () => {};
+let officialChannelId = config.channelSourceIds[0] || "";
+let botIdentity = null;
+const channelHubReady = new Set();
+const routedChannelMessages = new Set();
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -66,6 +71,7 @@ function mainKeyboard() {
     { text: "🧩 AETHER Features", callback_data: "features:all" },
     { text: "📚 Education", callback_data: "edu:aether" },
   ]);
+  rows.push([{ text: "🔗 Official Links", callback_data: "links" }]);
   rows.push([{ text: "👥 Invite Friends", callback_data: "invite" }]);
   if (config.communityUrl) rows.push([{ text: "💬 Community", url: config.communityUrl }]);
   if (config.websiteUrl) rows.push([{ text: "🌐 Official Website", url: config.websiteUrl }]);
@@ -99,6 +105,10 @@ async function showHome(message, referrerId = null) {
     `<b>AETHER ATH</b>\n\nWelcome to the official ATH community and referral bot.${linked}\n\n<b>AETHER Wallet — Official Web3 Gateway</b>\n${escapeHtml(config.appUrl || "https://wallet.aether.boats/")}\nUse the official AETHER Wallet to explore supported Web3 features and ATH routes.\n\nTelegram attribution is recorded when a new user starts the bot from a referral link. The official ATH on-chain referral is finalized only when Power is purchased through the ATH mining contract with an eligible sponsor wallet.\n\nThis bot never asks for a seed phrase or private key.`,
     { reply_markup: mainKeyboard() }
   );
+}
+
+async function showLinks(chatId) {
+  return send(chatId, linksText(config), { reply_markup: linksKeyboard(config) });
 }
 
 async function showFeatures(chatId, featureId = "all") {
@@ -373,6 +383,7 @@ async function handleMessage(message) {
 
   if (command && await handleAdmin(message, command, args)) return;
 
+  if (command === "links") return showLinks(message.chat.id);
   if (command === "features") return showFeatures(message.chat.id);
   if (command === "airdrop") return showAirdrop(message.chat.id);
   if (command === "invite") return showInvite(message.chat.id, user.telegramId);
@@ -410,7 +421,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/features — AETHER Wallet features & services\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/features — AETHER Wallet features & services\n/links — official AETHER links\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
       (config.admins.has(String(message.from.id))
         ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/growthstatus — opt-in acquisition status\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
         : "")
@@ -443,6 +454,10 @@ async function handleCallback(query) {
     await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
     return showReferral(query.message.chat.id, String(query.from.id));
   }
+  if (query.data === "links") {
+    await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
+    return showLinks(query.message.chat.id);
+  }
   if (String(query.data || "").startsWith("features:")) {
     await telegram("answerCallbackQuery", { callback_query_id: query.id }).catch(() => {});
     const featureId = String(query.data).split(":")[1] || "all";
@@ -468,6 +483,7 @@ async function configureTelegramProfile() {
     { command: "education", description: "Open crypto and ATH education" },
     { command: "aether", description: "Open AETHER Wallet education" },
     { command: "features", description: "Explore AETHER Wallet features and services" },
+    { command: "links", description: "Open official AETHER links" },
     { command: "article", description: "Read the daily ATH education article" },
     { command: "myid", description: "Show your Telegram user ID" },
     { command: "chatid", description: "Show the current chat or group ID" },
@@ -525,6 +541,108 @@ async function checkTargetChatAccess(me) {
   }
 }
 
+async function forwardChannelPostToGroups(channelId, messageId) {
+  for (const targetChatId of config.targetChats) {
+    if (String(targetChatId) === String(channelId)) continue;
+    try {
+      await telegram("forwardMessage", {
+        chat_id: targetChatId,
+        from_chat_id: channelId,
+        message_id: messageId,
+        disable_notification: false,
+      });
+    } catch (err) {
+      console.warn(`Forward channel post failed for ${targetChatId}: ${err.message}; trying copy.`);
+      await telegram("copyMessage", {
+        chat_id: targetChatId,
+        from_chat_id: channelId,
+        message_id: messageId,
+      });
+    }
+  }
+}
+
+async function ensureChannelLinksHub(channelId) {
+  const key = String(channelId);
+  if (channelHubReady.has(key)) return;
+
+  try {
+    const chat = await telegram("getChat", { chat_id: channelId });
+    if (chat?.pinned_message?.text?.includes("AETHER — Official Links Hub")) {
+      channelHubReady.add(key);
+      return;
+    }
+  } catch {}
+
+  channelHubReady.add(key);
+  const message = await send(channelId, linksText(config), {
+    reply_markup: linksKeyboard(config),
+  });
+  await telegram("pinChatMessage", {
+    chat_id: channelId,
+    message_id: message.message_id,
+    disable_notification: true,
+  }).catch((err) => {
+    console.warn("Unable to pin AETHER links hub:", err.message);
+  });
+}
+
+async function handleChannelPost(post) {
+  if (!config.channelForwardEnabled || !post?.chat?.id || !post?.message_id) return;
+  const channelId = String(post.chat.id);
+
+  if (config.channelSourceIds.length && !config.channelSourceIds.includes(channelId)) {
+    return;
+  }
+
+  if (!config.channelSourceIds.length) {
+    try {
+      const me = botIdentity || await telegram("getMe");
+      const member = await telegram("getChatMember", {
+        chat_id: channelId,
+        user_id: me.id,
+      });
+      if (!["administrator", "creator"].includes(member.status)) return;
+    } catch (err) {
+      console.warn("Channel auto-discovery rejected:", err.message);
+      return;
+    }
+  }
+
+  if (!officialChannelId) {
+    officialChannelId = channelId;
+    console.log(`AETHER official channel auto-discovered: ${channelId} (${post.chat.title || "untitled"}).`);
+  }
+  if (officialChannelId !== channelId) return;
+
+  await ensureChannelLinksHub(channelId);
+
+  const routeKey = `${channelId}:${post.message_id}`;
+  if (routedChannelMessages.has(routeKey)) {
+    routedChannelMessages.delete(routeKey);
+    return;
+  }
+
+  await forwardChannelPostToGroups(channelId, post.message_id);
+  console.log(`AETHER channel post forwarded: channel=${channelId}; message=${post.message_id}; groups=${config.targetChats.length}.`);
+}
+
+async function publishPrimaryUpdate(text, extra = {}) {
+  if (officialChannelId) {
+    await ensureChannelLinksHub(officialChannelId);
+    const message = await send(officialChannelId, text, extra);
+    const routeKey = `${officialChannelId}:${message.message_id}`;
+    routedChannelMessages.add(routeKey);
+    await forwardChannelPostToGroups(officialChannelId, message.message_id);
+    return { mode: "channel-first", channelId: officialChannelId, messageId: message.message_id };
+  }
+
+  for (const targetChatId of config.targetChats) {
+    await send(targetChatId, text, extra);
+  }
+  return { mode: "group-fallback", channelId: null, messageId: null };
+}
+
 async function handleUpdate(update) {
   if (!update || typeof update !== "object") return;
   if (typeof update.update_id === "number") {
@@ -533,6 +651,7 @@ async function handleUpdate(update) {
   if (update.chat_join_request && community) {
     await community.handleJoinRequest(update.chat_join_request);
   }
+  if (update.channel_post) await handleChannelPost(update.channel_post);
   if (update.message) await handleMessage(update.message);
   if (update.callback_query) await handleCallback(update.callback_query);
 }
@@ -558,7 +677,7 @@ async function startWebhook() {
     url,
     secret_token: secret,
     drop_pending_updates: false,
-    allowed_updates: ["message", "callback_query", "chat_join_request"],
+    allowed_updates: ["message", "channel_post", "callback_query", "chat_join_request"],
     max_connections: 40,
   });
 
@@ -577,7 +696,7 @@ async function pollingLoop() {
       const updates = await telegram("getUpdates", {
         offset,
         timeout: 30,
-        allowed_updates: ["message", "callback_query", "chat_join_request"],
+        allowed_updates: ["message", "channel_post", "callback_query", "chat_join_request"],
       });
 
       for (const update of updates) {
@@ -722,10 +841,12 @@ async function boot() {
     community,
     send,
     growthCampaign,
+    publishUpdate: publishPrimaryUpdate,
   });
 
   if (config.webhookEnabled) {
     const me = await telegram("getMe");
+    botIdentity = me;
     console.log(`ATH Telegram bot connected as @${me.username}`);
     await configureTelegramProfile();
     await checkTargetChatAccess(me);
