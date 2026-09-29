@@ -94,7 +94,7 @@ async function showHome(message, referrerId = null) {
 
   return send(
     message.chat.id,
-    `<b>AETHER ATH</b>\n\nWelcome to the official ATH community and referral bot.${linked}\n\nTelegram attribution is recorded when a new user starts the bot from a referral link. The official ATH on-chain referral is finalized only when Power is purchased through the ATH mining contract with an eligible sponsor wallet.\n\nThis bot never asks for a seed phrase or private key.`,
+    `<b>AETHER ATH</b>\n\nWelcome to the official ATH community and referral bot.${linked}\n\n<b>AETHER Wallet — Official Web3 Gateway</b>\n${escapeHtml(config.appUrl || "https://wallet.aether.boats/")}\nUse the official AETHER Wallet to explore supported Web3 features and ATH routes.\n\nTelegram attribution is recorded when a new user starts the bot from a referral link. The official ATH on-chain referral is finalized only when Power is purchased through the ATH mining contract with an eligible sponsor wallet.\n\nThis bot never asks for a seed phrase or private key.`,
     { reply_markup: mainKeyboard() }
   );
 }
@@ -102,7 +102,7 @@ async function showHome(message, referrerId = null) {
 async function showAirdrop(chatId) {
   return send(
     chatId,
-    `<b>${escapeHtml(config.campaign)}</b>\n\nATH uses a referral mining program. A sponsor must already have Power before a new miner activates Power with that sponsor wallet. Referral tiers raise the sponsor's daily mining multiplier from +10% up to +50% according to the number of qualifying referrals.\n\nTelegram is used for acquisition, education and referral routing; the ATH smart contract remains the source of truth for the official on-chain referral count.`
+    `<b>${escapeHtml(config.campaign)}</b>\n\nATH uses a referral mining program. A sponsor must already have Power before a new miner activates Power with that sponsor wallet. Referral tiers raise the sponsor's daily mining multiplier from +10% up to +50% according to the number of qualifying referrals.\n\n<b>AETHER Wallet</b>\n${escapeHtml(config.appUrl || "https://wallet.aether.boats/")}\n\nTelegram is used for acquisition, education and referral routing; the ATH smart contract remains the source of truth for the official on-chain referral count.`
   );
 }
 
@@ -398,7 +398,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates" +
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
       (config.admins.has(String(message.from.id))
         ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/growthstatus — opt-in acquisition status\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
         : "")
