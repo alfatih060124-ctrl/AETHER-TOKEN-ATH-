@@ -59,7 +59,7 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
     sendHourlyUpdate("startup").catch((err) => {
       console.error("Startup hourly update failed:", err.message);
     });
-  }, 45 * 1000);
+  }, 10 * 1000);
 
   const hourlyTimer = setInterval(() => {
     sendHourlyUpdate("interval").catch((err) => {
@@ -114,7 +114,7 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
   }
 
   console.log(
-    `Community scheduler active for ${config.targetChats.length} chat(s); first crypto/AETHER update in 45s; hourly update every ${updateHours}h; daily article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
+    `Community scheduler active for ${config.targetChats.length} chat(s); first crypto/AETHER update in 10s; hourly update every ${updateHours}h; daily article at UTC hour ${config.articleHourUtc}; growth=${growthCampaign?.enabled() ? "ready" : "off"}.`
   );
 
   return () => {
