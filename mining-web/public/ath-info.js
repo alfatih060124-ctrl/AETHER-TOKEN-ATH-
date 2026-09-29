@@ -85,10 +85,10 @@
         <p>The profiles below use project aliases and illustrative portraits for public presentation. They are not presented as verified legal identities or employment credentials.</p>
       </div>
       <div class="team-grid">
-        <article class="team-card"><div class="team-portrait"><i class="portrait-orbit"></i><i class="portrait-head"></i><i class="portrait-body"></i><span>EV</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Ethan Vale</h3><strong>CEO & Product Lead</strong><p>Protocol direction, product architecture, governance gates, and long-term ecosystem coordination.</p></article>
-        <article class="team-card"><div class="team-portrait"><i class="portrait-orbit"></i><i class="portrait-head"></i><i class="portrait-body"></i><span>MS</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Maya Sterling</h3><strong>CMO & Community Growth</strong><p>Community education, ecosystem communications, growth operations, and public documentation strategy.</p></article>
-        <article class="team-card"><div class="team-portrait"><i class="portrait-orbit"></i><i class="portrait-head"></i><i class="portrait-body"></i><span>NK</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Noah Kade</h3><strong>CTO & Protocol Engineering</strong><p>Smart-contract engineering, runtime architecture, release validation, and infrastructure reliability.</p></article>
-        <article class="team-card"><div class="team-portrait"><i class="portrait-orbit"></i><i class="portrait-head"></i><i class="portrait-body"></i><span>RC</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Riven Cross</h3><strong>Master Crypto / Blockchain Architect</strong><p>Token mechanics, on-chain risk controls, reserve design, blockchain integration, and protocol research.</p></article>
+        <article class="team-card"><div class="team-portrait team-photo team-photo-ethan" role="img" aria-label="Illustrative project portrait for Ethan Vale"><span>EV</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Ethan Vale</h3><strong>CEO & Product Lead</strong><p>Protocol direction, product architecture, governance gates, and long-term ecosystem coordination.</p></article>
+        <article class="team-card"><div class="team-portrait team-photo team-photo-maya" role="img" aria-label="Illustrative project portrait for Maya Sterling"><span>MS</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Maya Sterling</h3><strong>CMO & Community Growth</strong><p>Community education, ecosystem communications, growth operations, and public documentation strategy.</p></article>
+        <article class="team-card"><div class="team-portrait team-photo team-photo-noah" role="img" aria-label="Illustrative project portrait for Noah Kade"><span>NK</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Noah Kade</h3><strong>CTO & Protocol Engineering</strong><p>Smart-contract engineering, runtime architecture, release validation, and infrastructure reliability.</p></article>
+        <article class="team-card"><div class="team-portrait team-photo team-photo-riven" role="img" aria-label="Illustrative project portrait for Riven Cross"><span>RC</span></div><span class="alias-pill">PROJECT ALIAS</span><h3>Riven Cross</h3><strong>Master Crypto / Blockchain Architect</strong><p>Token mechanics, on-chain risk controls, reserve design, blockchain integration, and protocol research.</p></article>
       </div>
     </section>
   `;
@@ -96,4 +96,24 @@
   const fragment = document.createDocumentFragment();
   [...wrap.children].forEach((el) => fragment.appendChild(el));
   docs.parentNode.insertBefore(fragment, docs);
+
+  async function loadTeamPortraitSprite() {
+    try {
+      const parts = await Promise.all(
+        Array.from({ length: 6 }, (_, i) =>
+          fetch(`/team/team-sprite.${String(i).padStart(2, "0")}.txt`, { cache: "force-cache" }).then((res) => {
+            if (!res.ok) throw new Error(`team portrait sprite chunk ${i} failed`);
+            return res.text();
+          })
+        )
+      );
+      const base64 = parts.join("").replace(/\s+/g, "");
+      document.documentElement.style.setProperty("--ath-team-sprite", `url("data:image/webp;base64,${base64}")`);
+      document.body.classList.add("ath-team-photos-ready");
+    } catch (err) {
+      console.warn("AETHER team portraits could not be loaded.", err);
+    }
+  }
+
+  loadTeamPortraitSprite();
 })();
