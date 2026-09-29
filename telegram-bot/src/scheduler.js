@@ -31,7 +31,7 @@ function startScheduler({ config, community, send, growthCampaign = null }) {
   const articleDelay = msUntilNextUtcHour(config.articleHourUtc);
 
   const sendDailyArticle = async () => {
-    const articleText = articleForDate(new Date());
+    const walletCta = config.appUrl ? `\n\n<b>AETHER Wallet — Official Web3 Gateway</b>\n${config.appUrl}\nUse official links only. Never share your seed phrase or private key.` : "";\n    const articleText = `${articleForDate(new Date())}${walletCta}`;
     for (const chatId of config.targetChats) {
       try {
         await send(chatId, articleText);
