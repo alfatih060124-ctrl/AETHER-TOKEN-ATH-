@@ -42,7 +42,8 @@ function sensitive(s){return /(seed phrase|private key|recovery phrase|mnemonic|
 async function callAI(message,language){
   const key=process.env.OPENAI_API_KEY;
   if(!key) return null;
-  const body=JSON.stringify({model:process.env.AETHER_AI_MODEL||"gpt-5-mini",input:[{role:"system",content:AI_SYSTEM},{role:"user",content:"Browser language: "+language+"\\nUser: "+message}],max_output_tokens:500});
+  const body=JSON.stringify({model:process.env.AETHER_AI_MODEL||"gpt-5-mini",input:[{role:"system",content:AI_SYSTEM},{role:"user",content:"Browser language: "+language+"\
+User: "+message}],max_output_tokens:500});
   const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"authorization":"Bearer "+key,"content-type":"application/json"},body});
   if(!r.ok) throw new Error("provider_"+r.status);
   const j=await r.json();
@@ -53,7 +54,20 @@ async function callAI(message,language){
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
-  if (url.pathname === "/api/ai" && req.method === "POST") {\n    try {\n      const data=await readJson(req);\n      const message=String(data.message||"").trim().slice(0,1200);\n      const language=String(data.language||"en").slice(0,32);\n      if(!message) return json(res,400,{reply:"Please enter a message."});\n      if(sensitive(message)) return json(res,200,{reply:"For your security, never share a seed phrase, private key, recovery phrase, password or OTP with AETHER AI or anyone else. I can help without those secrets."});\n      const reply=await callAI(message,language);\n      if(!reply) return json(res,503,{reply:"AETHER AI is being activated. Meanwhile, please use the official AETHER links on this page."});\n      return json(res,200,{reply});\n    } catch(e) { return json(res,503,{reply:"AETHER AI is temporarily unavailable. Please use the official AETHER links on this page."}); }\n  }\n\n  if (url.pathname === "/health") {
+  if (url.pathname === "/api/ai" && req.method === "POST") {
+    try {
+      const data=await readJson(req);
+      const message=String(data.message||"").trim().slice(0,1200);
+      const language=String(data.language||"en").slice(0,32);
+      if(!message) return json(res,400,{reply:"Please enter a message."});
+      if(sensitive(message)) return json(res,200,{reply:"For your security, never share a seed phrase, private key, recovery phrase, password or OTP with AETHER AI or anyone else. I can help without those secrets."});
+      const reply=await callAI(message,language);
+      if(!reply) return json(res,503,{reply:"AETHER AI is being activated. Meanwhile, please use the official AETHER links on this page."});
+      return json(res,200,{reply});
+    } catch(e) { return json(res,503,{reply:"AETHER AI is temporarily unavailable. Please use the official AETHER links on this page."}); }
+  }
+
+  if (url.pathname === "/health") {
     return send(res, 200, JSON.stringify({
       ok: true,
       service: "aether-corporate-web",
