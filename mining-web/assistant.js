@@ -2,6 +2,7 @@ const DEFAULT_WALLET_URL = "https://wallet.aether.boats/";
 const DEFAULT_MINING_URL = "https://mining.aether.boats/";
 const DEFAULT_WEBSITE_URL = "https://aether.boats/";
 const DEFAULT_BOT_URL = "https://t.me/Aetther_bot";
+const DEFAULT_AUTOTRADE_URL = "https://aitrade.aether.boats";
 
 const KNOWLEDGE = [
   {
@@ -20,7 +21,7 @@ const KNOWLEDGE = [
       "• Custom Network / RPC health and fallback",
       "• Staking & Earn through supported providers",
       "• ATH Mining and referral routes",
-      "• AI-Trade access where product gates allow it",
+      "• AETHER AUTOTRADE — https://aitrade.aether.boats",
       "• Security Center and cold/watch-only workflows",
       "• AETHER Pay where provider/production gates are connected",
       "• Automatic refresh on supported wallet and market views",
@@ -137,12 +138,16 @@ const KNOWLEDGE = [
     ].join("\n"),
   },
   {
-    keys: ["ai trade", "ai-trade", "trading", "trade"],
+    keys: ["ai trade", "ai-trade", "autotrade", "auto trade", "aether autotrade", "trading", "trade"],
     answer: () => [
-      "<b>AETHER AI-Trade</b>",
+      "<b>AETHER AUTOTRADE</b>",
       "",
-      "AI-Trade is an AETHER ecosystem capability that may be gated by product, safety, network and execution readiness.",
-      "It is not a promise of profit. Always review risk and transaction details before enabling any execution feature."
+      "AETHER AUTOTRADE is the official automated trading portal in the AETHER ecosystem.",
+      "Use the official portal to review available trading features, supported modes, and execution controls.",
+      "",
+      `Open AETHER AUTOTRADE: ${DEFAULT_AUTOTRADE_URL}`,
+      "",
+      "AutoTrade does not guarantee profit. Always review risk, wallet permissions, network, and transaction details before enabling any execution feature."
     ].join("\n"),
   },
   {
@@ -283,6 +288,7 @@ async function providerAnswer({ question, local, cfg }) {
     `Official wallet: ${DEFAULT_WALLET_URL}`,
     `Official mining page: ${DEFAULT_MINING_URL}`,
     `Official website: ${DEFAULT_WEBSITE_URL}`,
+    `Official AETHER AUTOTRADE: ${DEFAULT_AUTOTRADE_URL}`,
     `Current mining deployment mode: ${cfg.networkMode || "UNKNOWN"}`,
     `Fallback knowledge: ${stripHtml(local)}`,
   ].join("\n");
