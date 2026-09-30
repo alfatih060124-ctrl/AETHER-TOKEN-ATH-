@@ -219,10 +219,215 @@ function cleanQuestion(value = "") {
 }
 
 function containsSecretRequest(text) {
-  return /(seed phrase|private key|recovery phrase|mnemonic|12 words|24 words)/i.test(text);
+  return /(seed phrase|private key|recovery phrase|mnemonic|12 words|24 words|frasa seed|kunci privat|private key|mnemonik|kata pemulihan)/i.test(text);
+}
+
+function detectLanguage(text = "") {
+  const value = String(text).toLowerCase();
+  const idSignals = [
+    "bagaimana", "gimana", "gmn", "apa ", "apakah", "saya", "anda", "tolong",
+    "bisa", "untuk", "dengan", "dan ", "yang ", "cara", "mulai", "fitur",
+    "layanan", "keamanan", "wallet saya", "tambahkan", "autotrade"
+  ];
+  const score = idSignals.reduce((n, token) => n + (value.includes(token) ? 1 : 0), 0);
+  return score >= 1 ? "id" : "en";
+}
+
+function indonesianAnswer(question, context = {}) {
+  const q = cleanQuestion(question).toLowerCase();
+  const cfg = context.cfg || {};
+
+  if (!q) {
+    return "Tanyakan kepada saya tentang ATH Mining, AETHER Wallet, AETHER AUTOTRADE, referral, staking, swap, DApps, network/RPC, keamanan, atau layanan AETHER lainnya.";
+  }
+
+  if (containsSecretRequest(q)) {
+    return [
+      "<b>Peringatan Keamanan</b>",
+      "",
+      "Jangan pernah mengirim atau menempelkan seed phrase, private key, mnemonic, password, atau kata pemulihan di sini.",
+      "Saya tetap dapat membantu dengan informasi publik dan panduan langkah demi langkah tanpa meminta data rahasia."
+    ].join("\n");
+  }
+
+  if (/(autotrade|auto trade|ai trade|ai-trade|trading|trade)/i.test(q)) {
+    return [
+      "<b>AETHER AUTOTRADE</b>",
+      "",
+      "AETHER AUTOTRADE adalah portal otomatisasi trading resmi dalam ekosistem AETHER.",
+      "Gunakan portal resmi untuk melihat fitur trading, mode yang tersedia, dan kontrol eksekusi.",
+      "",
+      `Buka AETHER AUTOTRADE: ${DEFAULT_AUTOTRADE_URL}`,
+      "",
+      "AutoTrade tidak menjamin keuntungan. Selalu periksa risiko, izin wallet, jaringan, dan detail transaksi sebelum mengaktifkan fitur eksekusi."
+    ].join("\n");
+  }
+
+  if (/(mining|miner|power|booster|claim|menambang|tambang)/i.test(q)) {
+    return [
+      "<b>Panduan ATH Mining</b>",
+      "",
+      "1. Hubungkan wallet yang didukung.",
+      "2. Pastikan jaringan sesuai dengan yang ditampilkan pada halaman AETHER Mining.",
+      "3. Periksa detail Power / Booster sebelum menandatangani transaksi.",
+      "4. Gunakan kontrol claim di halaman ketika posisi Anda memenuhi syarat.",
+      "",
+      `Mode halaman saat ini: <b>${escapeHtml(cfg.networkMode || "UNKNOWN")}</b>`,
+      `Harga Power pada deployment ini: <b>${escapeHtml(cfg.powerPriceBnb || "-")} BNB</b>`,
+      `Harga Booster pada deployment ini: <b>${escapeHtml(cfg.boosterPriceBnb || "-")} BNB</b>`,
+      "",
+      "Aturan on-chain dan smart contract yang terhubung tetap menjadi sumber kebenaran utama."
+    ].join("\n");
+  }
+
+  if (/(wallet|dompet|create wallet|import wallet|watch only|watch-only)/i.test(q)) {
+    return [
+      "<b>AETHER Wallet</b>",
+      "",
+      "AETHER Wallet adalah gerbang Web3 utama dalam ekosistem AETHER. Fiturnya mencakup pembuatan/import wallet, Watch-Only, send/receive, asset, DApp, custom network/RPC, workflow keamanan, dan layanan lain yang tersedia.",
+      "",
+      `Buka: ${DEFAULT_WALLET_URL}`,
+      "",
+      "Jangan pernah membagikan seed phrase atau private key kepada AI, bot Telegram, admin, atau formulir website apa pun."
+    ].join("\n");
+  }
+
+  if (/(fitur|layanan|semua aether|features|services|facilities)/i.test(q)) {
+    return [
+      "<b>Ekosistem AETHER — Fitur & Layanan</b>",
+      "",
+      "AETHER dirancang sebagai ekosistem Web3 multi-layanan:",
+      "• Create / Import Wallet dan Watch-Only",
+      "• Multi-wallet dan akses multi-chain yang didukung",
+      "• Asset, saldo, dan token view",
+      "• Send / Receive dan QR",
+      "• Import Custom Token",
+      "• Swap / DEX dan market data jika didukung",
+      "• Discover / DApps / Web3 connections",
+      "• Custom Network / RPC health dan fallback",
+      "• Staking & Earn melalui provider yang didukung",
+      "• ATH Mining dan referral",
+      `• AETHER AUTOTRADE — ${DEFAULT_AUTOTRADE_URL}`,
+      "• Security Center dan cold/watch-only workflow",
+      "• AETHER Pay jika provider/gate produksi sudah terhubung",
+      "• Auto refresh pada tampilan wallet dan market yang didukung",
+      "",
+      "Sebagian layanan bergantung pada jaringan, provider, versi aplikasi, atau gate produksi.",
+      "",
+      `AETHER Wallet: ${DEFAULT_WALLET_URL}`,
+      `ATH Mining: ${DEFAULT_MINING_URL}`
+    ].join("\n");
+  }
+
+  if (/(send|receive|qr|kirim|terima|transfer)/i.test(q)) {
+    return [
+      "<b>Panduan Kirim / Terima</b>",
+      "",
+      "Untuk menerima, pilih asset dan jaringan, verifikasi alamat serta QR, lalu bagikan hanya alamat publik atau QR.",
+      "Untuk mengirim, periksa jaringan, token, alamat tujuan, jumlah, dan biaya sebelum menandatangani transaksi di AETHER Wallet.",
+      "",
+      `Wallet: ${DEFAULT_WALLET_URL}`
+    ].join("\n");
+  }
+
+  if (/(swap|dex|market|harga|price|liquidity|likuiditas)/i.test(q)) {
+    return [
+      "<b>Swap & DEX</b>",
+      "",
+      "AETHER dapat menyediakan fungsi swap/DEX dan market pada jaringan/provider yang didukung. Quote, likuiditas, rute, dan ketersediaan eksekusi dapat berubah secara real-time.",
+      "",
+      "Selalu periksa contract token, expected output, slippage, dan network fee sebelum menandatangani transaksi."
+    ].join("\n");
+  }
+
+  if (/(staking|earn|stake)/i.test(q)) {
+    return [
+      "<b>Staking & Earn</b>",
+      "",
+      "AETHER dapat mengarahkan pengguna ke layanan staking/earn dan DApp yang didukung. Reward, lock period, dan ketentuan smart contract ditentukan oleh provider terkait.",
+      "",
+      "Jangan menganggap yield yang ditampilkan sebagai keuntungan yang dijamin."
+    ].join("\n");
+  }
+
+  if (/(referral|invite|sponsor|referal|undang)/i.test(q)) {
+    return [
+      "<b>Referral ATH</b>",
+      "",
+      "Telegram dapat mencatat attribution referral, tetapi kredit referral resmi ATH Mining ditentukan oleh smart contract on-chain.",
+      "Self-referral tidak boleh digunakan dan sponsor harus memenuhi syarat on-chain.",
+      "",
+      `AETHER Bot: ${DEFAULT_BOT_URL}`
+    ].join("\n");
+  }
+
+  if (/(security|keamanan|seed|private key|scam|phishing)/i.test(q)) {
+    return [
+      "<b>Aturan Keamanan AETHER</b>",
+      "",
+      "• Jangan pernah membagikan seed phrase atau private key.",
+      "• Jangan menempelkan recovery words ke AI.",
+      "• Verifikasi domain dan alamat contract token.",
+      "• Periksa semua transaksi sebelum sign.",
+      "• Abaikan DM yang meminta pembayaran, seed words, atau remote access."
+    ].join("\n");
+  }
+
+  if (/(dapp|discover|web3|connect wallet|hubungkan wallet)/i.test(q)) {
+    return [
+      "<b>DApps & Web3</b>",
+      "",
+      "Gunakan jalur Discover / DApp AETHER untuk layanan Web3 yang didukung. Saat menghubungkan wallet, verifikasi domain, jaringan, dan permission yang diminta.",
+      "",
+      `AETHER Wallet: ${DEFAULT_WALLET_URL}`
+    ].join("\n");
+  }
+
+  if (/(network|rpc|chain|jaringan|custom network)/i.test(q)) {
+    return [
+      "<b>Network & RPC</b>",
+      "",
+      "AETHER mendukung pengelolaan network/RPC pada jaringan yang tersedia. Gunakan HTTPS RPC, pastikan chain ID benar, dan verifikasi explorer/network sebelum memakai custom network.",
+      "",
+      "Jika saldo atau DApp terlihat salah, periksa kembali jaringan yang sedang dipilih."
+    ].join("\n");
+  }
+
+  if (/(token|ath|coin|aether coin)/i.test(q)) {
+    return [
+      "<b>AETHER / ATH</b>",
+      "",
+      "ATH adalah token dalam ekosistem mining AETHER. Gunakan hanya link resmi AETHER dan verifikasi jaringan serta contract sebelum berinteraksi dengan token.",
+      "",
+      `Website AETHER: ${DEFAULT_WEBSITE_URL}`,
+      `Mining: ${DEFAULT_MINING_URL}`
+    ].join("\n");
+  }
+
+  return [
+    "<b>Panduan AETHER AI</b>",
+    "",
+    "Saya dapat membantu Anda mengenai:",
+    "• ATH Mining / Power / Booster / Claim",
+    "• AETHER Wallet dan keamanan",
+    "• AETHER AUTOTRADE",
+    "• Send / Receive / QR",
+    "• Swap / DEX / market",
+    "• Staking & Earn",
+    "• DApps dan koneksi Web3",
+    "• Network / RPC",
+    "• Referral ATH dan link resmi ekosistem",
+    "",
+    `AETHER Wallet: ${DEFAULT_WALLET_URL}`,
+    `AETHER AUTOTRADE: ${DEFAULT_AUTOTRADE_URL}`,
+    `Mining: ${DEFAULT_MINING_URL}`
+  ].join("\n");
 }
 
 function localAnswer(question, context = {}) {
+  if (detectLanguage(question) === "id") {
+    return indonesianAnswer(question, context);
+  }
   const q = cleanQuestion(question).toLowerCase();
   if (!q) return "Ask me about ATH Mining, AETHER Wallet, referral, staking, swap, DApps, network/RPC, security, or other AETHER services.";
 
@@ -284,6 +489,7 @@ async function providerAnswer({ question, local, cfg }) {
     "Never promise profits, guaranteed returns, guaranteed mining yield, or guaranteed token prices.",
     "Clearly distinguish live/available features from network-dependent, provider-dependent, gated, or planned features.",
     "For on-chain actions, remind the user to verify the network, contract, transaction details and sign locally in their own wallet.",
+    "Always answer in the same language used by the user. If the user writes Indonesian, answer in Indonesian. If the user writes English, answer in English. For any other language, respond in that same language.",
     "Prefer concise step-by-step guidance.",
     `Official wallet: ${DEFAULT_WALLET_URL}`,
     `Official mining page: ${DEFAULT_MINING_URL}`,
@@ -328,22 +534,25 @@ async function providerAnswer({ question, local, cfg }) {
 
 async function answerQuestion(question, cfg) {
   const clean = cleanQuestion(question);
+  const language = detectLanguage(clean);
   const local = localAnswer(clean, { cfg });
   try {
     const external = await providerAnswer({ question: clean, local, cfg });
     return {
       answer: external || local,
       mode: external ? "ai" : "knowledge",
-      safety: "Never share seed phrases or private keys.",
+      language,
+      safety: language === "id" ? "Jangan pernah membagikan seed phrase atau private key." : "Never share seed phrases or private keys.",
     };
   } catch (error) {
     console.error("AETHER AI provider error:", error.message);
     return {
       answer: local,
       mode: "knowledge-fallback",
-      safety: "Never share seed phrases or private keys.",
+      language,
+      safety: language === "id" ? "Jangan pernah membagikan seed phrase atau private key." : "Never share seed phrases or private keys.",
     };
   }
 }
 
-module.exports = { answerQuestion, localAnswer, cleanQuestion };
+module.exports = { answerQuestion, localAnswer, cleanQuestion, detectLanguage };
