@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "engineVersion": "3.3.0",
+  "contracts": {
+    "ATHToken": {
+      "abiFile": "deployments/abi/ATHToken.json",
+      "abiSha256": "52ce0fae84c94b4bed5f0fe1b80d49ebd7dd9929acb4e18f5429c7a63cc2cd73",
+      "deployedBytecodeSha256": "34255d8c46d2fb58e5501b5eb27f2f7b3a26d88fa01a84bfd629cfffc519786b",
+      "deployedBytecodeBytes": 2747
+    },
+    "MiningAirdrop": {
+      "abiFile": "deployments/abi/MiningAirdrop.v3.3.json",
+      "abiSha256": "8f6eb017880d6dc4dedaa2629d5a2289e2b0c04954f4da878b906538c207fee4",
+      "deployedBytecodeSha256": "dab7c755f796c51e63c62fd6072e9af7ae974ffbca61b99ec4f8735eca2ac7e5",
+      "deployedBytecodeBytes": 18702
+    },
+    "TeamTokenLock": {
+      "abiFile": "deployments/abi/TeamTokenLock.json",
+      "abiSha256": "83a60ae6b055ed176986727cfee5df19a534e344dd0ce499d3817703f1db3bb8",
+      "deployedBytecodeSha256": "9ce855acb85d887af4cba3bc4d9d2e49fda1ecfa5257e5ca58dd3318420f27e4",
+      "deployedBytecodeBytes": 838
+    }
+  }
+}
