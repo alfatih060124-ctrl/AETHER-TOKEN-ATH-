@@ -65,7 +65,7 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 
 ### No-BNB Completion Gate — DONE
 
-All work that does not require a public-chain transaction is now represented by executable checks or documented release gates: contract rules, 25 automated tests, source self-check, script syntax checks, ABI/bytecode fingerprints, local full-tokenomics deployment rehearsal, holder-flow rehearsal, keeper hardening, deployment/post-deploy invariants, BscScan verification tooling, Control Panel, public web, AI knowledge, Whitepaper, runbooks and acceptance checklist.
+All work that does not require a public-chain transaction is now represented by executable checks or documented release gates: contract rules, 25 automated tests, source self-check, script syntax checks, ABI/bytecode fingerprints, local full-tokenomics deployment rehearsal, holder-flow rehearsal, keeper hardening, deterministic npm lockfiles, deployment/post-deploy invariants, BscScan verification tooling, Control Panel, public web, AI knowledge, Whitepaper, runbooks and acceptance checklist.
 
 The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC Testnet deployer wallet. No real BNB is required for the Testnet phase.
 
