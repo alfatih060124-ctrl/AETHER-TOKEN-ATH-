@@ -1,0 +1,16 @@
+# AETHER Corporate
+> Intelligent Infrastructure for Digital Ownership.
+
+Official corporate website: https://aether.boats/
+
+## Ecosystem
+- AETHER Wallet: https://wallet.aether.boats/
+- ATH Token / Mining: https://mining.aether.boats/
+- AETHER AUTOTRADE: https://aitrade.aether.boats/
+- Official Telegram Bot: https://t.me/Aetther_bot
+
+## Brand
+AETHER uses one master corporate identity across its businesses. Product names are descriptors under the AETHER master brand.
+
+## Safety
+Never share a seed phrase or private key. Product information does not guarantee profit, yield, market price, or investment return.
