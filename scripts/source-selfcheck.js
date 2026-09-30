@@ -23,7 +23,8 @@ if (/function\s+mint\s*\(/.test(token)) {
 console.log("OK: no post-deployment mint() function");
 
 must(mining, /POWER_PRICE\s*=\s*0\.001 ether/, "Power price is 0.001 BNB");
-must(mining, /BOOSTER_PRICE\s*=\s*0\.001 ether/, "Booster price is 0.001 BNB");
+must(mining, /powerBoosterPrice\s*=\s*0\.001 ether/, "Power Booster default price is 0.001 BNB");
+must(mining, /doublePowerBoosterPrice\s*=\s*0\.001 ether/, "Double Power Booster default price is 0.001 BNB");
 must(mining, /BASE_REWARD\s*=\s*1 ether/, "base reward is 1 ATH");
 must(mining, /MAX_DAYS\s*=\s*180/, "mining window is 180 days");
 must(mining, /MINING_POOL_ALLOCATION\s*=\s*700_000_000 ether/, "mining allocation is 700,000,000 ATH");
@@ -32,7 +33,21 @@ must(mining, /PCT_60\s*=\s*5/, "60d vesting tranche is 5%");
 must(mining, /PCT_90\s*=\s*5/, "90d vesting tranche is 5%");
 must(mining, /PCT_180\s*=\s*80/, "180d vesting tranche is 80%");
 must(mining, /BOOSTER_HASH\s*=\s*100/, "booster adds 100 Hash");
-must(mining, /TWO_X\s*=\s*20_000/, "booster reward multiplier is capped at 2x");
+must(mining, /TWO_X\s*=\s*20_000/, "Power Booster multiplier is 2x");
+must(mining, /SIX_X\s*=\s*60_000/, "Double Power applies x3 on top of Power Booster for 6x total");
+must(mining, /BOOSTER_DURATION\s*=\s*30 days/, "Power Booster duration is 30 days");
+must(mining, /DOUBLE_POWER_MIN_REFERRALS\s*=\s*5/, "Double Power requires at least 5 referrals");
+must(mining, /CLAIM_OPEN_OFFSET\s*=\s*5 minutes/, "daily reward opens at 00:05 UTC");
+must(mining, /MAX_VESTING_CYCLES\s*=\s*12/, "recurring vesting is capped at 12 cycles");
+must(mining, /CYCLE_BURN_PCT\s*=\s*10/, "each vesting cycle burns 10% on entry");
+must(mining, /FINAL_BURN_PCT\s*=\s*60/, "final settlement burns 60% of the last rollover");
+must(mining, /event RewardCalculated/, "RewardCalculated event is present");
+must(mining, /event RewardClaimed/, "RewardClaimed event is present");
+must(mining, /event RewardExpired/, "RewardExpired event is present");
+must(mining, /event VestingCycleEntered/, "VestingCycleEntered event is present");
+must(mining, /event ATHBurned/, "ATHBurned event is present");
+must(mining, /event VestingFinalSettled/, "VestingFinalSettled event is present");
+must(mining, /function setBoosterPrices[\s\S]*external onlyOwner/, "booster prices are owner-controlled");
 
 for (const expected of [
   "if (count >= 46) return 15_000",
