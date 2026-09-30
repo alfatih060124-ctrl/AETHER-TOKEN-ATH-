@@ -46,6 +46,8 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant CYCLE_UNLOCK_90_PCT = 5;
     uint256 public constant MAX_VESTING_CYCLES = 12;
     uint256 public constant FINAL_BURN_PCT = 60;
+    uint256 public constant MAX_KEEPER_BATCH = 50;
+    uint256 public constant MAX_MINER_PAGE = 200;
 
     uint256 public constant BOOSTER_HASH = 100;
     uint256 public constant BOOSTER_DURATION = 30 days;
@@ -128,6 +130,7 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
     }
 
     mapping(address => UserInfo) public users;
+    address[] private miners;
     mapping(address => VestingPosition[]) private vestingPositions;
     mapping(address => mapping(uint256 => mapping(uint8 => VestingCycle))) private vestingCycles;
     mapping(address => mapping(uint256 => DailyRewardRecord)) private dailyRewards;
@@ -191,6 +194,8 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
         uint256 positionIndex
     );
     event RewardExpired(address indexed user, uint256 indexed dayId, uint256 reward);
+    event RewardBatchSnapshotted(uint256 indexed dayId, uint256 requested, uint256 processed);
+    event RewardBatchExpired(uint256 indexed dayId, uint256 requested, uint256 processed);
     event DailyClaimed(address indexed user, uint256 reward, uint256 dayNumber, uint256 positionIndex);
 
     event VestingCreated(
@@ -265,6 +270,7 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
 
         totalPowerSold += 1;
         totalMiners += 1;
+        miners.push(msg.sender);
 
         if (referrer != address(0) && users[referrer].hasPower) {
             referrerOf[msg.sender] = referrer;
@@ -392,6 +398,68 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
 
         record.status = REWARD_EXPIRED;
         emit RewardExpired(account, dayId, record.reward);
+    }
+
+    /**
+     * @notice Permissionless keeper batch for today's 00:05 UTC reward evidence.
+     * @dev Skips ineligible or already-snapshotted accounts so one stale entry
+     *      cannot revert an otherwise valid keeper batch.
+     */
+    function snapshotDailyRewards(address[] calldata accounts)
+        external
+        whenNotPaused
+        returns (uint256 processed)
+    {
+        uint256 count = accounts.length;
+        require(count > 0 && count <= MAX_KEEPER_BATCH, "Invalid keeper batch");
+
+        uint256 dayId = _utcDayId(block.timestamp);
+        require(block.timestamp >= _rewardSnapshotAt(dayId), "Claim window not open");
+
+        for (uint256 i = 0; i < count; i++) {
+            address account = accounts[i];
+            if (!_isEligibleRewardDay(users[account], dayId)) continue;
+
+            DailyRewardRecord storage record = dailyRewards[account][dayId];
+            if (record.status != REWARD_NONE) continue;
+
+            _snapshotReward(account, dayId);
+            processed += 1;
+        }
+
+        emit RewardBatchSnapshotted(dayId, count, processed);
+    }
+
+    /**
+     * @notice Permissionless keeper batch that materializes RewardExpired events.
+     * @dev Claimed, already-expired and ineligible accounts are skipped.
+     */
+    function expireDailyRewards(address[] calldata accounts, uint256 dayId)
+        external
+        whenNotPaused
+        returns (uint256 processed)
+    {
+        uint256 count = accounts.length;
+        require(count > 0 && count <= MAX_KEEPER_BATCH, "Invalid keeper batch");
+        require(block.timestamp >= (dayId + 1) * DAY, "Reward day not ended");
+
+        for (uint256 i = 0; i < count; i++) {
+            address account = accounts[i];
+            if (!_isEligibleRewardDay(users[account], dayId)) continue;
+
+            DailyRewardRecord storage record = dailyRewards[account][dayId];
+            if (record.status == REWARD_CLAIMED || record.status == REWARD_EXPIRED) continue;
+
+            if (record.status == REWARD_NONE) {
+                _snapshotReward(account, dayId);
+            }
+
+            record.status = REWARD_EXPIRED;
+            emit RewardExpired(account, dayId, record.reward);
+            processed += 1;
+        }
+
+        emit RewardBatchExpired(dayId, count, processed);
     }
 
     function claimDaily() external whenNotPaused nonReentrant {
@@ -970,6 +1038,24 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
         if (block.timestamp >= pos.startTime + VEST_60) claimable60 = pos.initial60 - pos.claimedInitial60;
         if (block.timestamp >= pos.startTime + VEST_90) claimable90 = pos.initial90 - pos.claimedInitial90;
         claimable180 = 0;
+    }
+
+    function getMiners(uint256 offset, uint256 limit)
+        external
+        view
+        returns (address[] memory result)
+    {
+        require(limit > 0 && limit <= MAX_MINER_PAGE, "Invalid miner page");
+        uint256 count = miners.length;
+        if (offset >= count) return new address[](0);
+
+        uint256 end = offset + limit;
+        if (end > count) end = count;
+
+        result = new address[](end - offset);
+        for (uint256 i = offset; i < end; i++) {
+            result[i - offset] = miners[i];
+        }
     }
 
     function getPositionsCount(address account) external view returns (uint256) {
