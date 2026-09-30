@@ -84,7 +84,7 @@
     head.innerHTML = '<div><strong>AETHER AI</strong><span>Holder Guidance Center</span></div><button type="button" id="aetherAiClose" aria-label="Close">×</button>';
 
     const intro = el("div", "aether-ai-intro");
-    intro.innerHTML = '<b>Ask about AETHER.</b><span>Mining, Wallet, ATH, referral, staking, DApps, network/RPC, security and ecosystem navigation.</span>';
+    intro.innerHTML = '<b>Ask about AETHER.</b><span>Mining, Wallet, ATH, AETHER AUTOTRADE, referral, staking, DApps, network/RPC, security and ecosystem navigation.</span>';
 
     const quick = el("div", "aether-ai-quick");
     [
@@ -94,6 +94,7 @@
       ["How do I stay safe?", "Security"],
       ["How does Swap / DEX work?", "Swap / DEX"],
       ["How do I connect a wallet?", "Connect Wallet"],
+      ["What is AETHER AUTOTRADE?", "AETHER AUTOTRADE"],
     ].forEach(([q, label]) => {
       const b = el("button", "aether-ai-chip", label);
       b.type = "button";
@@ -110,6 +111,7 @@
       '<a href="https://mining.aether.boats/" target="_blank" rel="noopener">ATH Mining</a>',
       '<a href="https://aether.boats/" target="_blank" rel="noopener">AETHER</a>',
       '<a href="https://t.me/Aetther_bot" target="_blank" rel="noopener">Telegram Bot</a>',
+      '<a href="https://aitrade.aether.boats" target="_blank" rel="noopener">AETHER AUTOTRADE</a>',
     ].join("");
 
     const form = el("form", "aether-ai-form");
