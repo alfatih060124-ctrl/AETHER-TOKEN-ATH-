@@ -14,6 +14,12 @@ function requiredAddress(name) {
   return hre.ethers.getAddress(value);
 }
 
+function requiredAddressAny(names) {
+  const name = names.find((candidate) => String(process.env[candidate] || "").trim());
+  if (!name) throw new Error(`Missing required env: one of ${names.join(", ")}`);
+  return requiredAddress(name);
+}
+
 async function main() {
   required("BSCSCAN_API_KEY");
 
@@ -28,9 +34,9 @@ async function main() {
   if (isTestnet && chainId !== 97) throw new Error(`BSC Testnet chain mismatch: ${chainId}`);
   if (isMainnet && chainId !== 56) throw new Error(`BSC Mainnet chain mismatch: ${chainId}`);
 
-  const token = requiredAddress("ATH_TOKEN");
-  const mining = requiredAddress("MINING_AIRDROP");
-  const teamLock = requiredAddress("TEAM_TOKEN_LOCK");
+  const token = requiredAddressAny(["ATH_TOKEN_ADDRESS", "ATH_TOKEN"]);
+  const mining = requiredAddressAny(["ATH_MINING_ADDRESS", "MINING_AIRDROP"]);
+  const teamLock = requiredAddressAny(["ATH_TEAM_LOCK_ADDRESS", "TEAM_TOKEN_LOCK"]);
   const deployerAddress = requiredAddress("DEPLOYER_ADDRESS");
 
   const singleWalletMode = isTestnet && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";

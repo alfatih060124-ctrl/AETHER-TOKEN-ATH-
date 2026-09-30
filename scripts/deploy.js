@@ -98,6 +98,54 @@ async function main() {
   await mining.waitForDeployment();
   const miningAddress = await mining.getAddress();
 
+  const [
+    powerPrice,
+    baseReward,
+    maxDays,
+    claimOpenOffset,
+    boosterHash,
+    boosterDuration,
+    doublePowerMinReferrals,
+    maxVestingCycles,
+    cycleBurnPct,
+    finalBurnPct,
+    powerBoosterPrice,
+    doublePowerBoosterPrice,
+  ] = await Promise.all([
+    mining.POWER_PRICE(),
+    mining.BASE_REWARD(),
+    mining.MAX_DAYS(),
+    mining.CLAIM_OPEN_OFFSET(),
+    mining.BOOSTER_HASH(),
+    mining.BOOSTER_DURATION(),
+    mining.DOUBLE_POWER_MIN_REFERRALS(),
+    mining.MAX_VESTING_CYCLES(),
+    mining.CYCLE_BURN_PCT(),
+    mining.FINAL_BURN_PCT(),
+    mining.powerBoosterPrice(),
+    mining.doublePowerBoosterPrice(),
+  ]);
+
+  const expectedRules = [
+    [powerPrice, hre.ethers.parseEther("0.001"), "POWER_PRICE"],
+    [baseReward, hre.ethers.parseEther("1"), "BASE_REWARD"],
+    [maxDays, 180n, "MAX_DAYS"],
+    [claimOpenOffset, 300n, "CLAIM_OPEN_OFFSET"],
+    [boosterHash, 100n, "BOOSTER_HASH"],
+    [boosterDuration, BigInt(30 * 24 * 60 * 60), "BOOSTER_DURATION"],
+    [doublePowerMinReferrals, 5n, "DOUBLE_POWER_MIN_REFERRALS"],
+    [maxVestingCycles, 12n, "MAX_VESTING_CYCLES"],
+    [cycleBurnPct, 10n, "CYCLE_BURN_PCT"],
+    [finalBurnPct, 60n, "FINAL_BURN_PCT"],
+    [powerBoosterPrice, hre.ethers.parseEther("0.001"), "powerBoosterPrice"],
+    [doublePowerBoosterPrice, hre.ethers.parseEther("0.001"), "doublePowerBoosterPrice"],
+  ];
+  for (const [actual, expected, label] of expectedRules) {
+    if (actual !== expected) {
+      throw new Error(`Mining v3.3 invariant failed for ${label}: got ${actual}, expected ${expected}`);
+    }
+  }
+
   const TeamTokenLock = await hre.ethers.getContractFactory("TeamTokenLock");
   const teamLock = await TeamTokenLock.deploy(tokenAddress, teamBeneficiary, releaseTime);
   await teamLock.waitForDeployment();
@@ -133,6 +181,7 @@ async function main() {
   }
 
   const manifest = {
+    engineVersion: "3.3.0",
     network: hre.network.name,
     chainId,
     deployer: deployer.address,
@@ -154,6 +203,19 @@ async function main() {
       liquidity: "200000000",
       teamLocked: "50000000",
       marketing: "50000000",
+    },
+    miningRules: {
+      baseRewardATH: "1",
+      claimOpenUtc: "00:05:00",
+      claimCloseUtc: "23:59:59",
+      powerPriceBNB: "0.001",
+      powerBoosterPriceBNB: hre.ethers.formatEther(powerBoosterPrice),
+      doublePowerBoosterPriceBNB: hre.ethers.formatEther(doublePowerBoosterPrice),
+      powerBoosterDurationDays: 30,
+      doublePowerMinReferrals: Number(doublePowerMinReferrals),
+      maxVestingCycles: Number(maxVestingCycles),
+      cycleBurnPct: Number(cycleBurnPct),
+      finalBurnPct: Number(finalBurnPct),
     },
     deployerExpectedATH: hre.ethers.formatEther(expectedDeployerATH),
     deployedAt: new Date().toISOString(),
