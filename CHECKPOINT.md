@@ -16,8 +16,8 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - After Cycle 12, the last rollover settles **60% burn / 40% holder distribution** with zero residual.
 - On-chain evidence includes RewardCalculated, RewardClaimed, RewardExpired, VestingCreated, VestingCycleEntered, ATHBurned, VestingTrancheClaimed and VestingFinalSettled.
 - Holder-facing read functions expose daily reward status, deadline, allocated/claimed/burned balances, per-position vesting, all cycle previews, current cycle and final settlement preview.
-- Automated v3.3 suite: **21 passing**.
-- MiningAirdrop deployed bytecode: **18,702 bytes**, below the 24,576-byte EIP-170 limit.
+- Automated v3.3 suite: **25 passing**.
+- MiningAirdrop deployed bytecode: **20,309 bytes**, below the 24,576-byte EIP-170 limit with **4,267 bytes headroom**.
 - Web/admin JavaScript syntax QC: **PASSED**.
 - Blockchain deployment status: **NOT DEPLOYED** for v3.3.
 - Testnet deployer remains blocked at **0.0 tBNB**; at least **0.02 tBNB** is required.
@@ -31,8 +31,8 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - One-shot deploy automatically loads addresses from the generated manifest and runs post-deploy v3.3 invariants before reporting success.
 - BscScan verification accepts the canonical manifest variable names `ATH_TOKEN_ADDRESS`, `ATH_MINING_ADDRESS`, and `ATH_TEAM_LOCK_ADDRESS` while preserving legacy aliases.
 - Deterministic ABI/release package is generated under `deployments/abi/`.
-- MiningAirdrop ABI SHA-256: `8f6eb017880d6dc4dedaa2629d5a2289e2b0c04954f4da878b906538c207fee4`.
-- MiningAirdrop deployed-bytecode SHA-256: `dab7c755f796c51e63c62fd6072e9af7ae974ffbca61b99ec4f8735eca2ac7e5`.
+- MiningAirdrop ABI SHA-256: `15ca610bcf463064e6057eb1cf0a5ba31eba6ba827ca1b5cc0ebe876f652280a`.
+- MiningAirdrop deployed-bytecode SHA-256: `bfcdc69f7a9e5bd8307239642b4103a8e049f71978388069e63d19ac5c776d33`.
 - Fail-closed one-shot gate test: `TESTNET_DEPLOY_APPROVED=false` correctly exits before deployment.
 - Remaining external blocker is unchanged: fund the Testnet deployer with at least **0.02 tBNB**.
 
@@ -44,8 +44,30 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - Holder smoke flow verifies a real protocol path: Power activation, referral-effective reward, daily claim, initial vesting, Cycle-1 burn/rollover and final 60/40 conservation.
 - Latest rehearsal evidence: 1 referral => 1.1 ATH daily reward; 1.1 ATH vesting position; 0.088 ATH Cycle-1 burn; 0.616 ATH Cycle-1 rollover.
 - Local release rehearsal runs with `npm run release:smoke:local` and requires no BNB/tBNB.
-- Full gate remains green: source self-check PASSED, syntax check PASSED, 21/21 automated tests PASS, local release rehearsal PASS.
+- Full gate remains green: source self-check PASSED, syntax check PASSED, **25/25 automated tests PASS**, ABI export PASS, local release rehearsal PASS.
 - This rehearsal does not create public blockchain addresses and does not alter Testnet/Mainnet gates.
+
+### Reward Keeper / Transparency Hardening — DONE
+
+- Added permissionless `snapshotDailyRewards(address[])` and `expireDailyRewards(address[],dayId)` batch functions.
+- Batch execution is capped at **50 accounts** per transaction to bound gas exposure.
+- Added `RewardBatchSnapshotted` and `RewardBatchExpired` summary events while preserving per-holder `RewardCalculated` / `RewardExpired` evidence.
+- Added an on-chain miner registry populated at Power activation.
+- Added paginated `getMiners(offset,limit)` with a **200-account page cap**, eliminating daily historical-log scans and external holder databases for keeper discovery.
+- Keeper runtime is fail-closed: `KEEPER_ENABLED=false` performs no RPC call and no transaction.
+- Keeper runtime defaults to dry-run, is **BSC Testnet chain 97 only**, and rejects Mainnet in v3.3.
+- Keeper wallet is designed as a dedicated gas-only wallet with no owner, treasury, vesting, Booster-price, or token-control authority.
+- Deployment and post-deploy invariant scripts verify `MAX_KEEPER_BATCH=50` and `MAX_MINER_PAGE=200`.
+- Release ABI export requires the keeper batch functions and miner registry getters.
+- Runbook: `docs/REWARD_KEEPER_RUNBOOK.md`.
+- Testnet acceptance checklist: `docs/TESTNET_ACCEPTANCE_CHECKLIST.md`.
+- No-BNB completion register: `docs/NO_BNB_COMPLETION.md`.
+
+### No-BNB Completion Gate — DONE
+
+All work that does not require a public-chain transaction is now represented by executable checks or documented release gates: contract rules, 25 automated tests, source self-check, script syntax checks, ABI/bytecode fingerprints, local full-tokenomics deployment rehearsal, holder-flow rehearsal, keeper hardening, deployment/post-deploy invariants, BscScan verification tooling, Control Panel, public web, AI knowledge, Whitepaper, runbooks and acceptance checklist.
+
+The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC Testnet deployer wallet. No real BNB is required for the Testnet phase.
 
 ### Public Documentation / AI Sync — DONE
 
@@ -64,8 +86,8 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 3. Mining engine rebuilt around the 180-day claim window.
 4. Unsupported inherited 180-ATH hard cap removed; 180-day mining window retained.
 5. Referral tier logic preserved (+10% to +50%).
-6. Booster logic preserved as 100 Hash and x2 reward maximum.
-7. 4-tier vesting implemented per daily mining allocation.
+6. Power Booster 2x/30d and Double Power 3x-on-Power logic implemented with configurable prices and 5-referral Double Power gate.
+7. Initial 10%/5%/5% unlock plus 80% recurring 12-cycle vesting/burn implemented per daily mining allocation.
 8. Mining reserve protection added.
 9. Treasury update and emergency pause controls retained.
 10. Tokenomics deploy flow expanded to distribute 70/20/5/5.
@@ -95,16 +117,19 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 
 ## LATEST GREEN EVIDENCE
 
-- Current validated code commit: `4fd3751af389c15b0f5cbcf5844a38b71ab08b15`
-- Railway deployer/validator service: `ath-testnet-deployer`
-- Latest full validator deployment: `c83260a9-a4c1-46cd-8c1c-fcc21c68297f`
+- Current validated source: **ATH Mining v3.3 no-BNB completion gate**.
+- Railway deployer/validator service: `ath-testnet-deployer`.
+- Validator will be pinned to the merged keeper-hardening commit before any Testnet transaction.
 - Source self-check: `PASSED`
 - BSC Testnet RPC: `PASSED`
 - BSC chain ID: `97`
 - Safe config: `READY`
 - Deployment config: `READY`
 - Solidity files compiled: `18`
-- Automated tests: `16 passing`
+- Automated tests: **25 passing**
+- Local release rehearsal: **PASSED**
+- Reward keeper default/fail-closed test: **PASSED**
+- MiningAirdrop bytecode: **20,309 bytes / 24,576 max**
 - Admin safety tests: treasury authorization, token emergency pause, excess-reserve liability protection — `PASSED`
 - Mainnet gates: all `CLOSED`
 
