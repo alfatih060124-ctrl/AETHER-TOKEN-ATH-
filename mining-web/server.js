@@ -219,6 +219,11 @@ const server = http.createServer((req, res) => {
   });
 });
 
+server.requestTimeout = 15000;
+server.headersTimeout = 10000;
+server.keepAliveTimeout = 5000;
+server.maxHeadersCount = 64;
+
 server.listen(PORT, "0.0.0.0", () => {
   const cfg = configPayload();
   console.log(`AETHER ATH Mining web listening on ${PORT}; mode=${cfg.networkMode}; contractConfigured=${Boolean(cfg.miningAddress)}; mainnetEnabled=${cfg.mainnetEnabled}`);
