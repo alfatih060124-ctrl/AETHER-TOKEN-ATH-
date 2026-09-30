@@ -41,6 +41,14 @@ must(mining, /CLAIM_OPEN_OFFSET\s*=\s*5 minutes/, "daily reward opens at 00:05 U
 must(mining, /MAX_VESTING_CYCLES\s*=\s*12/, "recurring vesting is capped at 12 cycles");
 must(mining, /CYCLE_BURN_PCT\s*=\s*10/, "each vesting cycle burns 10% on entry");
 must(mining, /FINAL_BURN_PCT\s*=\s*60/, "final settlement burns 60% of the last rollover");
+must(mining, /MAX_KEEPER_BATCH\s*=\s*50/, "permissionless reward keeper batch is capped at 50 accounts");
+must(mining, /MAX_MINER_PAGE\s*=\s*200/, "on-chain miner registry page is capped at 200 accounts");
+must(mining, /miners\.push\(msg\.sender\)/, "Power activation registers each miner on-chain");
+must(mining, /function getMiners/, "paginated on-chain miner registry getter is present");
+must(mining, /function snapshotDailyRewards/, "permissionless batch reward snapshot function is present");
+must(mining, /function expireDailyRewards/, "permissionless batch reward expiry function is present");
+must(mining, /event RewardBatchSnapshotted/, "RewardBatchSnapshotted event is present");
+must(mining, /event RewardBatchExpired/, "RewardBatchExpired event is present");
 must(mining, /event RewardCalculated/, "RewardCalculated event is present");
 must(mining, /event RewardClaimed/, "RewardClaimed event is present");
 must(mining, /event RewardExpired/, "RewardExpired event is present");

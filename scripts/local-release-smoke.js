@@ -49,6 +49,8 @@ async function main() {
   assertEq(await mining.CYCLE_BURN_PCT(), 10n, "cycle burn");
   assertEq(await mining.FINAL_BURN_PCT(), 60n, "final burn");
   assertEq(await mining.CLAIM_OPEN_OFFSET(), 300n, "claim open offset");
+  assertEq(await mining.MAX_KEEPER_BATCH(), 50n, "keeper batch cap");
+  assertEq(await mining.MAX_MINER_PAGE(), 200n, "miner registry page cap");
 
   // Align local chain to a claimable UTC time (00:05 or later).
   const block = await hre.ethers.provider.getBlock("latest");
@@ -78,6 +80,7 @@ async function main() {
 
   const rewardBlock = await hre.ethers.provider.getBlock("latest");
   const rewardDay = Math.floor(Number(rewardBlock.timestamp) / 86400);
+  await (await mining.snapshotDailyRewards([holder.address])).wait();
   const status = await mining.getDailyRewardStatus(holder.address, rewardDay);
   assertEq(status.status, 1n, "daily reward status");
   assertEq(status.reward, hre.ethers.parseEther("1.1"), "referral-adjusted reward");

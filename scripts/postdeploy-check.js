@@ -29,6 +29,8 @@ const MINING_ABI = [
   "function MAX_VESTING_CYCLES() view returns (uint256)",
   "function CYCLE_BURN_PCT() view returns (uint256)",
   "function FINAL_BURN_PCT() view returns (uint256)",
+  "function MAX_KEEPER_BATCH() view returns (uint256)",
+  "function MAX_MINER_PAGE() view returns (uint256)",
   "function powerBoosterPrice() view returns (uint256)",
   "function doublePowerBoosterPrice() view returns (uint256)",
   "function totalMined() view returns (uint256)",
@@ -132,6 +134,8 @@ async function main() {
     maxVestingCycles,
     cycleBurnPct,
     finalBurnPct,
+    keeperBatchMax,
+    maxMinerPage,
     powerBoosterPrice,
     doublePowerBoosterPrice,
     totalMined,
@@ -167,6 +171,8 @@ async function main() {
     mining.MAX_VESTING_CYCLES(),
     mining.CYCLE_BURN_PCT(),
     mining.FINAL_BURN_PCT(),
+    mining.MAX_KEEPER_BATCH(),
+    mining.MAX_MINER_PAGE(),
     mining.powerBoosterPrice(),
     mining.doublePowerBoosterPrice(),
     mining.totalMined(),
@@ -213,6 +219,8 @@ async function main() {
   assertEq(maxVestingCycles, 12n, "Maximum vesting cycles");
   assertEq(cycleBurnPct, 10n, "Cycle entry burn");
   assertEq(finalBurnPct, 60n, "Final settlement burn");
+  assertEq(keeperBatchMax, 50n, "Reward keeper batch cap");
+  assertEq(maxMinerPage, 200n, "Miner registry page cap");
   assertEq(powerBoosterPrice, ethers.parseEther("0.001"), "Initial Power Booster price");
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
   assertEq(currentPrice, 3_000_000n, "ATH initial display price");
@@ -290,6 +298,8 @@ async function main() {
       maxVestingCycles: Number(maxVestingCycles),
       cycleBurnPct: Number(cycleBurnPct),
       finalBurnPct: Number(finalBurnPct),
+      keeperBatchMax: Number(keeperBatchMax),
+      minerPageMax: Number(maxMinerPage),
     },
     zeroState: {
       totalMined: totalMined.toString(),

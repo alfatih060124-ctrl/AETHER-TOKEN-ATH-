@@ -226,6 +226,96 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(info.totalAllocated).to.equal(ethers.parseEther("1"));
   });
 
+
+
+  it("keeps an on-chain paginated miner registry for keeper discovery", async function () {
+    const { alice, bob, carol, mining } = await deployFixture();
+
+    await moveToNextUtcSecond(60);
+    for (const user of [alice, bob, carol]) {
+      await mining.connect(user).buyPower(ethers.ZeroAddress, { value: ethers.parseEther("0.001") });
+    }
+
+    expect(await mining.totalMiners()).to.equal(3n);
+    expect(await mining.MAX_MINER_PAGE()).to.equal(200n);
+
+    const page1 = await mining.getMiners(0, 2);
+    const page2 = await mining.getMiners(2, 2);
+    const empty = await mining.getMiners(3, 2);
+
+    expect(page1).to.deep.equal([alice.address, bob.address]);
+    expect(page2).to.deep.equal([carol.address]);
+    expect(empty).to.deep.equal([]);
+
+    await expect(mining.getMiners(0, 201)).to.be.revertedWith("Invalid miner page");
+  });
+
+  it("snapshots daily rewards in permissionless keeper batches", async function () {
+    const { alice, bob, carol, george, mining } = await deployFixture();
+
+    await moveToNextUtcSecond(60);
+    for (const user of [alice, bob, carol]) {
+      await mining.connect(user).buyPower(ethers.ZeroAddress, { value: ethers.parseEther("0.001") });
+    }
+    await moveToCurrentUtcOpen();
+
+    const dayId = BigInt(Math.floor(Number(await time.latest()) / DAY));
+    await expect(
+      mining.connect(george).snapshotDailyRewards([
+        alice.address,
+        bob.address,
+        carol.address,
+        ethers.ZeroAddress,
+      ])
+    )
+      .to.emit(mining, "RewardBatchSnapshotted")
+      .withArgs(dayId, 4n, 3n);
+
+    for (const user of [alice, bob, carol]) {
+      const status = await mining.getDailyRewardStatus(user.address, dayId);
+      expect(status.reward).to.equal(ethers.parseEther("1"));
+      expect(status.status).to.equal(1n);
+    }
+  });
+
+  it("batch-expires only unclaimed eligible rewards and preserves claimed records", async function () {
+    const { alice, bob, carol, george, mining } = await deployFixture();
+
+    await moveToNextUtcSecond(60);
+    for (const user of [alice, bob, carol]) {
+      await mining.connect(user).buyPower(ethers.ZeroAddress, { value: ethers.parseEther("0.001") });
+    }
+    await moveToCurrentUtcOpen();
+
+    const expiredDay = BigInt(Math.floor(Number(await time.latest()) / DAY));
+    await mining.connect(george).snapshotDailyRewards([alice.address, bob.address, carol.address]);
+    await mining.connect(alice).claimDaily();
+
+    await time.increase(DAY);
+
+    await expect(
+      mining.connect(george).expireDailyRewards(
+        [alice.address, bob.address, carol.address],
+        expiredDay
+      )
+    )
+      .to.emit(mining, "RewardBatchExpired")
+      .withArgs(expiredDay, 3n, 2n);
+
+    expect((await mining.getDailyRewardStatus(alice.address, expiredDay)).status).to.equal(2n);
+    expect((await mining.getDailyRewardStatus(bob.address, expiredDay)).status).to.equal(3n);
+    expect((await mining.getDailyRewardStatus(carol.address, expiredDay)).status).to.equal(3n);
+  });
+
+  it("caps permissionless keeper batches at 50 accounts", async function () {
+    const { alice, mining } = await deployFixture();
+    await buyPowerBeforeOpen(mining, alice);
+
+    const oversized = Array.from({ length: 51 }, () => alice.address);
+    await expect(mining.snapshotDailyRewards(oversized))
+      .to.be.revertedWith("Invalid keeper batch");
+  });
+
   it("exposes the complete 1 ATH initial vesting and Cycle 1 preview on-chain", async function () {
     const { alice, mining } = await deployFixture();
     await buyPowerBeforeOpen(mining, alice);

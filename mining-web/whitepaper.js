@@ -12,7 +12,7 @@ function pageBase(doc, pageNo, title) {
   doc.rect(34, 34, 527, 773).lineWidth(0.6).strokeColor("#6d5118").stroke();
   doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(8).text("AETHER / ATH TOKEN", 50, 48);
   doc.fillColor(MUTED).font("Helvetica").fontSize(7).text(title.toUpperCase(), 50, 62);
-  doc.fillColor("#7f725a").fontSize(7).text(`WHITEPAPER V1.0  |  29 SEPTEMBER 2026  |  PAGE ${pageNo}`, 50, 770, { width: 495, align: "right", lineBreak: false });
+  doc.fillColor("#7f725a").fontSize(7).text(`WHITEPAPER V1.1  |  30 SEPTEMBER 2026  |  PAGE ${pageNo}`, 50, 770, { width: 495, align: "right", lineBreak: false });
 }
 
 function heading(doc, kicker, title, y) {
@@ -110,6 +110,8 @@ function streamWhitepaper(res) {
     "Each eligible reward opens at 00:05:00 UTC and closes at 23:59:59 UTC.",
     "An unclaimed daily reward expires at the next UTC day boundary and is never backfilled.",
     "Referral state and active Booster state are snapshotted for that reward at 00:05 UTC.",
+    "A permissionless keeper can materialize RewardCalculated and RewardExpired evidence in capped batches without holding owner/admin rights.",
+    "An on-chain paginated miner registry lets the keeper discover Power holders without relying on an external holder database.",
     "The 180-day Power window limits eligibility; it is not an unlimited emissions schedule.",
     "The mining reserve must be funded before claims can allocate rewards."
   ], y);
@@ -152,6 +154,8 @@ function streamWhitepaper(res) {
     "Liquidity-lock gate: must be confirmed before Mainnet activation.",
     "Mining reserve protection: allocated but unclaimed vesting liabilities are protected from excess-reserve withdrawal.",
     "Administrative controls include emergency pause, treasury update, and pause-gated excess reserve recovery.",
+    "Reward automation uses permissionless batch functions capped at 50 accounts and an on-chain miner registry paginated at 200 accounts.",
+    "The keeper wallet is designed as a gas-only automation key with no owner, treasury, vesting, Booster-price, or token-control authority.",
     "Browser transactions use the connected wallet for signing; private deployment keys are not embedded in the public web interface."
   ], y + 10);
 
@@ -168,7 +172,7 @@ function streamWhitepaper(res) {
 
   const phases = [
     ["01", "COMPLETE", "Protocol Foundation", "Fixed supply, UTC daily rewards, referral, Power/Double Power Boosters, 12-cycle vesting, burn and reserve protection."],
-    ["02", "COMPLETE", "Validation and Interfaces", "21 automated tests, source checks, deterministic ABI fingerprints, admin controls, responsive web and release-gate documentation."],
+    ["02", "COMPLETE", "Validation and Interfaces", "25 automated tests, source checks, deterministic ABI fingerprints, keeper hardening, admin controls, responsive web and release-gate documentation."],
     ["03", "NEXT GATE", "BSC Testnet Deployment", "After Testnet gas funding, deploy once, auto-run v3.3 post-deploy invariants, verify addresses, then test the full holder flow."],
     ["04", "PLANNED", "Wallet Integration", "Freeze verified Testnet ABI/address data and connect ATH mining to AETHER Wallet public testing."],
     ["05", "REQUIRED", "Production Security", "Independent audit, production multisig, operational controls and release evidence."],

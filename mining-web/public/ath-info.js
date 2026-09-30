@@ -71,7 +71,7 @@
       </div>
       <div class="roadmap-grid">
         <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>01</b><h3>Protocol Foundation</h3><p>Fixed 1B ATH supply, UTC daily rewards, referral logic, Power/Double Power Boosters, 12-cycle vesting, burn, and reserve protection.</p></article>
-        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>02</b><h3>Validation & Interfaces</h3><p>21 automated tests, source checks, deterministic ABI fingerprints, admin controls, responsive mining interface, and release-gate documentation.</p></article>
+        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>02</b><h3>Validation & Interfaces</h3><p>25 automated tests, source checks, deterministic ABI fingerprints, permissionless keeper hardening, on-chain miner registry, admin controls, responsive mining interface, and release-gate documentation.</p></article>
         <article class="roadmap-card"><span class="roadmap-status next">NEXT GATE</span><b>03</b><h3>BSC Testnet Deployment</h3><p>Fund Testnet gas, deploy once, auto-run v3.3 post-deploy invariants, capture verified addresses, then test the full Power → Claim → Boosters → Vesting flow.</p></article>
         <article class="roadmap-card"><span class="roadmap-status planned">PLANNED</span><b>04</b><h3>Wallet Integration</h3><p>Freeze verified Testnet ABI/address data and connect ATH mining flows with AETHER Wallet for public testing.</p></article>
         <article class="roadmap-card"><span class="roadmap-status gated">REQUIRED</span><b>05</b><h3>Production Security</h3><p>Independent security review, production multisig, operational controls, and final release-gate evidence.</p></article>

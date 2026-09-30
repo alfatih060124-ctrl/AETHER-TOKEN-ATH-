@@ -10,9 +10,9 @@
     },
     "MiningAirdrop": {
       "abiFile": "deployments/abi/MiningAirdrop.v3.3.json",
-      "abiSha256": "8f6eb017880d6dc4dedaa2629d5a2289e2b0c04954f4da878b906538c207fee4",
-      "deployedBytecodeSha256": "dab7c755f796c51e63c62fd6072e9af7ae974ffbca61b99ec4f8735eca2ac7e5",
-      "deployedBytecodeBytes": 18702
+      "abiSha256": "15ca610bcf463064e6057eb1cf0a5ba31eba6ba827ca1b5cc0ebe876f652280a",
+      "deployedBytecodeSha256": "bfcdc69f7a9e5bd8307239642b4103a8e049f71978388069e63d19ac5c776d33",
+      "deployedBytecodeBytes": 20309
     },
     "TeamTokenLock": {
       "abiFile": "deployments/abi/TeamTokenLock.json",
