@@ -23,6 +23,19 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - Testnet deployer remains blocked at **0.0 tBNB**; at least **0.02 tBNB** is required.
 - Mainnet gates remain **CLOSED**.
 
+### v3.3 Deployment Hardening — DONE
+
+- One-shot Testnet deploy now validates source self-check, script syntax, compile, all automated tests, and deterministic ABI fingerprints before preflight.
+- Deployment script verifies v3.3 constants immediately after MiningAirdrop creation and before ATH allocations continue.
+- Post-deploy verification now checks deployed bytecode existence, fixed supply, owner/treasury, pause state, 700M mining reserve, 50M team lock, all v3.3 reward/booster/vesting constants, zero-state counters, and 365-day lock timing.
+- One-shot deploy automatically loads addresses from the generated manifest and runs post-deploy v3.3 invariants before reporting success.
+- BscScan verification accepts the canonical manifest variable names `ATH_TOKEN_ADDRESS`, `ATH_MINING_ADDRESS`, and `ATH_TEAM_LOCK_ADDRESS` while preserving legacy aliases.
+- Deterministic ABI/release package is generated under `deployments/abi/`.
+- MiningAirdrop ABI SHA-256: `8f6eb017880d6dc4dedaa2629d5a2289e2b0c04954f4da878b906538c207fee4`.
+- MiningAirdrop deployed-bytecode SHA-256: `dab7c755f796c51e63c62fd6072e9af7ae974ffbca61b99ec4f8735eca2ac7e5`.
+- Fail-closed one-shot gate test: `TESTNET_DEPLOY_APPROVED=false` correctly exits before deployment.
+- Remaining external blocker is unchanged: fund the Testnet deployer with at least **0.02 tBNB**.
+
 
 ## DONE — Steps 1–23 + Step 24A
 
