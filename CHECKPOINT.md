@@ -67,6 +67,8 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 
 All work that does not require a public-chain transaction is now represented by executable checks or documented release gates: contract rules, 25 automated tests, source self-check, script syntax checks, ABI/bytecode fingerprints, local full-tokenomics deployment rehearsal, holder-flow rehearsal, keeper hardening, deterministic npm lockfiles, deployment/post-deploy invariants, BscScan verification tooling, Control Panel, public web, AI knowledge, Whitepaper, runbooks and acceptance checklist.
 
+Production dependency lockfiles are clean and reproducible: root engine and mining-web both install successfully with `npm ci`; the production-only npm audit reports **0 vulnerabilities** after removing an extraneous local Playwright QC dependency from the lockfiles.
+
 The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC Testnet deployer wallet. No real BNB is required for the Testnet phase.
 
 ### Public Documentation / AI Sync — DONE
