@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs>
+<radialGradient id="bg" cx="75%" cy="15%" r="70%"><stop stop-color="#2a210f"/><stop offset="1" stop-color="#050505"/></radialGradient>
+<linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f6d47c"/><stop offset=".52" stop-color="#d8ad4b"/><stop offset="1" stop-color="#8a6420"/></linearGradient>
+</defs>
+<rect width="1200" height="630" fill="url(#bg)"/>
+<circle cx="900" cy="315" r="185" fill="none" stroke="url(#g)" stroke-width="7"/>
+<path d="M790 430 875 200h48l86 230h-49l-61-167-62 167Z" fill="url(#g)"/>
+<path d="M850 382c31-48 67-72 119-84-46 19-81 50-105 101Z" fill="#f6d47c"/>
+<text x="90" y="178" fill="#d8ad4b" font-family="Arial,Helvetica,sans-serif" font-size="24" letter-spacing="7">AETHER CORPORATE</text>
+<text x="90" y="270" fill="#f7f2e8" font-family="Georgia,serif" font-size="68">Intelligent Infrastructure</text>
+<text x="90" y="350" fill="#f7f2e8" font-family="Georgia,serif" font-size="68">for Digital Ownership.</text>
+<text x="90" y="435" fill="#aaa18f" font-family="Arial,Helvetica,sans-serif" font-size="27">Wallet • ATH • AUTOTRADE • AI</text>
+<text x="90" y="535" fill="#8b816e" font-family="Arial,Helvetica,sans-serif" font-size="22">aether.boats</text>
+</svg>
