@@ -1,5 +1,29 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
+## CURRENT SOURCE LOCK — MINING v3.3
+
+This section supersedes conflicting v3.2 booster/vesting assumptions lower in this historical checkpoint.
+
+- Base reward remains **1 ATH per eligible UTC day**.
+- Daily reward opens **00:05:00 UTC** and expires after **23:59:59 UTC** if not claimed.
+- Referral multiplier is applied first.
+- **Power Booster** multiplies the referral-adjusted reward by **2x**, lasts **30 days**, and adds 100 Hash.
+- **Double Power Booster** requires an active Power Booster plus at least **5 referrals** and applies **3x on top of Power Booster**, giving a 6x booster factor in total.
+- Double Power follows the same expiry as the active Power Booster and does not extend it.
+- Both booster prices are owner-configurable on-chain through the ATH Control Panel.
+- Each successful daily claim unlocks 10% @30d, 5% @60d and 5% @90d; the remaining 80% enters recurring vesting at day 180.
+- Recurring vesting is capped at **12 cycles**. Every cycle burns 10% on entry, unlocks 10%/+30d, 5%/+60d, 5%/+90d, and rolls 70% to the next 180-day cycle.
+- After Cycle 12, the last rollover settles **60% burn / 40% holder distribution** with zero residual.
+- On-chain evidence includes RewardCalculated, RewardClaimed, RewardExpired, VestingCreated, VestingCycleEntered, ATHBurned, VestingTrancheClaimed and VestingFinalSettled.
+- Holder-facing read functions expose daily reward status, deadline, allocated/claimed/burned balances, per-position vesting, all cycle previews, current cycle and final settlement preview.
+- Automated v3.3 suite: **21 passing**.
+- MiningAirdrop deployed bytecode: **18,702 bytes**, below the 24,576-byte EIP-170 limit.
+- Web/admin JavaScript syntax QC: **PASSED**.
+- Blockchain deployment status: **NOT DEPLOYED** for v3.3.
+- Testnet deployer remains blocked at **0.0 tBNB**; at least **0.02 tBNB** is required.
+- Mainnet gates remain **CLOSED**.
+
+
 ## DONE — Steps 1–23 + Step 24A
 
 1. Blueprint v3.1 converted into an explicit ATH engine architecture.

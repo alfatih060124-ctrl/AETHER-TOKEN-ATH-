@@ -7,18 +7,29 @@ const MINING_ABI=[
   "function totalMined() view returns (uint256)",
   "function totalPowerSold() view returns (uint256)",
   "function totalBoosterSold() view returns (uint256)",
+  "function totalDoublePowerBoosterSold() view returns (uint256)",
   "function totalMiners() view returns (uint256)",
   "function globalClaimed() view returns (uint256)",
+  "function globalBurned() view returns (uint256)",
+  "function powerBoosterPrice() view returns (uint256)",
+  "function doublePowerBoosterPrice() view returns (uint256)",
   "function outstandingVestingLiability() view returns (uint256)",
   "function contractBalance() view returns (uint256)",
   "function MINING_POOL_ALLOCATION() view returns (uint256)",
   "function setTreasury(address)",
+  "function setBoosterPrices(uint256,uint256)",
   "function pause()",
   "function unpause()",
   "function withdrawExcessATH(address,uint256)",
   "event PowerPurchased(address indexed user,address indexed referrer,uint256 timestamp)",
-  "event BoosterPurchased(address indexed user,uint256 hashAdded,uint256 totalHash,uint256 rewardMultiplier,uint256 timestamp)",
-  "event DailyClaimed(address indexed user,uint256 reward,uint256 dayNumber,uint256 positionIndex)",
+  "event PowerBoosterPurchased(address indexed user,uint256 price,uint256 startsAt,uint256 expiresAt)",
+  "event DoublePowerBoosterPurchased(address indexed user,uint256 price,uint256 startsAt,uint256 expiresAt,uint256 referralCount)",
+  "event RewardCalculated(address indexed user,uint256 indexed dayId,uint256 baseReward,uint256 referralBonusBps,uint256 boosterMultiplier,uint256 reward,uint256 claimOpensAt,uint256 claimDeadline)",
+  "event RewardClaimed(address indexed user,uint256 indexed dayId,uint256 reward,uint256 positionIndex)",
+  "event RewardExpired(address indexed user,uint256 indexed dayId,uint256 reward)",
+  "event VestingCycleEntered(address indexed user,uint256 indexed positionIndex,uint8 indexed cycle,uint256 incomingAmount,uint256 burnedAmount,uint256 unlock30,uint256 unlock60,uint256 unlock90,uint256 rolloverAmount,uint256 scheduledStart)",
+  "event ATHBurned(address indexed user,uint256 indexed positionIndex,uint8 indexed cycle,uint256 amount,uint8 burnType)",
+  "event VestingFinalSettled(address indexed user,uint256 indexed positionIndex,uint256 principal,uint256 burned,uint256 distribution,uint256 scheduledAt)",
   "event TreasuryUpdated(address indexed oldTreasury,address indexed newTreasury)"
 ];
 const TOKEN_ABI=[
@@ -67,6 +78,7 @@ function paintAccess(){
   $("pauseMiningBtn").disabled=!miningAuthorized()||state.miningPaused;
   $("unpauseMiningBtn").disabled=!miningAuthorized()||!state.miningPaused;
   $("setTreasuryBtn").disabled=!miningAuthorized();
+  $("setBoosterPricesBtn").disabled=!miningAuthorized();
   $("withdrawExcessBtn").disabled=!miningAuthorized()||!state.miningPaused||!$("excessAck").checked;
   $("pauseTokenBtn").disabled=!tokenAuthorized()||state.tokenPaused;
   $("unpauseTokenBtn").disabled=!tokenAuthorized()||!state.tokenPaused;
@@ -120,12 +132,14 @@ async function refresh(){
     miningRead=new ethers.Contract(cfg.miningAddress,MINING_ABI,readProvider);
     tokenRead=new ethers.Contract(cfg.tokenAddress,TOKEN_ABI,readProvider);
     const [
-      miningOwner,miningPaused,treasury,totalMined,totalPower,totalBooster,totalMiners,liability,reserve,
+      miningOwner,miningPaused,treasury,totalMined,totalPower,totalBooster,totalDouble,totalMiners,
+      liability,reserve,burned,powerBoosterPrice,doubleBoosterPrice,
       tokenOwner,tokenPaused,totalSupply
     ]=await Promise.all([
       miningRead.owner(),miningRead.paused(),miningRead.treasury(),miningRead.totalMined(),
-      miningRead.totalPowerSold(),miningRead.totalBoosterSold(),miningRead.totalMiners(),
-      miningRead.outstandingVestingLiability(),miningRead.contractBalance(),
+      miningRead.totalPowerSold(),miningRead.totalBoosterSold(),miningRead.totalDoublePowerBoosterSold(),
+      miningRead.totalMiners(),miningRead.outstandingVestingLiability(),miningRead.contractBalance(),
+      miningRead.globalBurned(),miningRead.powerBoosterPrice(),miningRead.doublePowerBoosterPrice(),
       tokenRead.owner(),tokenRead.paused(),tokenRead.totalSupply()
     ]);
     state={miningOwner,tokenOwner,miningPaused,tokenPaused};
@@ -137,8 +151,12 @@ async function refresh(){
     $("totalMined").textContent=ath(totalMined);
     $("liability").textContent=ath(liability);
     $("reserve").textContent=ath(reserve);
-    $("sales").textContent=`${Number(totalPower).toLocaleString()} / ${Number(totalBooster).toLocaleString()}`;
-    $("revenue").textContent=`${((Number(totalPower)+Number(totalBooster))*0.001).toFixed(3)} BNB revenue basis`;
+    $("sales").textContent=Number(totalPower).toLocaleString()+" / "+Number(totalBooster).toLocaleString()+" / "+Number(totalDouble).toLocaleString();
+    $("globalBurned").textContent=ath(burned);
+    $("powerBoosterPriceCurrent").textContent=ethers.formatEther(powerBoosterPrice)+" BNB";
+    $("doubleBoosterPriceCurrent").textContent=ethers.formatEther(doubleBoosterPrice)+" BNB";
+    $("powerBoosterPriceInput").placeholder=ethers.formatEther(powerBoosterPrice);
+    $("doubleBoosterPriceInput").placeholder=ethers.formatEther(doubleBoosterPrice);
     $("miningOwner").textContent=miningOwner;
     $("tokenOwner").textContent=tokenOwner;
     $("treasury").textContent=treasury;
@@ -182,8 +200,14 @@ async function loadActivity(){
     const from=Math.max(0,latest-2500);
     const defs=[
       ["Power",miningRead.filters.PowerPurchased()],
-      ["Booster",miningRead.filters.BoosterPurchased()],
-      ["Daily Claim",miningRead.filters.DailyClaimed()],
+      ["Power Booster",miningRead.filters.PowerBoosterPurchased()],
+      ["Double Power",miningRead.filters.DoublePowerBoosterPurchased()],
+      ["Reward Calculated",miningRead.filters.RewardCalculated()],
+      ["Reward Claimed",miningRead.filters.RewardClaimed()],
+      ["Reward Expired",miningRead.filters.RewardExpired()],
+      ["Vesting Cycle",miningRead.filters.VestingCycleEntered()],
+      ["ATH Burned",miningRead.filters.ATHBurned()],
+      ["Final Settlement",miningRead.filters.VestingFinalSettled()],
       ["Treasury",miningRead.filters.TreasuryUpdated()]
     ];
     const groups=await Promise.all(defs.map(async([label,filter])=>(await miningRead.queryFilter(filter,from,latest)).map(e=>({label,e}))));
@@ -206,6 +230,19 @@ async function boot(){
     const v=$("treasuryInput").value.trim();
     if(!ethers.isAddress(v)||v===ethers.ZeroAddress)return toast("Enter a valid non-zero treasury address.",true);
     return runTx("Update Treasury",()=>miningWrite.setTreasury(v));
+  });
+  $("setBoosterPricesBtn").addEventListener("click",()=>{
+    const powerRaw=$("powerBoosterPriceInput").value.trim()||$("powerBoosterPriceInput").placeholder;
+    const doubleRaw=$("doubleBoosterPriceInput").value.trim()||$("doubleBoosterPriceInput").placeholder;
+    let powerPrice,doublePrice;
+    try{
+      powerPrice=ethers.parseEther(powerRaw);
+      doublePrice=ethers.parseEther(doubleRaw);
+    }catch{
+      return toast("Enter valid BNB prices for both boosters.",true);
+    }
+    if(powerPrice<=0n||doublePrice<=0n)return toast("Booster prices must be greater than zero.",true);
+    return runTx("Update Booster Prices",()=>miningWrite.setBoosterPrices(powerPrice,doublePrice));
   });
   $("excessAck").addEventListener("change",paintAccess);
   $("withdrawExcessBtn").addEventListener("click",()=>{

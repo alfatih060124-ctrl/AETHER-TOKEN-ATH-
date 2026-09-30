@@ -43,7 +43,8 @@
       <article><small>ATH Allocated</small><strong id="totalMined">0 ATH</strong><span>Mining vesting allocations</span></article>
       <article><small>Outstanding Vesting</small><strong id="liability">0 ATH</strong><span>Protected liability</span></article>
       <article><small>Mining Reserve</small><strong id="reserve">0 ATH</strong><span>Target 700,000,000 ATH</span></article>
-      <article><small>Power / Booster</small><strong id="sales">0 / 0</strong><span id="revenue">0.000 BNB revenue basis</span></article>
+      <article><small>ATH Burned</small><strong id="globalBurned">0 ATH</strong><span>Permanent on-chain supply reduction</span></article>
+      <article><small>Power / Booster / Double</small><strong id="sales">0 / 0 / 0</strong><span>On-chain activation counts</span></article>
     </section>
 
     <section class="panel">
@@ -83,6 +84,25 @@
           <button id="unpauseTokenBtn" class="btn" disabled>Unpause ATH</button>
         </div>
       </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><span class="eyebrow">REWARD ENGINE</span><h2>Booster pricing</h2></div>
+        <span class="policy">OWNER-GATED</span>
+      </div>
+      <p class="muted">Prices are stored on-chain. Power Booster is 2× for 30 days. Double Power requires at least 5 referrals and applies 3× on top of an active Power Booster without extending its expiry.</p>
+      <div class="two-col">
+        <div>
+          <div class="row"><span>Current Power Booster</span><strong id="powerBoosterPriceCurrent">—</strong></div>
+          <label>New Power Booster price (BNB)<input id="powerBoosterPriceInput" inputmode="decimal" placeholder="0.001" /></label>
+        </div>
+        <div>
+          <div class="row"><span>Current Double Power</span><strong id="doubleBoosterPriceCurrent">—</strong></div>
+          <label>New Double Power price (BNB)<input id="doubleBoosterPriceInput" inputmode="decimal" placeholder="0.001" /></label>
+        </div>
+      </div>
+      <button id="setBoosterPricesBtn" class="btn gold full" disabled>Update Booster Prices On-chain</button>
     </section>
 
     <section class="two-col">

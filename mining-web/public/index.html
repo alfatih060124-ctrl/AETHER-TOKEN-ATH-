@@ -74,18 +74,27 @@
 
       <article class="feature-card">
         <div class="feature-icon">🚀</div>
-        <h3>Buy Booster</h3>
-        <strong>0.001 BNB</strong>
-        <p>+100 Hash and reward multiplier up to 2×.</p>
-        <button id="boosterBtn" class="btn btn-card" disabled>▣ &nbsp; Buy Booster</button>
+        <h3>Power Booster</h3>
+        <strong id="powerBoosterPriceText">0.001 BNB</strong>
+        <p>2× your referral-adjusted reward for 30 days. Adds 100 Hash.</p>
+        <button id="boosterBtn" class="btn btn-card" disabled>▣ &nbsp; Buy Power Booster</button>
         <small id="boosterState">Power required</small>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon">✦</div>
+        <h3>Double Power Booster</h3>
+        <strong id="doubleBoosterPriceText">0.001 BNB</strong>
+        <p>3× the active Power Booster reward. Requires 5 referrals and follows the same expiry.</p>
+        <button id="doubleBoosterBtn" class="btn btn-card" disabled>✦ &nbsp; Activate Double Power</button>
+        <small id="doubleBoosterState">5 referrals + active Power Booster required</small>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon">🎁</div>
         <h3>Daily Claim</h3>
         <strong><span id="dailyRewardPreview">1.00</span> ATH / day</strong>
-        <p>Claim your daily mining allocation.</p>
+        <p>Reward opens 00:05 UTC and expires at 23:59:59 UTC if not claimed.</p>
         <button id="dailyBtn" class="btn btn-card" disabled>▣ &nbsp; Claim Now</button>
         <small id="dailyState">Waiting for active Power</small>
       </article>
@@ -93,8 +102,8 @@
       <article class="feature-card">
         <div class="feature-icon">◉</div>
         <h3>Vesting Progress</h3>
-        <strong>10% / 5% / 5% / 80%</strong>
-        <p>Gradual token release for a healthier ecosystem.</p>
+        <strong>20% initial + 12 cycles</strong>
+        <p>10% / 5% / 5% unlock first; the remaining 80% enters transparent recurring vesting with burn.</p>
         <button class="btn btn-card" onclick="document.getElementById('vesting').scrollIntoView({behavior:'smooth'})">▥ &nbsp; View Vesting</button>
       </article>
 
@@ -151,10 +160,11 @@
           <div class="time-line"></div>
           <div class="time-node"><b>5%</b><i></i><span>90 Days</span><small>Third Unlock</small></div>
           <div class="time-line"></div>
-          <div class="time-node final"><b>80%</b><i></i><span>180 Days</span><small>Final Unlock</small></div>
+          <div class="time-node final"><b>80%</b><i></i><span>180 Days</span><small>Enters Cycle 1</small></div>
         </div>
+        <p class="muted vesting-note">At every new cycle: 10% burn, 10% unlock at +30d, 5% at +60d, 5% at +90d, and 70% rolls into the next 180-day cycle. After Cycle 12, the final rollover is settled 60% burn / 40% distribution.</p>
         <button id="vestedBtn" class="btn btn-dark claim-unlocked" disabled>Claim All Unlocked</button>
-        <div class="vesting-summary"><span>Claimed <b id="claimedStat">0.000 ATH</b></span><span>Pending <b id="pendingStat">0.000 ATH</b></span></div>
+        <div class="vesting-summary"><span>Claimed <b id="claimedStat">0.000 ATH</b></span><span>Pending <b id="pendingStat">0.000 ATH</b></span><span>Burned <b id="burnedStat">0.000 ATH</b></span></div>
       </article>
 
       <article class="dash-panel network-panel">
@@ -169,6 +179,68 @@
           <div><span>Mining Contract</span><strong id="contractStatus">Waiting for verified Testnet deployment</strong></div>
         </div>
         <span id="contractDot" class="status-dot"></span>
+      </article>
+    </section>
+
+    <section class="shell dashboard-row transparency-row">
+      <article class="dash-panel">
+        <div class="panel-title">
+          <div class="round-icon">◷</div>
+          <div><h3>Daily Reward Transparency</h3><p>UTC snapshot and claim window read directly from the contract.</p></div>
+        </div>
+        <div class="network-list">
+          <div><span>Status</span><strong id="rewardStatus">Not available</strong></div>
+          <div><span>Reward Today</span><strong id="rewardOnChain">0.000 ATH</strong></div>
+          <div><span>Formula</span><strong id="rewardFormula">1 ATH × referral × booster</strong></div>
+          <div><span>Claim Window</span><strong id="rewardWindow">00:05–23:59:59 UTC</strong></div>
+          <div><span>Deadline</span><strong id="rewardDeadline">—</strong></div>
+        </div>
+      </article>
+
+      <article class="dash-panel">
+        <div class="panel-title">
+          <div class="round-icon">▤</div>
+          <div><h3>On-chain Vesting Ledger</h3><p>Select any daily claim position and inspect its exact locked amounts.</p></div>
+        </div>
+        <label class="mini-label" for="vestingPositionSelect">Vesting position</label>
+        <select id="vestingPositionSelect" class="mini-input"><option value="">No positions yet</option></select>
+        <div class="network-list">
+          <div><span>Claim Amount</span><strong id="positionAmount">0.000 ATH</strong></div>
+          <div><span>30-day Unlock</span><strong id="position30">0.000 ATH</strong></div>
+          <div><span>60-day Unlock</span><strong id="position60">0.000 ATH</strong></div>
+          <div><span>90-day Unlock</span><strong id="position90">0.000 ATH</strong></div>
+          <div><span>180-day Cycle Principal</span><strong id="positionCyclePrincipal">0.000 ATH</strong></div>
+          <div><span>Current Cycle</span><strong id="positionCurrentCycle">0 / 12</strong></div>
+          <div><span>Claimable Now</span><strong id="positionClaimable">0.000 ATH</strong></div>
+          <div><span>Burned So Far</span><strong id="positionBurned">0.000 ATH</strong></div>
+        </div>
+      </article>
+
+      <article class="dash-panel">
+        <div class="panel-title">
+          <div class="round-icon">↻</div>
+          <div><h3>12-Cycle Preview</h3><p>Deterministic cycle amounts derived from the selected claim.</p></div>
+        </div>
+        <label class="mini-label" for="cycleSelect">Cycle</label>
+        <select id="cycleSelect" class="mini-input">
+          <option value="1">Cycle 1</option><option value="2">Cycle 2</option><option value="3">Cycle 3</option>
+          <option value="4">Cycle 4</option><option value="5">Cycle 5</option><option value="6">Cycle 6</option>
+          <option value="7">Cycle 7</option><option value="8">Cycle 8</option><option value="9">Cycle 9</option>
+          <option value="10">Cycle 10</option><option value="11">Cycle 11</option><option value="12">Cycle 12</option>
+        </select>
+        <div class="network-list">
+          <div><span>Incoming</span><strong id="cycleIncoming">0.000 ATH</strong></div>
+          <div><span>Burn on Entry 10%</span><strong id="cycleBurn">0.000 ATH</strong></div>
+          <div><span>+30d Unlock 10%</span><strong id="cycle30">0.000 ATH</strong></div>
+          <div><span>+60d Unlock 5%</span><strong id="cycle60">0.000 ATH</strong></div>
+          <div><span>+90d Unlock 5%</span><strong id="cycle90">0.000 ATH</strong></div>
+          <div><span>Roll Forward 70%</span><strong id="cycleRollover">0.000 ATH</strong></div>
+          <div><span>Scheduled Start</span><strong id="cycleStart">—</strong></div>
+          <div><span>On-chain Entry</span><strong id="cycleEntered">Not entered</strong></div>
+          <div><span>Final Cycle-12 Burn 60%</span><strong id="finalBurn">0.000 ATH</strong></div>
+          <div><span>Final Distribution 40%</span><strong id="finalDistribution">0.000 ATH</strong></div>
+          <div><span>Final Settlement</span><strong id="finalSettlementAt">—</strong></div>
+        </div>
       </article>
     </section>
 
