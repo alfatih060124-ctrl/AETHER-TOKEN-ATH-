@@ -541,7 +541,60 @@ async function checkTargetChatAccess(me) {
   }
 }
 
-async function forwardChannelPostToGroups(channelId, messageId) {
+async function mirrorChannelPost(targetChatId, post) {
+  if (!post) return false;
+
+  const common = { chat_id: targetChatId };
+  if (post.text) {
+    await telegram("sendMessage", {
+      ...common,
+      text: post.text,
+      ...(post.entities ? { entities: post.entities } : {}),
+      disable_web_page_preview: false,
+    });
+    return true;
+  }
+
+  const caption = post.caption || "";
+  const captionExtra = post.caption_entities ? { caption_entities: post.caption_entities } : {};
+
+  if (Array.isArray(post.photo) && post.photo.length) {
+    await telegram("sendPhoto", {
+      ...common,
+      photo: post.photo[post.photo.length - 1].file_id,
+      ...(caption ? { caption, ...captionExtra } : {}),
+    });
+    return true;
+  }
+  if (post.video?.file_id) {
+    await telegram("sendVideo", { ...common, video: post.video.file_id, ...(caption ? { caption, ...captionExtra } : {}) });
+    return true;
+  }
+  if (post.document?.file_id) {
+    await telegram("sendDocument", { ...common, document: post.document.file_id, ...(caption ? { caption, ...captionExtra } : {}) });
+    return true;
+  }
+  if (post.animation?.file_id) {
+    await telegram("sendAnimation", { ...common, animation: post.animation.file_id, ...(caption ? { caption, ...captionExtra } : {}) });
+    return true;
+  }
+  if (post.audio?.file_id) {
+    await telegram("sendAudio", { ...common, audio: post.audio.file_id, ...(caption ? { caption, ...captionExtra } : {}) });
+    return true;
+  }
+  if (post.voice?.file_id) {
+    await telegram("sendVoice", { ...common, voice: post.voice.file_id, ...(caption ? { caption, ...captionExtra } : {}) });
+    return true;
+  }
+  if (post.sticker?.file_id) {
+    await telegram("sendSticker", { ...common, sticker: post.sticker.file_id });
+    return true;
+  }
+
+  return false;
+}
+
+async function forwardChannelPostToGroups(channelId, messageId, sourcePost = null) {
   for (const targetChatId of config.targetChats) {
     if (String(targetChatId) === String(channelId)) continue;
     try {
@@ -551,13 +604,28 @@ async function forwardChannelPostToGroups(channelId, messageId) {
         message_id: messageId,
         disable_notification: false,
       });
+      continue;
     } catch (err) {
       console.warn(`Forward channel post failed for ${targetChatId}: ${err.message}; trying copy.`);
+    }
+
+    try {
       await telegram("copyMessage", {
         chat_id: targetChatId,
         from_chat_id: channelId,
         message_id: messageId,
       });
+      continue;
+    } catch (err) {
+      console.warn(`Copy channel post failed for ${targetChatId}: ${err.message}; trying mirror.`);
+    }
+
+    const mirrored = await mirrorChannelPost(targetChatId, sourcePost).catch((err) => {
+      console.error(`Mirror channel post failed for ${targetChatId}: ${err.message}`);
+      return false;
+    });
+    if (!mirrored) {
+      console.warn(`Channel post ${messageId} could not be mirrored to ${targetChatId}; unsupported post type.`);
     }
   }
 }
@@ -623,7 +691,7 @@ async function handleChannelPost(post) {
     return;
   }
 
-  await forwardChannelPostToGroups(channelId, post.message_id);
+  await forwardChannelPostToGroups(channelId, post.message_id, post);
   console.log(`AETHER channel post forwarded: channel=${channelId}; message=${post.message_id}; groups=${config.targetChats.length}.`);
 }
 
