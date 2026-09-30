@@ -38,7 +38,33 @@ const AI_SYSTEM = `You are AETHER AI, the official multilingual assistant on AET
 
 function json(res,status,obj){ return send(res,status,JSON.stringify(obj),{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}); }
 function readJson(req,limit=8192){return new Promise((resolve,reject)=>{let raw="";req.on("data",d=>{raw+=d;if(raw.length>limit){reject(new Error("too_large"));req.destroy();}});req.on("end",()=>{try{resolve(JSON.parse(raw||"{}"))}catch(e){reject(e)}});req.on("error",reject);});}
-function sensitive(s){return /(seed phrase|private key|recovery phrase|mnemonic|frasa pemulihan|kunci pribadi|12 words|24 words)/i.test(s);}
+function sensitive(s){return /(seed phrase|private key|recovery phrase|mnemonic|frasa pemulihan|kunci pribadi|password|kata sandi|otp|12 words|24 words)/i.test(s);}
+const aiHits=new Map();
+function rateLimited(req){
+  const ip=String(req.headers["x-forwarded-for"]||req.socket.remoteAddress||"unknown").split(",")[0].trim();
+  const now=Date.now(), windowMs=60000, max=20;
+  const row=aiHits.get(ip)||{start:now,count:0};
+  if(now-row.start>windowMs){row.start=now;row.count=0;}
+  row.count++; aiHits.set(ip,row);
+  if(aiHits.size>5000) for(const [k,v] of aiHits) if(now-v.start>windowMs*2) aiHits.delete(k);
+  return row.count>max;
+}
+function localAI(message,language){
+  const m=message.toLowerCase();
+  const id=/^(id|id-|in)/i.test(language)||/(apa|bagaimana|wallet|dompet|mining|tambang|keamanan|aman|autotrade)/i.test(m);
+  const L={
+    wallet:id?"AETHER Wallet adalah bagian ekosistem AETHER untuk pengelolaan aset digital dan koneksi Web3. Gunakan hanya situs resmi: https://wallet.aether.boats/ dan jangan pernah membagikan seed phrase atau private key.":"AETHER Wallet is the AETHER ecosystem interface for digital assets and Web3 connectivity. Use only https://wallet.aether.boats/ and never share a seed phrase or private key.",
+    mining:id?"ATH Mining dapat diakses melalui https://mining.aether.boats/. Informasi status, reward, dan aturan harus mengikuti halaman resmi; AETHER AI tidak menjanjikan profit atau hasil tertentu.":"ATH Mining is available at https://mining.aether.boats/. Status, rewards and rules should follow the official page; AETHER AI does not promise profit or returns.",
+    trade:id?"AETHER AUTOTRADE dapat diakses di https://aitrade.aether.boats/. Status trading harus mengikuti informasi runtime resmi; jangan menganggap fitur LIVE aktif kecuali dinyatakan dan diverifikasi di layanan tersebut.":"AETHER AUTOTRADE is at https://aitrade.aether.boats/. Trading status must follow the official runtime information; do not assume LIVE trading is enabled unless the service explicitly verifies it.",
+    security:id?"Untuk keamanan, jangan pernah berikan seed phrase, private key, password, OTP, atau recovery phrase kepada siapa pun, termasuk AETHER AI. Gunakan hanya domain resmi AETHER.":"For security, never give anyone your seed phrase, private key, password, OTP, or recovery phrase, including AETHER AI. Use only official AETHER domains.",
+    general:id?"Saya AETHER AI Assistant. Saya dapat membantu tentang AETHER Wallet, ATH Token & Mining, AUTOTRADE, keamanan, dan navigasi ekosistem. Corporate: https://aether.boats/ • Wallet: https://wallet.aether.boats/ • Mining: https://mining.aether.boats/ • AUTOTRADE: https://aitrade.aether.boats/":"I’m AETHER AI Assistant. I can help with AETHER Wallet, ATH Token & Mining, AUTOTRADE, security, and ecosystem navigation. Corporate: https://aether.boats/ • Wallet: https://wallet.aether.boats/ • Mining: https://mining.aether.boats/ • AUTOTRADE: https://aitrade.aether.boats/"
+  };
+  if(/wallet|dompet/.test(m)) return L.wallet;
+  if(/mining|mine|reward|ath token|token ath/.test(m)) return L.mining;
+  if(/autotrade|ai trade|trading|trade/.test(m)) return L.trade;
+  if(/security|secure|aman|keamanan|scam|phish/.test(m)) return L.security;
+  return L.general;
+}
 async function callAI(message,language){
   const key=process.env.OPENAI_API_KEY;
   if(!key) return null;
@@ -59,12 +85,12 @@ const server = http.createServer(async (req, res) => {
       const data=await readJson(req);
       const message=String(data.message||"").trim().slice(0,1200);
       const language=String(data.language||"en").slice(0,32);
-      if(!message) return json(res,400,{reply:"Please enter a message."});
+      if(!message) return json(res,400,{reply:"Please enter a message."});\n      if(rateLimited(req)) return json(res,429,{reply:"Too many requests. Please wait a moment and try again."});
       if(sensitive(message)) return json(res,200,{reply:"For your security, never share a seed phrase, private key, recovery phrase, password or OTP with AETHER AI or anyone else. I can help without those secrets."});
       const reply=await callAI(message,language);
-      if(!reply) return json(res,503,{reply:"AETHER AI is being activated. Meanwhile, please use the official AETHER links on this page."});
+      if(!reply) return json(res,200,{reply:localAI(message,language),mode:"knowledge"});
       return json(res,200,{reply});
-    } catch(e) { return json(res,503,{reply:"AETHER AI is temporarily unavailable. Please use the official AETHER links on this page."}); }
+    } catch(e) { return json(res,200,{reply:localAI(String((e&&e.message)||""),"en"),mode:"knowledge"}); }
   }
 
   if (url.pathname === "/health") {
