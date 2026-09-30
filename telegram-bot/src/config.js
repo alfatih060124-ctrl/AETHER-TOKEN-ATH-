@@ -38,6 +38,7 @@ module.exports = {
   communityUrl: url("AETHER_COMMUNITY_URL"),
   websiteUrl: url("AETHER_WEBSITE_URL"),
   coinUrl: url("AETHER_COIN_URL"),
+  autotradeUrl: url("AETHER_AUTOTRADE_URL", "https://aitrade.aether.boats/"),
   channelUrl: url("AETHER_CHANNEL_URL"),
   groupUrl: url("AETHER_GROUP_URL"),
   channelSourceIds: list("AETHER_CHANNEL_IDS"),
