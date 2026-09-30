@@ -867,12 +867,19 @@ async function boot() {
         }
 
         let raw = "";
+        let tooLarge = false;
         req.setEncoding("utf8");
         req.on("data", (chunk) => {
+          if (tooLarge) return;
           raw += chunk;
-          if (raw.length > 1024 * 1024) req.destroy();
+          if (raw.length > 1024 * 1024) {
+            tooLarge = true;
+            res.writeHead(413, { "content-type": "text/plain", "connection": "close" });
+            res.end("Payload Too Large");
+          }
         });
         req.on("end", () => {
+          if (tooLarge) return;
           let update;
           try {
             update = JSON.parse(raw || "{}");
@@ -939,6 +946,11 @@ async function boot() {
     res.writeHead(200, { "content-type": "text/plain" });
     res.end("AETHER ATH Telegram Bot");
   });
+
+  server.requestTimeout = 15000;
+  server.headersTimeout = 10000;
+  server.keepAliveTimeout = 5000;
+  server.maxHeadersCount = 64;
 
   server.listen(config.port, "0.0.0.0", () => {
     console.log(`ATH Telegram bot health server listening on ${config.port}`);
