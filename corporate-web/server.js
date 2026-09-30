@@ -51,7 +51,7 @@ function rateLimited(req){
 }
 function localAI(message,language){
   const m=message.toLowerCase();
-  const id=/^(id|id-|in)/i.test(language)||/(apa|bagaimana|wallet|dompet|mining|tambang|keamanan|aman|autotrade)/i.test(m);
+  const id=/^(id|id-)/i.test(language)||/(apa|bagaimana|dompet|tambang|keamanan|aman|bagikan|saya|kami|tentang|adalah|untuk)/i.test(m);
   const L={
     wallet:id?"AETHER Wallet adalah bagian ekosistem AETHER untuk pengelolaan aset digital dan koneksi Web3. Gunakan hanya situs resmi: https://wallet.aether.boats/ dan jangan pernah membagikan seed phrase atau private key.":"AETHER Wallet is the AETHER ecosystem interface for digital assets and Web3 connectivity. Use only https://wallet.aether.boats/ and never share a seed phrase or private key.",
     mining:id?"ATH Mining dapat diakses melalui https://mining.aether.boats/. Informasi status, reward, dan aturan harus mengikuti halaman resmi; AETHER AI tidak menjanjikan profit atau hasil tertentu.":"ATH Mining is available at https://mining.aether.boats/. Status, rewards and rules should follow the official page; AETHER AI does not promise profit or returns.",
