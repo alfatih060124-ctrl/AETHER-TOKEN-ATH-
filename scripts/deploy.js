@@ -109,6 +109,8 @@ async function main() {
     maxVestingCycles,
     cycleBurnPct,
     finalBurnPct,
+    keeperBatchMax,
+    maxMinerPage,
     powerBoosterPrice,
     doublePowerBoosterPrice,
   ] = await Promise.all([
@@ -122,6 +124,8 @@ async function main() {
     mining.MAX_VESTING_CYCLES(),
     mining.CYCLE_BURN_PCT(),
     mining.FINAL_BURN_PCT(),
+    mining.MAX_KEEPER_BATCH(),
+    mining.MAX_MINER_PAGE(),
     mining.powerBoosterPrice(),
     mining.doublePowerBoosterPrice(),
   ]);
@@ -137,6 +141,8 @@ async function main() {
     [maxVestingCycles, 12n, "MAX_VESTING_CYCLES"],
     [cycleBurnPct, 10n, "CYCLE_BURN_PCT"],
     [finalBurnPct, 60n, "FINAL_BURN_PCT"],
+    [keeperBatchMax, 50n, "MAX_KEEPER_BATCH"],
+    [maxMinerPage, 200n, "MAX_MINER_PAGE"],
     [powerBoosterPrice, hre.ethers.parseEther("0.001"), "powerBoosterPrice"],
     [doublePowerBoosterPrice, hre.ethers.parseEther("0.001"), "doublePowerBoosterPrice"],
   ];
@@ -216,6 +222,8 @@ async function main() {
       maxVestingCycles: Number(maxVestingCycles),
       cycleBurnPct: Number(cycleBurnPct),
       finalBurnPct: Number(finalBurnPct),
+      keeperBatchMax: Number(keeperBatchMax),
+      minerPageMax: Number(maxMinerPage),
     },
     deployerExpectedATH: hre.ethers.formatEther(expectedDeployerATH),
     deployedAt: new Date().toISOString(),
