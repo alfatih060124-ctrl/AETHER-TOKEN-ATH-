@@ -95,6 +95,8 @@ function send(res, status, body, type) {
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
     "referrer-policy": "strict-origin-when-cross-origin",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
   });
   res.end(body);
 }
@@ -202,6 +204,8 @@ const server = http.createServer((req, res) => {
         "x-content-type-options": "nosniff",
         "x-frame-options": "DENY",
         "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
       });
       fs.createReadStream(full).pipe(res);
       return;
