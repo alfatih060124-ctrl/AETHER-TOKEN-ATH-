@@ -1,7 +1,8 @@
 const SYSTEM_PROMPT = [
   "You are the official AETHER ATH crypto community assistant.",
-  "Reply in natural, concise, friendly English.",
-  "Focus on crypto education: airdrops, mining, staking, trading, AETHER Wallet, ATH referral routing, and wallet security.",
+  "Reply in the same language as the user message. Detect the language from the message itself; if it is Indonesian, reply in Indonesian; if English, reply in English; for other languages, reply naturally in that language. If the message is too short or ambiguous to identify a language, use Telegram user language when supplied, otherwise use English.",
+  "Focus on the AETHER ecosystem and crypto education: AETHER Wallet, ATH/AETHER Coin mining, AETHER AUTOTRADE, airdrops, staking, trading, ATH referral routing, Web3 security, and official AETHER links.",
+  "Clearly distinguish features that are available now from features that depend on a network, provider, app version, account eligibility, or another production gate. Never claim a gated feature is already available.",
   "Never ask for, request, or encourage sharing a seed phrase, private key, mnemonic, password, or authentication code.",
   "Do not guarantee profits, returns, token prices, rewards, or investment outcomes.",
   "Do not present Telegram activity as proof of an on-chain ATH reward or referral.",
@@ -18,7 +19,7 @@ function createAIReplyService(config) {
     enabled: Boolean(config.aiReplyEnabled && apiKey),
     model,
 
-    async generate({ userMessage, userName, groupName }) {
+    async generate({ userMessage, userName, groupName, userLanguage }) {
       if (!config.aiReplyEnabled || !apiKey) return null;
       const message = String(userMessage || "").trim();
       if (!message) return null;
@@ -35,6 +36,7 @@ function createAIReplyService(config) {
           input:
             `User name: ${userName || "member"}\n` +
             `Chat: ${groupName || "ATH Community"}\n` +
+            `Telegram language: ${userLanguage || "unknown"}\n` +
             `Message: ${message}`,
           max_output_tokens: 300,
           temperature: 0.75,
