@@ -16,7 +16,8 @@ const TYPES = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
-  ".webp": "image/webp"
+  ".webp": "image/webp",
+  ".webmanifest": "application/manifest+json; charset=utf-8"
 };
 
 function send(res, status, body, headers = {}) {
