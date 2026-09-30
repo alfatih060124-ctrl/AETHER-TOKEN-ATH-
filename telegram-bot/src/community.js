@@ -667,6 +667,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
             userMessage: text,
             userName: message.from.first_name || message.from.username || "member",
             groupName: message.chat.title || "ATH Community",
+            userLanguage: message.from.language_code || "",
           });
           if (answer) {
             await send(message.chat.id, escapeHtml(answer));
@@ -763,6 +764,7 @@ function createCommunity({ telegram, storage, config, send, escapeHtml }) {
             userMessage: text,
             userName: message.from.first_name || message.from.username || "member",
             groupName: "Private Chat",
+            userLanguage: message.from.language_code || "",
           });
           if (answer) {
             await send(message.chat.id, escapeHtml(answer));
