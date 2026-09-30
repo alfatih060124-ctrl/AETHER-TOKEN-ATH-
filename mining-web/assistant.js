@@ -227,10 +227,18 @@ function detectLanguage(text = "") {
   const idSignals = [
     "bagaimana", "gimana", "gmn", "apa ", "apakah", "saya", "anda", "tolong",
     "bisa", "untuk", "dengan", "dan ", "yang ", "cara", "mulai", "fitur",
-    "layanan", "keamanan", "wallet saya", "tambahkan", "autotrade"
+    "layanan", "keamanan", "wallet saya", "tambahkan", "gunakan", "menggunakan"
   ];
-  const score = idSignals.reduce((n, token) => n + (value.includes(token) ? 1 : 0), 0);
-  return score >= 1 ? "id" : "en";
+  const enSignals = [
+    "how ", "what ", "where ", "when ", "why ", "can i", "could you", "please",
+    "use ", "using ", "start ", "feature", "service", "security", "wallet my",
+    "show me", "tell me", "help me", "do i"
+  ];
+  const idScore = idSignals.reduce((n, token) => n + (value.includes(token) ? 1 : 0), 0);
+  const enScore = enSignals.reduce((n, token) => n + (value.includes(token) ? 1 : 0), 0);
+  if (enScore > idScore) return "en";
+  if (idScore > 0) return "id";
+  return "en";
 }
 
 function indonesianAnswer(question, context = {}) {
