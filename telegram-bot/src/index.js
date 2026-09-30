@@ -63,6 +63,7 @@ function inviteLink(userId) {
 function mainKeyboard() {
   const rows = [];
   if (config.appUrl) rows.push([{ text: "🚀 Open AETHER", url: config.appUrl }]);
+  if (config.autotradeUrl) rows.push([{ text: "🤖 AETHER AUTOTRADE", url: config.autotradeUrl }]);
   rows.push([
     { text: "🎁 ATH Airdrop", callback_data: "airdrop" },
     { text: "🔗 ATH Referral", callback_data: "referral" },
@@ -385,6 +386,7 @@ async function handleMessage(message) {
 
   if (command === "links") return showLinks(message.chat.id);
   if (command === "features") return showFeatures(message.chat.id);
+  if (command === "autotrade") return showFeatures(message.chat.id, "ai-trade");
   if (command === "airdrop") return showAirdrop(message.chat.id);
   if (command === "invite") return showInvite(message.chat.id, user.telegramId);
   if (command === "referral") return showReferral(message.chat.id, user.telegramId);
@@ -421,7 +423,7 @@ async function handleMessage(message) {
   if (command === "help") {
     return send(
       message.chat.id,
-      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/features — AETHER Wallet features & services\n/links — official AETHER links\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
+      "<b>Commands</b>\n/start — open ATH bot\n/airdrop — ATH campaign information\n/invite — Telegram referral link\n/referral — ATH sponsor/on-chain referral status\n/wallet — link public wallet\n/stats — campaign + on-chain stats\n/education — crypto & ATH education\n/aether — AETHER Wallet education\n/features — AETHER Wallet features & services\n/autotrade — open AETHER AUTOTRADE\n/links — official AETHER links\n/article — daily ATH education article\n/myid — show your Telegram User ID\n/chatid — show Chat/Group ID\n/help — command reference\n/stop — opt out of promotional updates\n\n<b>AETHER Wallet</b>\n" + escapeHtml(config.appUrl || "https://wallet.aether.boats/") +
       (config.admins.has(String(message.from.id))
         ? "\n\n<b>Admin Commands</b>\n/adminstats — aggregate bot stats\n/growthstatus — opt-in acquisition status\n/promo — send one soft promotion\n/warn — warn a member\n/warnings — check warnings\n/mute — mute a member\n/unmute — unmute a member\n/kick — remove a member\n/ban — ban a member\n/unban — unban a member\n/modlog — recent moderation log"
         : "")
@@ -483,6 +485,7 @@ async function configureTelegramProfile() {
     { command: "education", description: "Open crypto and ATH education" },
     { command: "aether", description: "Open AETHER Wallet education" },
     { command: "features", description: "Explore AETHER Wallet features and services" },
+    { command: "autotrade", description: "Open AETHER AUTOTRADE" },
     { command: "links", description: "Open official AETHER links" },
     { command: "article", description: "Read the daily ATH education article" },
     { command: "myid", description: "Show your Telegram user ID" },
@@ -496,7 +499,7 @@ async function configureTelegramProfile() {
   });
   await telegram("setMyDescription", {
     description:
-      "Official AETHER ecosystem bot for Wallet features, crypto education, hourly updates, ATH community and security. Never share a seed phrase or private key.",
+      "Official AETHER ecosystem bot for Wallet, AUTOTRADE, crypto education, hourly updates, ATH community and security. Never share a seed phrase or private key.",
   }).catch((err) => {
     console.warn("Unable to set bot description:", err.message);
   });
