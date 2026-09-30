@@ -1,0 +1,4 @@
+Canonical: https://aether.boats/.well-known/security.txt
+Policy: https://aether.boats/#security
+Expires: 2027-09-30T00:00:00.000Z
+Preferred-Languages: en, id
