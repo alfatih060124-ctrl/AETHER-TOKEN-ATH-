@@ -81,7 +81,10 @@ User: "+message}],max_output_tokens:500});
 }
 
 const server = http.createServer(async (req, res) => {
+  if (!["GET", "HEAD", "POST"].includes(req.method)) return send(res, 405, "Method Not Allowed", {"allow":"GET, HEAD, POST","cache-control":"no-store"});
+  if (req.headers["content-length"] && Number(req.headers["content-length"]) > 8192) return json(res, 413, {reply:"Request too large."});
   const url = new URL(req.url, "http://localhost");
+  if (req.method === "POST" && url.pathname !== "/api/ai") return send(res, 404, "Not found", {"cache-control":"no-store"});
   if (url.pathname === "/api/ai" && req.method === "POST") {
     if(!String(req.headers["content-type"]||"").toLowerCase().startsWith("application/json")) return json(res,415,{reply:"JSON content type required."});
     try {
