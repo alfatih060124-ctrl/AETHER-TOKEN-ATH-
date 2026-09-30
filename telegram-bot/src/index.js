@@ -593,8 +593,60 @@ async function mirrorChannelPost(targetChatId, post) {
     await telegram("sendSticker", { ...common, sticker: post.sticker.file_id });
     return true;
   }
+  if (post.video_note?.file_id) {
+    await telegram("sendVideoNote", { ...common, video_note: post.video_note.file_id });
+    return true;
+  }
+  if (post.contact?.phone_number) {
+    await telegram("sendContact", {
+      ...common,
+      phone_number: post.contact.phone_number,
+      first_name: post.contact.first_name || "AETHER",
+      ...(post.contact.last_name ? { last_name: post.contact.last_name } : {}),
+    });
+    return true;
+  }
+  if (post.location?.latitude != null && post.location?.longitude != null) {
+    await telegram("sendLocation", {
+      ...common,
+      latitude: post.location.latitude,
+      longitude: post.location.longitude,
+    });
+    return true;
+  }
+  if (post.venue?.location) {
+    await telegram("sendVenue", {
+      ...common,
+      latitude: post.venue.location.latitude,
+      longitude: post.venue.location.longitude,
+      title: post.venue.title || "AETHER",
+      address: post.venue.address || "",
+    });
+    return true;
+  }
+  if (post.poll?.question && Array.isArray(post.poll.options)) {
+    await telegram("sendPoll", {
+      ...common,
+      question: post.poll.question,
+      options: post.poll.options.map((option) => option.text),
+      is_anonymous: post.poll.is_anonymous !== false,
+      allows_multiple_answers: Boolean(post.poll.allows_multiple_answers),
+    });
+    return true;
+  }
 
-  return false;
+  // Fail-safe: never silently lose a protected/unsupported channel post.
+  // Telegram may reject forwardMessage/copyMessage for protected content or
+  // introduce message types that cannot be recreated byte-for-byte.
+  const type = Object.keys(post).find((key) =>
+    !["message_id", "date", "chat", "sender_chat", "author_signature", "forward_origin", "is_automatic_forward"].includes(key)
+  ) || "unsupported";
+  await telegram("sendMessage", {
+    ...common,
+    text: `AETHER channel update received (type: ${type}). Open the official ATH MINER CHANNEL to view the original post.`,
+    disable_web_page_preview: true,
+  });
+  return true;
 }
 
 async function forwardChannelPostToGroups(channelId, messageId, sourcePost = null) {
