@@ -78,20 +78,23 @@ const KNOWLEDGE = [
     ].join("\n"),
   },
   {
-    keys: ["mining", "mine", "miner", "power", "booster", "claim"],
+    keys: ["mining", "mine", "miner", "power", "booster", "double power", "claim", "vesting", "reward", "burn", "00:05", "utc"],
     answer: ({ cfg }) => [
-      "<b>ATH Mining Guide</b>",
+      "<b>ATH Mining v3.3 Guide</b>",
       "",
-      "1. Connect your supported wallet.",
-      "2. Confirm you are on the network shown by the AETHER Mining page.",
-      "3. Review Power / Booster details before signing.",
-      "4. Use the on-page claim controls when your position is eligible.",
+      "1. Buy Power for 0.001 BNB to activate the 180-day mining window.",
+      "2. Base reward is 1 ATH per eligible UTC day. It opens at 00:05:00 UTC and expires after 23:59:59 UTC if not claimed.",
+      "3. Referral multiplier (+10% to +50%) is applied first.",
+      "4. Power Booster adds 100 Hash and multiplies the referral-adjusted reward by 2x for 30 days.",
+      "5. Double Power requires at least 5 referrals and applies 3x on top of an active Power Booster. It shares the same expiry and does not extend it.",
+      "6. Each successful claim unlocks 10% at 30d, 5% at 60d, 5% at 90d; the remaining 80% enters Cycle 1 at 180d.",
+      "7. Each of 12 cycles burns 10% on entry, unlocks 10%/+30d, 5%/+60d, 5%/+90d, and rolls 70% forward. After Cycle 12, the final rollover settles 60% burn / 40% holder distribution.",
       "",
       `Current page mode: <b>${escapeHtml(cfg.networkMode || "UNKNOWN")}</b>`,
-      `Power price shown by this deployment: <b>${escapeHtml(cfg.powerPriceBnb || "-")} BNB</b>`,
-      `Booster price shown by this deployment: <b>${escapeHtml(cfg.boosterPriceBnb || "-")} BNB</b>`,
+      `Power price: <b>${escapeHtml(cfg.powerPriceBnb || "0.001")} BNB</b>`,
+      "Booster prices are stored on-chain and owner-configurable; the v3.3 source default is 0.001 BNB for each Booster.",
       "",
-      "On-chain rules and the connected smart contract are the final source of truth."
+      "The connected smart contract and explorer-readable on-chain records are the final source of truth."
     ].join("\n"),
   },
   {
@@ -271,20 +274,23 @@ function indonesianAnswer(question, context = {}) {
     ].join("\n");
   }
 
-  if (/(mining|miner|power|booster|claim|menambang|tambang)/i.test(q)) {
+  if (/(mining|miner|power|booster|double power|claim|vesting|reward|burn|00:05|utc|menambang|tambang|vesting|bakar)/i.test(q)) {
     return [
-      "<b>Panduan ATH Mining</b>",
+      "<b>Panduan ATH Mining v3.3</b>",
       "",
-      "1. Hubungkan wallet yang didukung.",
-      "2. Pastikan jaringan sesuai dengan yang ditampilkan pada halaman AETHER Mining.",
-      "3. Periksa detail Power / Booster sebelum menandatangani transaksi.",
-      "4. Gunakan kontrol claim di halaman ketika posisi Anda memenuhi syarat.",
+      "1. Beli Power 0.001 BNB untuk mengaktifkan mining window 180 hari.",
+      "2. Base reward adalah 1 ATH per hari UTC yang eligible. Claim dibuka 00:05:00 UTC dan hangus setelah 23:59:59 UTC jika tidak di-claim.",
+      "3. Referral multiplier (+10% sampai +50%) dihitung lebih dahulu.",
+      "4. Power Booster menambah 100 Hash dan mengalikan reward setelah referral menjadi 2x selama 30 hari.",
+      "5. Double Power membutuhkan minimal 5 referral dan memberi 3x di atas Power Booster aktif. Masa aktif mengikuti expiry Power Booster dan tidak memperpanjangnya.",
+      "6. Setiap claim membuka 10% pada 30 hari, 5% pada 60 hari, 5% pada 90 hari; sisa 80% masuk Cycle 1 pada 180 hari.",
+      "7. Setiap dari 12 cycle membakar 10% saat masuk cycle, membuka 10%/+30d, 5%/+60d, 5%/+90d, lalu 70% diteruskan. Setelah Cycle 12, sisa akhir diselesaikan 60% burn / 40% distribusi holder.",
       "",
       `Mode halaman saat ini: <b>${escapeHtml(cfg.networkMode || "UNKNOWN")}</b>`,
-      `Harga Power pada deployment ini: <b>${escapeHtml(cfg.powerPriceBnb || "-")} BNB</b>`,
-      `Harga Booster pada deployment ini: <b>${escapeHtml(cfg.boosterPriceBnb || "-")} BNB</b>`,
+      `Harga Power: <b>${escapeHtml(cfg.powerPriceBnb || "0.001")} BNB</b>`,
+      "Harga Booster disimpan on-chain dan dapat diatur owner; default source v3.3 adalah 0.001 BNB untuk masing-masing Booster.",
       "",
-      "Aturan on-chain dan smart contract yang terhubung tetap menjadi sumber kebenaran utama."
+      "Smart contract terhubung dan data on-chain yang dapat dibaca melalui explorer tetap menjadi sumber kebenaran utama."
     ].join("\n");
   }
 
