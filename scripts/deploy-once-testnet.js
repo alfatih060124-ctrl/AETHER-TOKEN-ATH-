@@ -1,4 +1,6 @@
 const { spawnSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
 function fail(message) {
   console.error(message);
@@ -41,13 +43,39 @@ if (existing.length > 0) {
 }
 
 console.log("ATH one-shot Testnet deployment gate OPEN.");
-console.log("Running preflight first; no private key will be printed.");
+console.log("Validating exact ATH Mining v3.3 source before any deployment transaction.");
 
+run("npm", ["run", "source:selfcheck"]);
+run("npm", ["run", "syntax:check"]);
+run("npm", ["run", "compile"]);
+run("npm", ["test"]);
+run("npm", ["run", "abi:export"]);
+
+console.log("Source validation passed. Running BSC Testnet preflight; no private key will be printed.");
 run("npm", ["run", "preflight:testnet"]);
 
 console.log("Preflight passed. Starting BSC Testnet deployment.");
 run("npm", ["run", "deploy:testnet"]);
 
-console.log("ATH one-shot BSC Testnet deployment completed.");
-console.log("Capture contract addresses from deployment output, then set ATH_TOKEN_ADDRESS, ATH_MINING_ADDRESS and ATH_TEAM_LOCK_ADDRESS.");
-console.log("After addresses are stored, set TESTNET_DEPLOY_APPROVED=false.");
+const manifestPath = path.join(__dirname, "..", "deployments", "bscTestnet.json");
+if (!fs.existsSync(manifestPath)) {
+  fail("Deployment finished without deployments/bscTestnet.json manifest");
+}
+
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+if (manifest.engineVersion !== "3.3.0") {
+  fail("Unexpected deployment manifest version: " + String(manifest.engineVersion));
+}
+
+const contracts = manifest.contracts || {};
+for (const name of ["ATH_TOKEN_ADDRESS", "ATH_MINING_ADDRESS", "ATH_TEAM_LOCK_ADDRESS"]) {
+  if (!contracts[name]) fail("Deployment manifest missing " + name);
+  process.env[name] = contracts[name];
+}
+process.env.DEPLOYER_ADDRESS = manifest.deployer;
+
+console.log("Deployment transactions confirmed. Running v3.3 post-deploy invariants.");
+run("npm", ["run", "postdeploy:testnet"]);
+
+console.log("ATH one-shot BSC Testnet v3.3 deployment + postdeploy verification PASSED.");
+console.log("Persist the verified addresses from deployments/bscTestnet.json, then restore TESTNET_DEPLOY_APPROVED=false.");
