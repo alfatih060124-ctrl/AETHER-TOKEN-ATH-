@@ -1,0 +1,13 @@
+{
+  "name": "aether-corporate-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AETHER Corporate master brand website",
+  "scripts": {
+    "check": "node --check server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
