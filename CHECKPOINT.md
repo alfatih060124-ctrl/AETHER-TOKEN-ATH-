@@ -36,6 +36,17 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - Fail-closed one-shot gate test: `TESTNET_DEPLOY_APPROVED=false` correctly exits before deployment.
 - Remaining external blocker is unchanged: fund the Testnet deployer with at least **0.02 tBNB**.
 
+### Local Release Rehearsal — DONE
+
+- Added a zero-cost Hardhat deployment rehearsal that deploys ATH, MiningAirdrop and TeamTokenLock from clean state.
+- Rehearsal verifies the full fixed-supply allocation: 700M mining / 200M liquidity / 50M team lock / 50M marketing.
+- Team lock is verified at 365 days and deployer residual ATH is verified at zero.
+- Holder smoke flow verifies a real protocol path: Power activation, referral-effective reward, daily claim, initial vesting, Cycle-1 burn/rollover and final 60/40 conservation.
+- Latest rehearsal evidence: 1 referral => 1.1 ATH daily reward; 1.1 ATH vesting position; 0.088 ATH Cycle-1 burn; 0.616 ATH Cycle-1 rollover.
+- Local release rehearsal runs with `npm run release:smoke:local` and requires no BNB/tBNB.
+- Full gate remains green: source self-check PASSED, syntax check PASSED, 21/21 automated tests PASS, local release rehearsal PASS.
+- This rehearsal does not create public blockchain addresses and does not alter Testnet/Mainnet gates.
+
 ### Public Documentation / AI Sync — DONE
 
 - Whitepaper updated to **v1.1** and explicitly aligned to Mining Protocol **v3.3**.
