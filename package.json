@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node scripts/service-start.js",
     "source:selfcheck": "node scripts/source-selfcheck.js",
-    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/deploy-once-testnet.js && node --check scripts/service-start.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js && node --check scripts/export-abi.js && node --check scripts/local-release-smoke.js",
+    "syntax:check": "node --check scripts/preflight.js && node --check scripts/deploy.js && node --check scripts/deploy-once-testnet.js && node --check scripts/service-start.js && node --check scripts/verify.js && node --check scripts/rpc-check.js && node --check scripts/readiness-report.js && node --check scripts/postdeploy-check.js && node --check scripts/export-abi.js && node --check scripts/local-release-smoke.js && node --check scripts/reward-keeper.js",
     "rpc:check:testnet": "node scripts/rpc-check.js",
     "readiness:testnet": "node scripts/readiness-report.js",
     "preflight:testnet": "node scripts/preflight.js testnet",
@@ -20,7 +20,9 @@
     "deploy:mainnet": "hardhat run scripts/deploy.js --network bscMainnet",
     "verify:testnet": "hardhat run scripts/verify.js --network bscTestnet",
     "verify:mainnet": "hardhat run scripts/verify.js --network bscMainnet",
-    "release:smoke:local": "hardhat run scripts/local-release-smoke.js"
+    "release:smoke:local": "hardhat run scripts/local-release-smoke.js",
+    "keeper:reward": "node scripts/reward-keeper.js",
+    "release:gate:local": "npm run source:selfcheck && npm run syntax:check && npm run compile && npm test && npm run abi:export && npm run release:smoke:local"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
