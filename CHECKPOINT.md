@@ -36,6 +36,15 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - Fail-closed one-shot gate test: `TESTNET_DEPLOY_APPROVED=false` correctly exits before deployment.
 - Remaining external blocker is unchanged: fund the Testnet deployer with at least **0.02 tBNB**.
 
+### Public Documentation / AI Sync — DONE
+
+- Whitepaper updated to **v1.1** and explicitly aligned to Mining Protocol **v3.3**.
+- Public Whitepaper now documents the 00:05 UTC claim window, Power Booster 2x/30d, Double Power 3x with 5-referral gate, 12 recurring vesting cycles, cycle-entry burn, and final 60/40 settlement.
+- AETHER AI English and Indonesian fallback knowledge now uses the same v3.3 rules and no longer describes the old 80% direct Day-180 final unlock.
+- Landing page roadmap and Whitepaper links point to `/ATH-Whitepaper-v1.1.pdf`; `/ATH-Whitepaper-v1.0.pdf` remains a backward-compatible alias.
+- `/health` and `/config` expose `miningProtocolVersion=3.3` and `whitepaperVersion=1.1`.
+- Desktop 1440px and mobile 393px visual QC: no horizontal overflow; Whitepaper/roadmap/AI controls present with no page JavaScript errors.
+
 
 ## DONE — Steps 1–23 + Step 24A
 
