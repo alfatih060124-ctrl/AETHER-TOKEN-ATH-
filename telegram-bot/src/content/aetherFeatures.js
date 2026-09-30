@@ -1,4 +1,5 @@
 const WALLET_URL = "https://wallet.aether.boats/";
+const AUTOTRADE_URL = "https://aitrade.aether.boats/";
 
 const FEATURES = [
   {
@@ -75,9 +76,10 @@ const FEATURES = [
   },
   {
     id: "ai-trade",
-    title: "AI-Trade Access",
-    status: "gated",
-    body: "AI-Trade discovery is part of the AETHER ecosystem. Availability is controlled by product, safety and execution gates; no profit is guaranteed.",
+    title: "AETHER AUTOTRADE",
+    status: "ecosystem",
+    body: "Open the official AETHER AUTOTRADE portal to review supported automated-trading features, modes, and execution controls. AutoTrade does not guarantee profit; users must review risk and transaction permissions.",
+    url: AUTOTRADE_URL,
   },
   {
     id: "security",
@@ -190,6 +192,7 @@ function featureText(feature, walletUrl = WALLET_URL) {
     "",
     "<b>Official AETHER Wallet</b>",
     escapeHtml(walletUrl || WALLET_URL),
+    ...(feature.url ? ["", "<b>Open AETHER Service</b>", escapeHtml(feature.url)] : []),
   ].join("\n");
 }
 
@@ -218,7 +221,7 @@ function featureKeyboard() {
         { text: "Mining", callback_data: "features:mining" },
       ],
       [
-        { text: "AI-Trade", callback_data: "features:ai-trade" },
+        { text: "AETHER AUTOTRADE", callback_data: "features:ai-trade" },
         { text: "Security", callback_data: "features:security" },
       ],
       [
@@ -226,6 +229,7 @@ function featureKeyboard() {
         { text: "All Features", callback_data: "features:all" },
       ],
       [{ text: "Open AETHER Wallet", url: WALLET_URL }],
+      [{ text: "Open AETHER AUTOTRADE", url: AUTOTRADE_URL }],
     ],
   };
 }
@@ -237,6 +241,7 @@ function getFeature(id) {
 module.exports = {
   FEATURES,
   WALLET_URL,
+  AUTOTRADE_URL,
   overview,
   featureText,
   featureForHour,
