@@ -26,10 +26,12 @@
   }
 
   const heroButtons = document.querySelector(".hero-buttons");
-  if (heroButtons && !heroButtons.querySelector('a[href="/ATH-Whitepaper-v1.0.pdf"]')) {
+  if (heroButtons && !heroButtons.querySelector('a[href="/ATH-Whitepaper-v1.1.pdf"]')) {
+    const legacy = heroButtons.querySelector('a[href="/ATH-Whitepaper-v1.0.pdf"]');
+    if (legacy) legacy.remove();
     const a = document.createElement("a");
     a.className = "btn btn-dark btn-large";
-    a.href = "/ATH-Whitepaper-v1.0.pdf";
+    a.href = "/ATH-Whitepaper-v1.1.pdf";
     a.innerHTML = "↓ &nbsp; Whitepaper";
     heroButtons.appendChild(a);
   }
@@ -43,10 +45,10 @@
       <div class="whitepaper-panel">
         <div class="whitepaper-copy">
           <span class="section-kicker">ATH TOKEN DOCUMENTATION</span>
-          <h2>Whitepaper v1.0</h2>
-          <p>The public ATH whitepaper documents the fixed-supply token model, mining mechanics, vesting, security controls, Testnet gates, and the path toward a gated production launch.</p>
+          <h2>Whitepaper v1.1</h2>
+          <p>The public ATH whitepaper documents Mining Protocol v3.3: fixed supply, 00:05 UTC daily rewards, Power and Double Power Boosters, recurring 12-cycle vesting with burn, security controls, Testnet gates, and the path toward a gated production launch.</p>
           <div class="whitepaper-actions">
-            <a class="btn btn-gold" href="/ATH-Whitepaper-v1.0.pdf">↓ &nbsp; Download Whitepaper PDF</a>
+            <a class="btn btn-gold" href="/ATH-Whitepaper-v1.1.pdf">↓ &nbsp; Download Whitepaper PDF</a>
             <a class="btn btn-dark" href="#roadmap">View Roadmap</a>
           </div>
           <small class="doc-note">ATH's protocol display price is an internal contract metric. It is not a market-price guarantee, investment return, or listing promise.</small>
@@ -68,9 +70,9 @@
         <p>Milestones are labeled by actual implementation status. Mainnet remains fail-closed until the required security and liquidity gates are complete.</p>
       </div>
       <div class="roadmap-grid">
-        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>01</b><h3>Protocol Foundation</h3><p>Fixed 1B ATH supply, MiningAirdrop engine, referral logic, booster, reserve protection, and vesting rules.</p></article>
-        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>02</b><h3>Validation & Interfaces</h3><p>Automated tests, source checks, admin controls, responsive mining interface, and release-gate documentation.</p></article>
-        <article class="roadmap-card"><span class="roadmap-status next">NEXT GATE</span><b>03</b><h3>BSC Testnet Deployment</h3><p>Fund Testnet gas, deploy once, capture addresses, verify contracts, and run the Power → Claim → Booster → Vesting flow.</p></article>
+        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>01</b><h3>Protocol Foundation</h3><p>Fixed 1B ATH supply, UTC daily rewards, referral logic, Power/Double Power Boosters, 12-cycle vesting, burn, and reserve protection.</p></article>
+        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>02</b><h3>Validation & Interfaces</h3><p>21 automated tests, source checks, deterministic ABI fingerprints, admin controls, responsive mining interface, and release-gate documentation.</p></article>
+        <article class="roadmap-card"><span class="roadmap-status next">NEXT GATE</span><b>03</b><h3>BSC Testnet Deployment</h3><p>Fund Testnet gas, deploy once, auto-run v3.3 post-deploy invariants, capture verified addresses, then test the full Power → Claim → Boosters → Vesting flow.</p></article>
         <article class="roadmap-card"><span class="roadmap-status planned">PLANNED</span><b>04</b><h3>Wallet Integration</h3><p>Freeze verified Testnet ABI/address data and connect ATH mining flows with AETHER Wallet for public testing.</p></article>
         <article class="roadmap-card"><span class="roadmap-status gated">REQUIRED</span><b>05</b><h3>Production Security</h3><p>Independent security review, production multisig, operational controls, and final release-gate evidence.</p></article>
         <article class="roadmap-card"><span class="roadmap-status gated">GATED</span><b>06</b><h3>Mainnet & Liquidity</h3><p>Mainnet activation and ATH/USDT liquidity only after audit, multisig, liquidity-lock, and explicit release approvals.</p></article>
