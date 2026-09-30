@@ -46,13 +46,13 @@ function bulletList(doc, items, y) {
 function streamWhitepaper(res) {
   res.writeHead(200, {
     "content-type": "application/pdf",
-    "content-disposition": 'attachment; filename="ATH-Whitepaper-v1.0.pdf"',
+    "content-disposition": 'attachment; filename="ATH-Whitepaper-v1.1.pdf"',
     "cache-control": "public, max-age=3600",
     "x-content-type-options": "nosniff"
   });
 
   const doc = new PDFDocument({ size: "A4", margin: 50, info: {
-    Title: "AETHER ATH Token Whitepaper v1.0",
+    Title: "AETHER ATH Token Whitepaper v1.1 - Mining Protocol v3.3",
     Author: "AETHER Project",
     Subject: "ATH Token, mining protocol, tokenomics, security gates and roadmap"
   }});
@@ -60,7 +60,7 @@ function streamWhitepaper(res) {
   pageBase(doc, 1, "Executive Summary");
   doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(9).text("THE NEXT ERA OF DECENTRALIZED VALUE", 50, 135);
   doc.fillColor(GOLD_LIGHT).font("Times-Bold").fontSize(44).text("AETHER", 50, 160);
-  doc.fillColor(TEXT).font("Times-Roman").fontSize(24).text("ATH Token Whitepaper", 50, 213);
+  doc.fillColor(TEXT).font("Times-Roman").fontSize(24).text("ATH Token Whitepaper v1.1", 50, 213);
   doc.fillColor(MUTED).font("Helvetica").fontSize(11).text("Fixed-supply utility token and community mining protocol on BNB Smart Chain.", 50, 255, { width: 460, lineGap: 5 });
 
   card(doc, 50, 320, 116, 78, "Ticker", "ATH", "Aether ecosystem token");
@@ -97,21 +97,21 @@ function streamWhitepaper(res) {
   ], y);
   doc.addPage();
   pageBase(doc, 3, "Mining Protocol");
-  y = heading(doc, "02 / Mining Protocol", "Power, Daily Claim and Booster", 105);
-  y = body(doc, "The ATH mining engine is a reward-allocation protocol. Users activate a 180-day mining window by purchasing Power. Each successful daily claim creates a vesting position backed by the pre-funded ATH reserve.", y);
+  y = heading(doc, "02 / Mining Protocol", "Power, Daily Claim and Boosters", 105);
+  y = body(doc, "The ATH mining engine is a reward-allocation protocol. Users activate a 180-day mining window by purchasing Power. Each successful UTC daily claim creates its own auditable vesting position backed by the pre-funded ATH reserve.", y);
 
   card(doc, 50, y + 12, 153, 86, "Power", "0.001 BNB", "Activates one 180-day mining window");
-  card(doc, 221, y + 12, 153, 86, "Base Reward", "1 ATH/day", "Claim must be made for the current mining day");
-  card(doc, 392, y + 12, 153, 86, "Booster", "0.001 BNB", "+100 Hash and reward multiplier up to 2x");
+  card(doc, 221, y + 12, 153, 86, "Base Reward", "1 ATH/day", "Opens 00:05 UTC; missed reward expires");
+  card(doc, 392, y + 12, 153, 86, "Power Booster", "2x / 30 days", "+100 Hash; price stored on-chain");
 
   y = heading(doc, "Claim Logic", "Daily Allocation Rules", y + 128);
   y = bulletList(doc, [
-    "A mining day is calculated from the user's Power activation timestamp.",
-    "A user can claim once for the current eligible mining day.",
-    "Missed daily claims are not backfilled by the contract.",
-    "The 180-day window limits eligibility; it is not an unlimited emissions schedule.",
-    "The mining reserve must be funded before claims can allocate rewards.",
-    "Allocated rewards become vesting positions and can only be transferred when their vesting tranches unlock."
+    "Daily reward status is determined by UTC blockchain time, not the user's local device clock.",
+    "Each eligible reward opens at 00:05:00 UTC and closes at 23:59:59 UTC.",
+    "An unclaimed daily reward expires at the next UTC day boundary and is never backfilled.",
+    "Referral state and active Booster state are snapshotted for that reward at 00:05 UTC.",
+    "The 180-day Power window limits eligibility; it is not an unlimited emissions schedule.",
+    "The mining reserve must be funded before claims can allocate rewards."
   ], y);
 
   y = heading(doc, "Protocol Display Metric", "ATH Display Price Formula", y + 10);
@@ -119,25 +119,26 @@ function streamWhitepaper(res) {
 
   doc.addPage();
   pageBase(doc, 4, "Rewards and Vesting");
-  y = heading(doc, "03 / Reward Design", "Referral, Booster and Vesting", 105);
-  y = body(doc, "ATH combines a capped referral multiplier with a capped Booster multiplier. Reward allocations then follow a four-stage vesting schedule.", y);
+  y = heading(doc, "03 / Reward Design", "Referral, Boosters and Recurring Vesting", 105);
+  y = body(doc, "ATH applies the referral multiplier first, then optional Booster multipliers. Every successful claim creates an independent vesting position whose locked 80% can continue through recurring on-chain cycles.", y);
 
-  card(doc, 50, y + 12, 153, 82, "Referral Range", "+10% to +50%", "Based on active referred users that purchased Power");
-  card(doc, 221, y + 12, 153, 82, "Booster Cap", "2.00x", "Repeated Booster purchases add Hash but do not stack x2 repeatedly");
-  card(doc, 392, y + 12, 153, 82, "Mining Window", "180 days", "Per Power activation");
+  card(doc, 50, y + 12, 153, 82, "Referral Range", "+10% to +50%", "Applied before Booster multiplication");
+  card(doc, 221, y + 12, 153, 82, "Power Booster", "2x / 30 days", "Adds 100 Hash; non-overlapping active period");
+  card(doc, 392, y + 12, 153, 82, "Double Power", "3x on Power", "Requires 5 referrals; same Booster expiry");
 
-  y = heading(doc, "Vesting Schedule", "Four Unlock Tranches", y + 124);
+  y = heading(doc, "Initial Vesting", "20% Unlock + 80% Cycle Principal", y + 124);
   card(doc, 50, y + 12, 116, 76, "Day 30", "10%", "First unlock");
   card(doc, 176, y + 12, 116, 76, "Day 60", "5%", "Second unlock");
   card(doc, 302, y + 12, 116, 76, "Day 90", "5%", "Third unlock");
-  card(doc, 428, y + 12, 116, 76, "Day 180", "80%", "Final unlock");
+  card(doc, 428, y + 12, 116, 76, "Day 180", "80%", "Enters Vesting Cycle 1");
 
-  y = heading(doc, "Referral Tiers", "Community Multiplier", y + 118);
+  y = heading(doc, "Referral + Recurring Vesting", "Community Multiplier and 12-Cycle Lock", y + 118);
   y = bulletList(doc, [
     "1-5 referrals: +10%; 6-10: +15%; 11-20: +20%; 21-25: +25%.",
-    "26-30 referrals: +30%; 31-35: +35%; 36-40: +40%; 41-45: +45%.",
-    "46 or more qualifying referrals: +50% maximum referral bonus.",
-    "The protocol prevents self-referral. Referral accounting is on-chain after Power activation."
+    "26-30 referrals: +30%; 31-35: +35%; 36-40: +40%; 41-45: +45%; 46+: +50%.",
+    "At each of 12 vesting-cycle entries: 10% burns, 10% unlocks at +30d, 5% at +60d, 5% at +90d, and 70% rolls forward.",
+    "After Cycle 12, the last rollover is settled 60% burn / 40% holder distribution; there is no Cycle 13.",
+    "Double Power requires at least 5 referrals and applies 3x on top of an active 2x Power Booster without extending its expiry."
   ], y);
   doc.addPage();
   pageBase(doc, 5, "Security Architecture");
@@ -166,9 +167,9 @@ function streamWhitepaper(res) {
   y = body(doc, "Roadmap phases distinguish completed engineering work from future gated milestones. Future items are plans and may change after testing, security review, legal review, market conditions, or ecosystem requirements.", y);
 
   const phases = [
-    ["01", "COMPLETE", "Protocol Foundation", "Fixed supply, MiningAirdrop engine, referral, Booster, vesting and reserve protection."],
-    ["02", "COMPLETE", "Validation and Interfaces", "Automated tests, source checks, admin controls, responsive web interface and release-gate documentation."],
-    ["03", "NEXT GATE", "BSC Testnet Deployment", "Deploy once after Testnet gas funding, capture verified addresses and test Power -> Claim -> Booster -> Vesting."],
+    ["01", "COMPLETE", "Protocol Foundation", "Fixed supply, UTC daily rewards, referral, Power/Double Power Boosters, 12-cycle vesting, burn and reserve protection."],
+    ["02", "COMPLETE", "Validation and Interfaces", "21 automated tests, source checks, deterministic ABI fingerprints, admin controls, responsive web and release-gate documentation."],
+    ["03", "NEXT GATE", "BSC Testnet Deployment", "After Testnet gas funding, deploy once, auto-run v3.3 post-deploy invariants, verify addresses, then test the full holder flow."],
     ["04", "PLANNED", "Wallet Integration", "Freeze verified Testnet ABI/address data and connect ATH mining to AETHER Wallet public testing."],
     ["05", "REQUIRED", "Production Security", "Independent audit, production multisig, operational controls and release evidence."],
     ["06", "GATED", "Mainnet and Liquidity", "Mainnet and ATH/USDT liquidity only after all production release gates are satisfied."],

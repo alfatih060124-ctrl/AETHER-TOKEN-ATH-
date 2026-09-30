@@ -91,6 +91,7 @@
       ["How do I start mining?", "Start Mining"],
       ["What can AETHER Wallet do?", "Wallet Features"],
       ["How do ATH referrals work?", "Referral"],
+      ["How does ATH vesting work?", "Vesting v3.3"],
       ["How do I stay safe?", "Security"],
       ["How does Swap / DEX work?", "Swap / DEX"],
       ["How do I connect a wallet?", "Connect Wallet"],

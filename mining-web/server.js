@@ -65,6 +65,8 @@ const MIME = {
 function configPayload() {
   return {
     appName: "AETHER ATH Mining",
+    miningProtocolVersion: "3.3",
+    whitepaperVersion: "1.1",
     networkMode: (process.env.NETWORK_MODE || "TESTNET").toUpperCase(),
     chainId: Number(process.env.PUBLIC_CHAIN_ID || 97),
     chainName: process.env.PUBLIC_CHAIN_NAME || "BSC Testnet",
@@ -119,6 +121,8 @@ const server = http.createServer((req, res) => {
       JSON.stringify({
         ok: true,
         service: "aether-ath-mining-web",
+        miningProtocolVersion: cfg.miningProtocolVersion,
+        whitepaperVersion: cfg.whitepaperVersion,
         networkMode: cfg.networkMode,
         contractConfigured: Boolean(cfg.miningAddress),
         mainnetEnabled: cfg.mainnetEnabled,
@@ -174,7 +178,11 @@ const server = http.createServer((req, res) => {
       );
   }
 
-  if (req.url === "/ATH-Whitepaper-v1.0.pdf" || req.url === "/whitepaper.pdf") {
+  if (
+    req.url === "/ATH-Whitepaper-v1.1.pdf" ||
+    req.url === "/ATH-Whitepaper-v1.0.pdf" ||
+    req.url === "/whitepaper.pdf"
+  ) {
     return streamWhitepaper(res);
   }
 
