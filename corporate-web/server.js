@@ -85,7 +85,8 @@ const server = http.createServer(async (req, res) => {
       const data=await readJson(req);
       const message=String(data.message||"").trim().slice(0,1200);
       const language=String(data.language||"en").slice(0,32);
-      if(!message) return json(res,400,{reply:"Please enter a message."});\n      if(rateLimited(req)) return json(res,429,{reply:"Too many requests. Please wait a moment and try again."});
+      if(!message) return json(res,400,{reply:"Please enter a message."});
+      if(rateLimited(req)) return json(res,429,{reply:"Too many requests. Please wait a moment and try again."});
       if(sensitive(message)) return json(res,200,{reply:"For your security, never share a seed phrase, private key, recovery phrase, password or OTP with AETHER AI or anyone else. I can help without those secrets."});
       const reply=await callAI(message,language);
       if(!reply) return json(res,200,{reply:localAI(message,language),mode:"knowledge"});
