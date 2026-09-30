@@ -12,6 +12,7 @@ function buildLinks(config = {}) {
     ["AETHER Official Website", config.websiteUrl],
     ["AETHER Wallet", config.appUrl || "https://wallet.aether.boats/"],
     ["AETHER Coin / ATH Mining", config.coinUrl || "https://mining.aether.boats/"],
+    ["AETHER AUTOTRADE", config.autotradeUrl || "https://aitrade.aether.boats/"],
     ["AETHER Telegram Bot", botUrl],
     ["AETHER Official Channel", config.channelUrl],
     ["AETHER Community Group", config.groupUrl || config.communityUrl],
