@@ -26,7 +26,9 @@ function send(res, status, body, headers = {}) {
     "referrer-policy": "strict-origin-when-cross-origin",
     "permissions-policy": "camera=(), microphone=(), geolocation=()",
     "x-frame-options": "SAMEORIGIN",
-    "strict-transport-security": "max-age=31536000; includeSubDomains",\n    "cross-origin-opener-policy": "same-origin",\n    "cross-origin-resource-policy": "same-origin",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "cross-origin-opener-policy": "same-origin",
+    "cross-origin-resource-policy": "same-origin",
     "content-security-policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
     ...headers
   });
@@ -80,7 +82,8 @@ User: "+message}],max_output_tokens:500});
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
-  if (url.pathname === "/api/ai" && req.method === "POST") {\n    if(!String(req.headers["content-type"]||"").toLowerCase().startsWith("application/json")) return json(res,415,{reply:"JSON content type required."});
+  if (url.pathname === "/api/ai" && req.method === "POST") {
+    if(!String(req.headers["content-type"]||"").toLowerCase().startsWith("application/json")) return json(res,415,{reply:"JSON content type required."});
     try {
       const data=await readJson(req);
       const message=String(data.message||"").trim().slice(0,1200);
@@ -129,6 +132,11 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.requestTimeout=15000;\nserver.headersTimeout=10000;\nserver.keepAliveTimeout=5000;\nserver.maxHeadersCount=64;\n\nserver.listen(PORT, "0.0.0.0", () => {
+server.requestTimeout=15000;
+server.headersTimeout=10000;
+server.keepAliveTimeout=5000;
+server.maxHeadersCount=64;
+
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`AETHER Corporate web listening on ${PORT}`);
 });
