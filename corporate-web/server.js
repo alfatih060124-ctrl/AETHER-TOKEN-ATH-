@@ -115,6 +115,7 @@ const server = http.createServer(async (req, res) => {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
   if (pathname === "/knowledge" || pathname === "/product-knowledge") pathname = "/product-knowledge.html";
+  if (pathname === "/knowledge" || pathname === "/product-knowledge") pathname = "/product-knowledge.html";
   if (pathname === "/favicon.ico") pathname = "/favicon.svg";
   const file = path.normalize(path.join(PUBLIC, pathname));
   if (!file.startsWith(PUBLIC)) return send(res, 403, "Forbidden");
