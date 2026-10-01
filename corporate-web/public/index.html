@@ -88,7 +88,14 @@ footer{padding:36px 0 48px;color:#777066;font-size:12px}.footer-row{display:flex
 </main>
 <footer><div class="wrap footer-row"><span>© 2026 AETHER. Corporate master brand.</span><span>Technology and product information only. No guaranteed profit, yield, market price or investment return.</span></div></footer><button class="ai-fab" id="aiFab" aria-label="Open AETHER AI Assistant">AI</button><aside class="ai-box" id="aiBox" aria-label="AETHER AI Assistant"><div class="ai-head"><div><b>AETHER AI</b><small>MULTILINGUAL ECOSYSTEM ASSISTANT</small></div><button class="ai-close" id="aiClose" aria-label="Close assistant">×</button></div><div class="ai-msgs" id="aiMsgs"><div class="ai-msg bot" id="aiWelcome">Hello. I’m AETHER AI. Ask me about AETHER Wallet, ATH Token & Mining, AUTOTRADE, security, or official AETHER services. I will reply in your language.</div></div><form class="ai-form" id="aiForm"><input class="ai-input" id="aiInput" maxlength="1200" autocomplete="off" placeholder="Ask AETHER AI…" aria-label="Message"><button class="ai-send" type="submit">Send</button></form><div class="ai-note">Never share a seed phrase, private key, password, OTP, or recovery secret.</div></aside>
 <script>
+window.aetherEnglishBaseline=window.aetherEnglishBaseline||{};
+(function(){
+ var selectors=["section:not(#contact) .section-head .eyebrow","section:not(#contact) .section-head h2","section:not(#contact) .section-head > p","#about .panel h3","#about .panel > p","#about .item b","#about .item span[style]","#technology .item b","#technology .item span[style]","#ecosystem .card p","#security .card h3","#security .card p","#roadmap .step p","#contact .eyebrow","#contact h2",".ai-head small","#aiWelcome","#aiInput",".ai-send",".ai-note",".footer-row span"];
+ selectors.forEach(function(s){window.aetherEnglishBaseline[s]=Array.from(document.querySelectorAll(s)).map(function(e){return s==="#aiInput"?e.placeholder:e.textContent})});
+ window.aetherRestoreEnglish=function(){selectors.forEach(function(s){var vals=window.aetherEnglishBaseline[s]||[];document.querySelectorAll(s).forEach(function(e,i){if(vals[i]===undefined)return;if(s==="#aiInput")e.placeholder=vals[i];else e.textContent=vals[i]})})};
+})();
 window.aetherSetLanguage=function(code){
+ if(window.aetherRestoreEnglish)window.aetherRestoreEnglish();
  var hero=document.querySelector(".hero"),nav=document.getElementById("links"),sel=document.getElementById("corpLang");
  var d={
  en:["AETHER Corporate • Master Brand","Intelligent Infrastructure for Digital Ownership.","AETHER connects self-custody, digital assets, automation, AI and community infrastructure through one premium technology ecosystem—designed around user control, transparent systems and disciplined release gates.","Explore the ecosystem",["About","Ecosystem","Technology","Security","Roadmap","Brand"],"Official Links"],
