@@ -106,7 +106,7 @@ window.aetherSetLanguage=function(code){
  if(hero){var e=hero.querySelector(".eyebrow"),h=hero.querySelector("h1"),p=hero.querySelector(".lead"),b=hero.querySelector(".btn.primary");if(e)e.textContent=x[0];if(h)h.textContent=x[1];if(p)p.textContent=x[2];if(b)b.textContent=x[3]}
  if(nav){var a=nav.querySelectorAll("a");for(var i=0;i<a.length;i++)if(x[4][i])a[i].textContent=x[4][i]}
  var nc=document.querySelector(".navcta");if(nc)nc.textContent=x[5];try{localStorage.setItem("aether-corp-lang",code)}catch(_){}
- if(typeof window.aetherDeepLanguage==="function")try{window.aetherDeepLanguage(code)}catch(_){}
+ if(typeof applyFullPageLanguage==="function")try{applyFullPageLanguage(code)}catch(_){}
 };
 </script>
 <script>
@@ -195,7 +195,7 @@ function applyFullPageLanguage(code){
  const foot=[...document.querySelectorAll(".footer-row span")];foot[0].textContent=t.footer[0];foot[1].textContent=t.footer[1];
  translateDeepContent(code);
 }
-window.aetherDeepLanguage=function setCorpLang(code){
+function setCorpLangLegacy(code){
  code=corpI18n[code]?code:"en";
  const x=corpI18n[code],hero=document.querySelector(".hero");
  document.documentElement.lang=code;document.documentElement.dir=code==="ar"?"rtl":"ltr";corpLang.value=code;
