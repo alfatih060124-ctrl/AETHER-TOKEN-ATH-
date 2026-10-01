@@ -173,7 +173,17 @@ function applyFullPageLanguage(code){
  const foot=[...document.querySelectorAll(".footer-row span")];foot[0].textContent=t.footer[0];foot[1].textContent=t.footer[1];
  translateDeepContent(code);
 }
-function setCorpLang(code){code=corpI18n[code]?code:"en";const x=corpI18n[code],hero=document.querySelector(".hero");document.documentElement.lang=code;document.documentElement.dir=code==="ar"?"rtl":"ltr";hero.querySelector(".eyebrow").textContent=x[0];hero.querySelector("h1").textContent=x[1];hero.querySelector(".lead").textContent=x[2];hero.querySelector(".btn.primary").textContent=x[3];corpLang.value=code;localStorage.setItem("aether-corp-lang",code);applyFullPageLanguage(code)}
+function setCorpLang(code){
+ code=corpI18n[code]?code:"en";
+ const x=corpI18n[code],hero=document.querySelector(".hero");
+ document.documentElement.lang=code;document.documentElement.dir=code==="ar"?"rtl":"ltr";corpLang.value=code;
+ try{localStorage.setItem("aether-corp-lang",code)}catch(e){}
+ if(hero){const e=hero.querySelector(".eyebrow"),h=hero.querySelector("h1"),l=hero.querySelector(".lead"),b=hero.querySelector(".btn.primary");if(e)e.textContent=x[0];if(h)h.textContent=x[1];if(l)l.textContent=x[2];if(b)b.textContent=x[3]}
+ const t=fullPageI18n[code]||fullPageI18n.en;
+ try{[...links.querySelectorAll("a")].forEach((el,n)=>{if(t.nav[n])el.textContent=t.nav[n]});const nc=document.querySelector(".navcta");if(nc)nc.textContent=t.nav[6]}catch(e){}
+ try{const heads=[...document.querySelectorAll("section .section-head")];heads.forEach((h,n)=>{const ey=h.querySelector(".eyebrow"),h2=h.querySelector("h2");if(ey&&t.sections[n*2])ey.textContent=(n+1)+" / "+t.sections[n*2];if(h2&&t.sections[n*2+1])h2.textContent=t.sections[n*2+1]})}catch(e){}
+ try{applyFullPageLanguage(code)}catch(e){try{translateDeepContent(code)}catch(_){}}
+}
 const aiFab=document.getElementById("aiFab"),aiBox=document.getElementById("aiBox"),aiClose=document.getElementById("aiClose"),aiForm=document.getElementById("aiForm"),aiInput=document.getElementById("aiInput"),aiMsgs=document.getElementById("aiMsgs");
 function aiOpen(){aiBox.classList.add("open");setTimeout(()=>aiInput.focus(),100)}
 function aiMsg(text,who){const d=document.createElement("div");d.className="ai-msg "+who;d.textContent=text;aiMsgs.appendChild(d);aiMsgs.scrollTop=aiMsgs.scrollHeight;return d}
