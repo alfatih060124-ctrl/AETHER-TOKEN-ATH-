@@ -127,8 +127,7 @@ rules:["Merek utama dan komunikasi korporat.","Logo utama + descriptor Wallet.",
 },
 en:{}
 };
-function translateDeepContent(code){
- const t=contentI18n[code]; if(!t||!t.sectionP)return;
+const deepSelectors=["section .section-head > p","#about .panel > p","#about .item b","#about .item span[style]","#technology .item b","#technology .item span[style]","#ecosystem .card p","#security .card p","#roadmap .step p","#brand .rule span"];\nconst deepBaseline=deepSelectors.map(s=>[...document.querySelectorAll(s)].map(x=>x.textContent));\nfunction restoreDeepBaseline(){deepSelectors.forEach((s,n)=>[...document.querySelectorAll(s)].forEach((x,k)=>x.textContent=deepBaseline[n][k]||x.textContent));}\nfunction translateDeepContent(code){\n restoreDeepBaseline();\n const t=contentI18n[code]; if(!t||!t.sectionP)return;
  [...document.querySelectorAll("section .section-head > p")].forEach((x,n)=>{if(t.sectionP[n])x.textContent=t.sectionP[n]});
  [...document.querySelectorAll("#about .panel > p")].forEach((x,n)=>{if(t.panelP[n])x.textContent=t.panelP[n]});
  [...document.querySelectorAll("#about .item,#technology .item")].forEach((x,n)=>{if(!t.items[n])return;const a=t.items[n].split("|"),b=x.querySelector("b"),s=x.querySelector("span[style]");if(b)b.textContent=a[0];if(s)s.textContent=a[1]});
