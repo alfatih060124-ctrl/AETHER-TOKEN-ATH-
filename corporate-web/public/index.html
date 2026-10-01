@@ -152,7 +152,8 @@ pt:{cards:["Gateway Web3 para criar/importar wallet, watch-only, ativos, envio/r
 function applyDetailDeep(code){const d=detailDeepI18n[code];if(!d)return;[...document.querySelectorAll("#ecosystem .card p,#security .card p")].forEach((e,n)=>{if(d.cards[n])e.textContent=d.cards[n]});[...document.querySelectorAll("#roadmap .step p")].forEach((e,n)=>{if(d.steps[n])e.textContent=d.steps[n]});[...document.querySelectorAll("#brand .rule span")].forEach((e,n)=>{if(d.rules[n])e.textContent=d.rules[n]})}
 function applyExtraDeep(code){const x=extraDeepI18n[code];if(!x)return;[...document.querySelectorAll("section .section-head > p")].forEach((e,n)=>{if(x.p[n])e.textContent=x.p[n]});[...document.querySelectorAll("#about .panel > p")].forEach((e,n)=>{if(x.v[n])e.textContent=x.v[n]});applyDetailDeep(code)}
 function translateDeepContent(code){
- restoreDeepBaseline();\n const t=contentI18n[code]; if(!t||!t.sectionP){applyExtraDeep(code);return;}
+ restoreDeepBaseline();
+ const t=contentI18n[code]; if(!t||!t.sectionP){applyExtraDeep(code);return;}
  [...document.querySelectorAll("section .section-head > p")].forEach((x,n)=>{if(t.sectionP[n])x.textContent=t.sectionP[n]});
  [...document.querySelectorAll("#about .panel > p")].forEach((x,n)=>{if(t.panelP[n])x.textContent=t.panelP[n]});
  [...document.querySelectorAll("#about .item,#technology .item")].forEach((x,n)=>{if(!t.items[n])return;const a=t.items[n].split("|"),b=x.querySelector("b"),s=x.querySelector("span[style]");if(b)b.textContent=a[0];if(s)s.textContent=a[1]});
