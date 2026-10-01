@@ -9,5 +9,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "aetherBuild": "product-knowledge-2026-10-01"
 }
