@@ -115,7 +115,6 @@ const server = http.createServer(async (req, res) => {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
   if (pathname === "/knowledge" || pathname === "/product-knowledge") pathname = "/product-knowledge.html";
-  if (pathname === "/knowledge" || pathname === "/product-knowledge") pathname = "/product-knowledge.html";
   if (pathname === "/favicon.ico") pathname = "/favicon.svg";
   const file = path.normalize(path.join(PUBLIC, pathname));
   if (!file.startsWith(PUBLIC)) return send(res, 403, "Forbidden");
@@ -125,7 +124,7 @@ const server = http.createServer(async (req, res) => {
     const ext = path.extname(file).toLowerCase();
     res.writeHead(200, {
       "content-type": TYPES[ext] || "application/octet-stream",
-      "cache-control": ext === ".html" ? "public, max-age=300" : "public, max-age=86400",
+      "cache-control": ext === ".html" ? "no-store, no-cache, must-revalidate, max-age=0" : "public, max-age=86400",
       "x-content-type-options": "nosniff",
       "referrer-policy": "strict-origin-when-cross-origin",
       "permissions-policy": "camera=(), microphone=(), geolocation=()",
