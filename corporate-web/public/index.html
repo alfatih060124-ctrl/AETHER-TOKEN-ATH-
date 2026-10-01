@@ -169,11 +169,16 @@ function applyFullPageLanguage(code){
  const secCards=[...document.querySelectorAll("#security .card h3")];secCards.forEach((x,n)=>x.textContent=t.labels[n+4]);
  const opens=[...document.querySelectorAll(".actions .btn:nth-child(2),#ecosystem .open")];opens.forEach((x,n)=>{if(t.actions[n])x.textContent=t.actions[n]});
  const contact=document.querySelector("#contact");contact.querySelector(".eyebrow").textContent=t.sections[12];contact.querySelector("h2").textContent=t.sections[13];
- document.querySelector(".ai-head small").textContent=t.ai[0];document.getElementById("aiWelcome").textContent=t.ai[1];aiInput.placeholder=t.ai[2];document.querySelector(".ai-send").textContent=t.ai[3];document.querySelector(".ai-note").textContent=t.ai[4];
+ document.querySelector(".ai-head small").textContent=t.ai[0];document.getElementById("aiWelcome").textContent=t.ai[1];document.getElementById("aiInput").placeholder=t.ai[2];document.querySelector(".ai-send").textContent=t.ai[3];document.querySelector(".ai-note").textContent=t.ai[4];
  const foot=[...document.querySelectorAll(".footer-row span")];foot[0].textContent=t.footer[0];foot[1].textContent=t.footer[1];
  translateDeepContent(code);
 }
 function setCorpLang(code){code=corpI18n[code]?code:"en";const x=corpI18n[code],hero=document.querySelector(".hero");document.documentElement.lang=code;document.documentElement.dir=code==="ar"?"rtl":"ltr";hero.querySelector(".eyebrow").textContent=x[0];hero.querySelector("h1").textContent=x[1];hero.querySelector(".lead").textContent=x[2];hero.querySelector(".btn.primary").textContent=x[3];corpLang.value=code;localStorage.setItem("aether-corp-lang",code);applyFullPageLanguage(code)}
+const aiFab=document.getElementById("aiFab"),aiBox=document.getElementById("aiBox"),aiClose=document.getElementById("aiClose"),aiForm=document.getElementById("aiForm"),aiInput=document.getElementById("aiInput"),aiMsgs=document.getElementById("aiMsgs");
+function aiOpen(){aiBox.classList.add("open");setTimeout(()=>aiInput.focus(),100)}
+function aiMsg(text,who){const d=document.createElement("div");d.className="ai-msg "+who;d.textContent=text;aiMsgs.appendChild(d);aiMsgs.scrollTop=aiMsgs.scrollHeight;return d}
+aiFab.addEventListener("click",aiOpen);aiClose.addEventListener("click",()=>aiBox.classList.remove("open"));
+aiForm.addEventListener("submit",async e=>{e.preventDefault();const message=aiInput.value.trim();if(!message)return;aiInput.value="";aiMsg(message,"user");const wait=aiMsg("AETHER AI…","bot");try{const r=await fetch("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({message,language:document.documentElement.lang||navigator.language||"en"})});const j=await r.json();wait.textContent=j.reply||"AETHER AI is temporarily unavailable."}catch(err){wait.textContent="AETHER AI is temporarily unavailable."}});
 setCorpLang(localStorage.getItem("aether-corp-lang")||(navigator.language||"en").toLowerCase().split("-")[0]);corpLang.addEventListener("change",()=>setCorpLang(corpLang.value));
 </script>
 </body></html>
