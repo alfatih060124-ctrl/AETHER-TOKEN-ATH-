@@ -131,7 +131,7 @@ window.aetherSetLanguage=function(code){
   var ft=document.querySelectorAll(".footer-row span");if(ft[0])ft[0].textContent="© 2026 AETHER. Merek utama korporat.";if(ft[1])ft[1].textContent="Informasi teknologi dan produk saja. Tidak ada jaminan profit, imbal hasil, harga pasar, atau keuntungan investasi.";
  }
  try{localStorage.setItem("aether-corp-lang",code)}catch(_){}
- if(typeof applyFullPageLanguage==="function")try{applyFullPageLanguage(code)}catch(_){}
+ if(code!=="en"&&typeof applyFullPageLanguage==="function")try{applyFullPageLanguage(code)}catch(_){}
 };
 </script>
 <script>
