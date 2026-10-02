@@ -1,0 +1,1 @@
+(()=>{const s=document.createElement('script');s.src='/i18n.js?v=1';s.defer=true;document.head.appendChild(s)})();
