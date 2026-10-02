@@ -101,11 +101,16 @@ function send(res, status, body, type) {
   res.end(body);
 }
 
-function safePublicPath(urlPath) {
+function isControlPanelHost(req) {
+  const host = String(req.headers.host || "").split(":")[0].toLowerCase();
+  return host === "pm.aether.boats";
+}
+
+function safePublicPath(urlPath, controlPanelHost = false) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const normalized = path.posix.normalize(decoded).replace(/^\.\.(\/|\\|$)/g, "");
   const relative = normalized === "/"
-    ? "index.html"
+    ? (controlPanelHost ? "admin.html" : "index.html")
     : normalized === "/admin" || normalized === "/admin/"
       ? "admin.html"
       : normalized.replace(/^\//, "");
@@ -192,7 +197,7 @@ const server = http.createServer((req, res) => {
     return send(res, 200, JSON.stringify(configPayload()), MIME[".json"]);
   }
 
-  const full = safePublicPath(req.url || "/");
+  const full = safePublicPath(req.url || "/", isControlPanelHost(req));
   if (!full) return send(res, 400, "Bad request", "text/plain; charset=utf-8");
 
   fs.stat(full, (statErr, stat) => {
