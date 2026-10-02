@@ -1,3 +1,3 @@
-ATH Mining multilingual production refresh
-Requested HEAD: f575884f210767e836ebc62645851b4b2b7cfe6b
-Reason: enable i18n runtime + polished selector + RTL
+ATH Mining mobile+i18n correction deploy
+Requested source: latest main HEAD after 4487aff4eeaaa1b65691f4d3e9f0d284f2c55590
+Reason: stop translation reversion, expose language selector, single-column mobile cards, cache-bust assets, validate all i18n layers
