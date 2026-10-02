@@ -1,14 +1,14 @@
 {
   "name": "aether-corporate-web",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "AETHER Corporate master brand website",
   "scripts": {
-    "check": "node --check server.js",
-    "start": "node server.js"
+    "check": "node --check bootstrap.js && node --check server.js",
+    "start": "node bootstrap.js"
   },
   "engines": {
     "node": ">=20"
   },
-  "aetherBuild": "product-knowledge-2026-10-01"
+  "aetherBuild": "multilingual-runtime-fix-2026-10-02"
 }
