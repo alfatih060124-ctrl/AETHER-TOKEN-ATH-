@@ -1,2 +1,3 @@
-Trigger Railway source deployment for AETHER Mining multilingual release.
-Expected source commit lineage includes f49a944ef21ccf049957e3e4ab71d6f3dfd69996.
+ATH Mining multilingual production refresh
+Requested HEAD: f575884f210767e836ebc62645851b4b2b7cfe6b
+Reason: enable i18n runtime + polished selector + RTL
