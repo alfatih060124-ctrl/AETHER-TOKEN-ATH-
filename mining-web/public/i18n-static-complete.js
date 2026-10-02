@@ -34,8 +34,8 @@ const norm=s=>String(s||'').trim().replace(/\s+/g,' '),B=new WeakMap(),REV={};
 Object.entries(X).forEach(([k,a])=>a.forEach(v=>{REV[norm(v)]=k}));
 function current(){return (localStorage.getItem('aether-mining-lang')||localStorage.getItem('aetherMiningLang')||'en').toLowerCase().split('-')[0]}
 function apply(){const c=current(),i=L.indexOf(c);document.querySelectorAll('a,button,h1,h2,h3,h4,h5,label,span,p,strong,small,option,th,td,div').forEach(e=>{if(e.children.length)return;const now=norm(e.textContent);if(X[now])B.set(e,now);else if(REV[now])B.set(e,REV[now]);const key=norm(B.get(e)||'');const v=X[key];if(!v)return;if(c==='en'){if(now!==key)e.textContent=key}else if(i>=0&&v[i]&&now!==v[i])e.textContent=v[i]})}
-window.addEventListener('aether:languagechange',()=>setTimeout(apply,0));
-window.addEventListener('aether-language-change',()=>setTimeout(apply,0));
-let pending=false;new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;apply()})}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+function schedule(){requestAnimationFrame(apply)}
+window.addEventListener('aether-language-change',schedule);
+window.addEventListener('aether-language-refresh',schedule);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
 })();
