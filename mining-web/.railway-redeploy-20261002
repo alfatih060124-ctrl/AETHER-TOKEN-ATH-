@@ -1,4 +1,5 @@
-ATH Control Panel domain routing refresh
-Latest routing commit: 0026620cf9fd0ddd4d8ea88a7636ce24fad35487
-Domain: pm.aether.boats
-Trigger after Railway watch-pattern refresh.
+ATH Control Panel mobile QC deploy
+Latest mobile commits:
+- 2f47176adce95b6faea215ea580841260d5d63cc
+- 7a7741ed1f3a135450e38b12e391432e7212a164
+Reason: mobile layout hardening only; admin logic and Mining i18n unchanged
