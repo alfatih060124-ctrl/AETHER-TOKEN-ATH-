@@ -149,6 +149,14 @@ function safePublicPath(urlPath, controlPanelHost = false) {
 const server = http.createServer((req, res) => {
   const controlPanelHost = isControlPanelHost(req);
   const requestPath = String(req.url || "/").split("?")[0];
+  const controlPanelAllowedRequest = new Set([
+    "/", "/admin", "/admin/", "/admin.html", "/admin.js", "/admin.css",
+    "/config", "/health", "/favicon.ico",
+  ]);
+
+  if (controlPanelHost && !controlPanelAllowedRequest.has(requestPath)) {
+    return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
+  }
 
   if (req.url === "/health") {
     const cfg = configPayload();
@@ -174,10 +182,6 @@ const server = http.createServer((req, res) => {
       MIME[".json"],
       controlPanelHost
     );
-  }
-
-  if (controlPanelHost && requestPath === "/api/assistant") {
-    return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
   }
 
   if (req.url === "/api/assistant" && req.method === "POST") {
