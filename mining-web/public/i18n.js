@@ -1,0 +1,20 @@
+(()=>{
+const langs={en:'English',id:'Indonesia',zh:'中文',es:'Español',ar:'العربية',ru:'Русский',ko:'한국어',ja:'日本語',vi:'Tiếng Việt',pt:'Português'};
+const dict={
+en:{mining:'Mining',connect:'Connect Wallet',disconnect:'Disconnect',claim:'Claim Reward',reward:'Reward',balance:'Balance',status:'Status',active:'Active',roadmap:'Roadmap',whitepaper:'Whitepaper',community:'Community'},
+id:{mining:'Mining',connect:'Hubungkan Wallet',disconnect:'Putuskan',claim:'Klaim Reward',reward:'Reward',balance:'Saldo',status:'Status',active:'Aktif',roadmap:'Roadmap',whitepaper:'Whitepaper',community:'Komunitas'},
+zh:{mining:'挖矿',connect:'连接钱包',disconnect:'断开连接',claim:'领取奖励',reward:'奖励',balance:'余额',status:'状态',active:'活跃',roadmap:'路线图',whitepaper:'白皮书',community:'社区'},
+es:{mining:'Minería',connect:'Conectar Wallet',disconnect:'Desconectar',claim:'Reclamar recompensa',reward:'Recompensa',balance:'Saldo',status:'Estado',active:'Activo',roadmap:'Hoja de ruta',whitepaper:'Whitepaper',community:'Comunidad'},
+ar:{mining:'التعدين',connect:'ربط المحفظة',disconnect:'قطع الاتصال',claim:'استلام المكافأة',reward:'المكافأة',balance:'الرصيد',status:'الحالة',active:'نشط',roadmap:'خارطة الطريق',whitepaper:'الورقة البيضاء',community:'المجتمع'},
+ru:{mining:'Майнинг',connect:'Подключить кошелёк',disconnect:'Отключить',claim:'Получить награду',reward:'Награда',balance:'Баланс',status:'Статус',active:'Активен',roadmap:'Дорожная карта',whitepaper:'Whitepaper',community:'Сообщество'},
+ko:{mining:'마이닝',connect:'지갑 연결',disconnect:'연결 해제',claim:'리워드 받기',reward:'리워드',balance:'잔액',status:'상태',active:'활성',roadmap:'로드맵',whitepaper:'백서',community:'커뮤니티'},
+ja:{mining:'マイニング',connect:'ウォレット接続',disconnect:'切断',claim:'報酬を受け取る',reward:'報酬',balance:'残高',status:'ステータス',active:'アクティブ',roadmap:'ロードマップ',whitepaper:'ホワイトペーパー',community:'コミュニティ'},
+vi:{mining:'Khai thác',connect:'Kết nối ví',disconnect:'Ngắt kết nối',claim:'Nhận phần thưởng',reward:'Phần thưởng',balance:'Số dư',status:'Trạng thái',active:'Hoạt động',roadmap:'Lộ trình',whitepaper:'Sách trắng',community:'Cộng đồng'},
+pt:{mining:'Mineração',connect:'Conectar Wallet',disconnect:'Desconectar',claim:'Resgatar recompensa',reward:'Recompensa',balance:'Saldo',status:'Status',active:'Ativo',roadmap:'Roadmap',whitepaper:'Whitepaper',community:'Comunidade'}};
+const original=new WeakMap();
+function norm(s){return String(s||'').trim().replace(/\s+/g,' ')}
+function translateText(code){const en=dict.en,t=dict[code]||en;document.querySelectorAll('a,button,h1,h2,h3,h4,label,span,p').forEach(el=>{if(el.children.length)return;if(!original.has(el))original.set(el,el.textContent);const base=norm(original.get(el));for(const k of Object.keys(en)){if(base===en[k]){el.textContent=t[k];break}}});}
+function setLang(code){code=langs[code]?code:'en';document.documentElement.lang=code;document.documentElement.dir=code==='ar'?'rtl':'ltr';localStorage.setItem('aether-mining-lang',code);translateText(code);const s=document.getElementById('aetherMiningLang');if(s)s.value=code;window.dispatchEvent(new CustomEvent('aether-language-change',{detail:{code}}));}
+function mount(){if(document.getElementById('aetherMiningLang'))return;const s=document.createElement('select');s.id='aetherMiningLang';s.setAttribute('aria-label','Language');Object.entries(langs).forEach(([v,n])=>{const o=document.createElement('option');o.value=v;o.textContent=n;s.appendChild(o)});Object.assign(s.style,{position:'fixed',right:'16px',top:'76px',zIndex:'9999',padding:'8px 10px',borderRadius:'10px',background:'#111',color:'#fff',border:'1px solid #555'});s.onchange=()=>setLang(s.value);document.body.appendChild(s);setLang(localStorage.getItem('aether-mining-lang')||(navigator.language||'en').toLowerCase().split('-')[0]);}
+window.aetherMiningSetLanguage=setLang;document.readyState==='loading'?document.addEventListener('DOMContentLoaded',mount):mount();
+})();
