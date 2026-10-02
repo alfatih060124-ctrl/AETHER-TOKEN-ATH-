@@ -1,6 +1,5 @@
-ATH Mining full multilingual QC deploy
-Latest language commits:
-- cdcb9c9365fcaf17bd842eb55fe0193232cbe75f
-- ef8a2651f877aeb52323b703a8f8acce06de7c2d
-- 66701b8283400ba89eac9ed1131ee6a9ec47c428
-Reason: complete Whitepaper/Roadmap/Developer translations across all 9 translated languages and enforce automated i18n QC in build.
+ATH Control Panel host-isolation deploy
+Latest security commits:
+- 13cc3d4629a1878cbebe5a017b1883132ef1e699
+- 271f62e12d566e49b58d26190ad5752ee36699bc
+Reason: isolate admin routes/assets to pm.aether.boats, apply admin CSP/noindex headers, block public/admin cross-host fallback.
