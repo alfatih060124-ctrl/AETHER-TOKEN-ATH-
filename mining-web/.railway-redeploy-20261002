@@ -1,3 +1,4 @@
-ATH Mining control panel subdomain deploy
-Requested source: latest main after 0026620cf9fd0ddd4d8ea88a7636ce24fad35487
-Reason: route pm.aether.boats root to ATH Control Panel; keep mining.aether.boats root on public Mining website
+ATH Control Panel domain routing refresh
+Latest routing commit: 0026620cf9fd0ddd4d8ea88a7636ce24fad35487
+Domain: pm.aether.boats
+Trigger after Railway watch-pattern refresh.
