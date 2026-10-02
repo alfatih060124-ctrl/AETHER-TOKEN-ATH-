@@ -1,5 +1,25 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
+## 2026-10-03 CURRENT LOCK — WEB / CONTROL PANEL / TESTNET PREFLIGHT
+
+- ATH Mining multilingual production: **PASS + LOCK**.
+- Supported languages: English, Indonesia, 中文, Español, العربية, Русский, 한국어, 日本語, Tiếng Việt, Português.
+- Automated multilingual gate: **259 translation keys across 9 translated languages + English — PASS**.
+- `https://mining.aether.boats` remains the public ATH Mining website.
+- `https://pm.aether.boats` is the dedicated ATH Control Panel host.
+- Control Panel mobile QC: **PASS**.
+- Control Panel host isolation: **PASS**; admin routes/assets are restricted to `pm.aether.boats` and are no longer served from the public Mining host.
+- Control Panel security headers include noindex/nofollow, DENY framing, HSTS, restrictive permissions policy and host-specific CSP.
+- Owner wallet remains the on-chain write authorization boundary; the panel stores no private key.
+- Mainnet admin writes remain fail-closed.
+- Latest BSC Testnet preflight executed in read-only mode with `TESTNET_DEPLOY_APPROVED=false`, `RUN_ATH_TESTNET_DEPLOY=false`, and `ALLOW_MAINNET_DEPLOY=false`.
+- RPC: **PASS**, BSC Testnet chain ID: **97**, source self-check: **PASS**, compile: **PASS**, tests: **25/25 PASS**.
+- Testnet deployer: `0xD90aA494da8444222944f87Af5e8D714Dd5aCe44`.
+- Latest deployer balance: **0.0 tBNB**.
+- Required before Step 25: **at least 0.02 tBNB**.
+- No deployment transaction was started.
+- After the preflight, all execution flags were returned to false/fail-closed.
+
 ## CURRENT SOURCE LOCK — MINING v3.3
 
 This section supersedes conflicting v3.2 booster/vesting assumptions lower in this historical checkpoint.
