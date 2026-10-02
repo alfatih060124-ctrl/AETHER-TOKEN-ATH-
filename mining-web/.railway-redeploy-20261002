@@ -1,3 +1,3 @@
-ATH Mining i18n performance hotfix v2
-Requested source: latest main after 9598118b9352ca06fc47527f1ae9d9654f0e88fb
-Reason: remove i18n mutation loops, defer secondary translations to idle time, narrow DOM scan scope, keep language switch responsive
+ATH Mining Indonesian translation cleanup
+Requested source: latest main after d1a86c398466110ecf9100a5d8a574e8dd085629
+Reason: remove Vietnamese word from Indonesian "Fixed 1B Supply" label and refresh cached i18n asset
