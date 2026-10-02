@@ -86,17 +86,39 @@ function configPayload() {
   };
 }
 
-function send(res, status, body, type) {
+function baseSecurityHeaders(controlPanelHost = false) {
+  const headers = {
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": controlPanelHost ? "no-referrer" : "strict-origin-when-cross-origin",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
+    "cross-origin-opener-policy": "same-origin",
+  };
+  if (controlPanelHost) {
+    headers["x-robots-tag"] = "noindex, nofollow, noarchive";
+    headers["content-security-policy"] = [
+      "default-src 'self'",
+      "script-src 'self' https://cdn.jsdelivr.net",
+      "style-src 'self'",
+      "img-src 'self' data:",
+      "connect-src 'self' https: wss:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+    ].join("; ");
+  }
+  return headers;
+}
+
+function send(res, status, body, type, controlPanelHost = false) {
   res.writeHead(status, {
     "content-type": type,
     "cache-control": type.includes("html") || type.includes("json")
       ? "no-store"
       : "public, max-age=300",
-    "x-content-type-options": "nosniff",
-    "x-frame-options": "DENY",
-    "referrer-policy": "strict-origin-when-cross-origin",
-    "strict-transport-security": "max-age=31536000; includeSubDomains",
-    "permissions-policy": "camera=(), microphone=(), geolocation=()",
+    ...baseSecurityHeaders(controlPanelHost),
   });
   res.end(body);
 }
@@ -106,20 +128,28 @@ function isControlPanelHost(req) {
   return host === "pm.aether.boats";
 }
 
+const ADMIN_PUBLIC_FILES = new Set(["/admin", "/admin/", "/admin.html", "/admin.js", "/admin.css"]);
+const CONTROL_PANEL_ALLOWED_FILES = new Set(["/", "/admin", "/admin/", "/admin.html", "/admin.js", "/admin.css", "/favicon.ico"]);
+
 function safePublicPath(urlPath, controlPanelHost = false) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const normalized = path.posix.normalize(decoded).replace(/^\.\.(\/|\\|$)/g, "");
-  const relative = normalized === "/"
+
+  if (!controlPanelHost && ADMIN_PUBLIC_FILES.has(normalized)) return null;
+  if (controlPanelHost && !CONTROL_PANEL_ALLOWED_FILES.has(normalized)) return null;
+
+  const relative = normalized === "/" || normalized === "/admin" || normalized === "/admin/"
     ? (controlPanelHost ? "admin.html" : "index.html")
-    : normalized === "/admin" || normalized === "/admin/"
-      ? "admin.html"
-      : normalized.replace(/^\//, "");
+    : normalized.replace(/^\//, "");
   const full = path.join(PUBLIC_DIR, relative);
   if (!full.startsWith(PUBLIC_DIR)) return null;
   return full;
 }
 
 const server = http.createServer((req, res) => {
+  const controlPanelHost = isControlPanelHost(req);
+  const requestPath = String(req.url || "/").split("?")[0];
+
   if (req.url === "/health") {
     const cfg = configPayload();
     return send(
@@ -141,8 +171,13 @@ const server = http.createServer((req, res) => {
           fallback: "aether-knowledge",
         },
       }),
-      MIME[".json"]
+      MIME[".json"],
+      controlPanelHost
     );
+  }
+
+  if (controlPanelHost && requestPath === "/api/assistant") {
+    return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
   }
 
   if (req.url === "/api/assistant" && req.method === "POST") {
@@ -194,11 +229,11 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === "/config") {
-    return send(res, 200, JSON.stringify(configPayload()), MIME[".json"]);
+    return send(res, 200, JSON.stringify(configPayload()), MIME[".json"], controlPanelHost);
   }
 
-  const full = safePublicPath(req.url || "/", isControlPanelHost(req));
-  if (!full) return send(res, 400, "Bad request", "text/plain; charset=utf-8");
+  const full = safePublicPath(req.url || "/", controlPanelHost);
+  if (!full) return send(res, 404, "Not found", "text/plain; charset=utf-8", controlPanelHost);
 
   fs.stat(full, (statErr, stat) => {
     if (!statErr && stat.isFile()) {
@@ -206,16 +241,15 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, {
         "content-type": MIME[ext] || "application/octet-stream",
         "cache-control": ext === ".html" ? "no-store" : "public, max-age=300",
-        "x-content-type-options": "nosniff",
-        "x-frame-options": "DENY",
-        "referrer-policy": "strict-origin-when-cross-origin",
-        "strict-transport-security": "max-age=31536000; includeSubDomains",
-        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        ...baseSecurityHeaders(controlPanelHost),
       });
       fs.createReadStream(full).pipe(res);
       return;
     }
 
+    if (controlPanelHost) {
+      return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
+    }
     const index = path.join(PUBLIC_DIR, "index.html");
     fs.readFile(index, (err, data) => {
       if (err) return send(res, 404, "Not found", "text/plain; charset=utf-8");
