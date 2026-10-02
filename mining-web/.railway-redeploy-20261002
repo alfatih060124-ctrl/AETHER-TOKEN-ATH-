@@ -1,3 +1,3 @@
-ATH Mining Indonesian translation cleanup
-Requested source: latest main after d1a86c398466110ecf9100a5d8a574e8dd085629
-Reason: remove Vietnamese word from Indonesian "Fixed 1B Supply" label and refresh cached i18n asset
+ATH Mining control panel subdomain deploy
+Requested source: latest main after 0026620cf9fd0ddd4d8ea88a7636ce24fad35487
+Reason: route pm.aether.boats root to ATH Control Panel; keep mining.aether.boats root on public Mining website
