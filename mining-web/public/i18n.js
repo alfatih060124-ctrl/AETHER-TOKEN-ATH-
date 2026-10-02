@@ -153,6 +153,8 @@ function tr(c){if(busy)return;busy=true;
   busy=false;
 }
 function set(c){if(!langs[c])c='en';localStorage.setItem('aether-mining-lang',c);localStorage.setItem('aetherMiningLang',c);document.documentElement.lang=c;document.documentElement.dir=c==='ar'?'rtl':'ltr';const s=document.getElementById('aetherLangSelect');if(s)s.value=c;tr(c);window.dispatchEvent(new CustomEvent('aether-language-change',{detail:{language:c}}))}
-function init(){let s=document.getElementById('aetherLangSelect');if(!s){s=document.createElement('select');s.id='aetherLangSelect';s.className='aether-lang-select';s.setAttribute('aria-label','Language');Object.entries(langs).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;s.appendChild(o)});const host=document.querySelector('.nav-actions')||document.querySelector('header')||document.body;host.prepend(s)}if(!s.dataset.i18nBound){s.dataset.i18nBound='1';s.addEventListener('change',()=>set(s.value))}set(code());let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;tr(code())})}).observe(document.body,{subtree:true,childList:true,characterData:true})}
+function refresh(){requestAnimationFrame(()=>tr(code()))}
+function init(){let s=document.getElementById('aetherLangSelect');if(!s){s=document.createElement('select');s.id='aetherLangSelect';s.className='aether-lang-select';s.setAttribute('aria-label','Language');Object.entries(langs).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;s.appendChild(o)});const host=document.querySelector('.nav-actions')||document.querySelector('header')||document.body;host.prepend(s)}if(!s.dataset.i18nBound){s.dataset.i18nBound='1';s.addEventListener('change',()=>set(s.value))}set(code())}
+window.addEventListener('aether-language-refresh',refresh);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
