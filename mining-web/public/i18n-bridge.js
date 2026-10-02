@@ -12,8 +12,8 @@ const X={
 const n=s=>String(s||'').trim().replace(/\s+/g,' '), base=new WeakMap();
 const reverse={};Object.entries(X).forEach(([k,a])=>a.forEach(v=>{reverse[n(v)]=k}));
 function lang(){return (localStorage.getItem('aether-mining-lang')||document.documentElement.lang||'en').toLowerCase().split('-')[0]}
-function apply(){const c=lang(),i=L.indexOf(c);localStorage.setItem('aetherMiningLang',c);document.querySelectorAll('body *').forEach(e=>{if(e.children.length||['SCRIPT','STYLE'].includes(e.tagName))return;const now=n(e.textContent);if(X[now])base.set(e,now);else if(reverse[now])base.set(e,reverse[now]);const key=n(base.get(e)||''),v=X[key];if(!v)return;if(c==='en'){if(n(e.textContent)!==key)e.textContent=key}else if(i>=0&&v?.[i]&&n(e.textContent)!==v[i])e.textContent=v[i]})}
-function schedule(){requestAnimationFrame(apply)}
+function apply(){const c=lang(),i=L.indexOf(c);localStorage.setItem('aetherMiningLang',c);document.querySelectorAll('a,button,h1,h2,h3,h4,h5,label,span,p,strong,small,option,th,td,div').forEach(e=>{if(e.children.length||['SCRIPT','STYLE'].includes(e.tagName))return;const now=n(e.textContent);if(X[now])base.set(e,now);else if(reverse[now])base.set(e,reverse[now]);const key=n(base.get(e)||''),v=X[key];if(!v)return;if(c==='en'){if(n(e.textContent)!==key)e.textContent=key}else if(i>=0&&v?.[i]&&n(e.textContent)!==v[i])e.textContent=v[i]})}
+function schedule(){if('requestIdleCallback'in window)requestIdleCallback(apply,{timeout:120});else setTimeout(apply,24)}
 window.addEventListener('aether-language-change',schedule);
 window.addEventListener('aether-language-refresh',schedule);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
