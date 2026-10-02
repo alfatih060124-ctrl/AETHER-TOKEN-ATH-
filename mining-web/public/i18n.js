@@ -137,7 +137,7 @@ const reverse={};Object.entries(R).forEach(([en,a])=>a.forEach(v=>{reverse[norm(
 function code(){const x=(localStorage.getItem('aether-mining-lang')||localStorage.getItem('aetherMiningLang')||navigator.language||'en').toLowerCase();return langs[x]?x:(langs[x.split('-')[0]]?x.split('-')[0]:'en')}
 function translated(base,c){if(!R[base])return null;if(c==='en')return base;const i=L.indexOf(c);return i>=0?(R[base]?.[i]||base):base}
 function tr(c){if(busy)return;busy=true;
-  document.querySelectorAll('body *').forEach(e=>{
+  document.querySelectorAll('a,button,h1,h2,h3,h4,h5,label,span,p,strong,small,option,th,td,div').forEach(e=>{
     if(['SCRIPT','STYLE','OPTION'].includes(e.tagName)||e.children.length)return;
     const now=norm(e.textContent);
     if(R[now])O.set(e,now);else if(reverse[now])O.set(e,reverse[now]);
@@ -152,7 +152,7 @@ function tr(c){if(busy)return;busy=true;
   });
   busy=false;
 }
-function set(c){if(!langs[c])c='en';localStorage.setItem('aether-mining-lang',c);localStorage.setItem('aetherMiningLang',c);document.documentElement.lang=c;document.documentElement.dir=c==='ar'?'rtl':'ltr';const s=document.getElementById('aetherLangSelect');if(s)s.value=c;tr(c);window.dispatchEvent(new CustomEvent('aether-language-change',{detail:{language:c}}))}
+function set(c){if(!langs[c])c='en';localStorage.setItem('aether-mining-lang',c);localStorage.setItem('aetherMiningLang',c);document.documentElement.lang=c;document.documentElement.dir=c==='ar'?'rtl':'ltr';const s=document.getElementById('aetherLangSelect');if(s)s.value=c;requestAnimationFrame(()=>tr(c));window.dispatchEvent(new CustomEvent('aether-language-change',{detail:{language:c}}))}
 function refresh(){requestAnimationFrame(()=>tr(code()))}
 function init(){let s=document.getElementById('aetherLangSelect');if(!s){s=document.createElement('select');s.id='aetherLangSelect';s.className='aether-lang-select';s.setAttribute('aria-label','Language');Object.entries(langs).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;s.appendChild(o)});const host=document.querySelector('.nav-actions')||document.querySelector('header')||document.body;host.prepend(s)}if(!s.dataset.i18nBound){s.dataset.i18nBound='1';s.addEventListener('change',()=>set(s.value))}set(code())}
 window.addEventListener('aether-language-refresh',refresh);
