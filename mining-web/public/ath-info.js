@@ -98,6 +98,7 @@
   const fragment = document.createDocumentFragment();
   [...wrap.children].forEach((el) => fragment.appendChild(el));
   docs.parentNode.insertBefore(fragment, docs);
+  requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("aether-language-refresh")));
 
   async function loadTeamPortraitSprite() {
     try {
