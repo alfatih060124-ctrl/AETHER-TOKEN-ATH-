@@ -30,10 +30,12 @@ const X={
 'Wallet-Side Signing':['Signing di Sisi Wallet','钱包端签名','Firma desde la Wallet','التوقيع من جانب المحفظة','Подпись на стороне кошелька','지갑 측 서명','ウォレット側署名','Ký phía ví','Assinatura pela Wallet'],
 'People · Utility · Community · A Brighter Tomorrow':['Manusia · Utilitas · Komunitas · Masa Depan Lebih Cerah','人 · 实用性 · 社区 · 更光明的未来','Personas · Utilidad · Comunidad · Un Mañana Más Brillante','الناس · المنفعة · المجتمع · غد أكثر إشراقاً','Люди · Полезность · Сообщество · Светлое будущее','사람 · 유틸리티 · 커뮤니티 · 더 밝은 내일','人々 · ユーティリティ · コミュニティ · より明るい未来','Con người · Tiện ích · Cộng đồng · Ngày mai tươi sáng hơn','Pessoas · Utilidade · Comunidade · Um Amanhã Mais Brilhante']
 };
-const norm=s=>String(s||'').trim().replace(/\s+/g,' ');
-function current(){return localStorage.getItem('aetherMiningLang')||'en'}
-function apply(){const c=current();if(c==='en')return;const i=L.indexOf(c);if(i<0)return;document.querySelectorAll('a,button,h1,h2,h3,h4,h5,label,span,p,strong,small,option,th,td,div').forEach(e=>{if(e.children.length)return;const n=norm(e.textContent);const v=X[n];if(v&&v[i])e.textContent=v[i]})}
+const norm=s=>String(s||'').trim().replace(/\s+/g,' '),B=new WeakMap(),REV={};
+Object.entries(X).forEach(([k,a])=>a.forEach(v=>{REV[norm(v)]=k}));
+function current(){return (localStorage.getItem('aether-mining-lang')||localStorage.getItem('aetherMiningLang')||'en').toLowerCase().split('-')[0]}
+function apply(){const c=current(),i=L.indexOf(c);document.querySelectorAll('a,button,h1,h2,h3,h4,h5,label,span,p,strong,small,option,th,td,div').forEach(e=>{if(e.children.length)return;const now=norm(e.textContent);if(X[now])B.set(e,now);else if(REV[now])B.set(e,REV[now]);const key=norm(B.get(e)||'');const v=X[key];if(!v)return;if(c==='en'){if(now!==key)e.textContent=key}else if(i>=0&&v[i]&&now!==v[i])e.textContent=v[i]})}
 window.addEventListener('aether:languagechange',()=>setTimeout(apply,0));
-new MutationObserver(()=>{if(current()!=='en')setTimeout(apply,0)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+window.addEventListener('aether-language-change',()=>setTimeout(apply,0));
+let pending=false;new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;apply()})}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
 })();
