@@ -4,14 +4,10 @@
   "private": true,
   "description": "AETHER ATH mining web application",
   "scripts": {
-    "start": "node server.js",
-    "check": "node --check server.js && node --check assistant.js && node --check whitepaper.js && node --check public/app.js && node --check public/aether-ai.js && node --check public/ath-info.js && node --check public/admin.js"
+    "start": "node bootstrap.js",
+    "check": "node --check bootstrap.js && node --check server.js && node --check assistant.js && node --check whitepaper.js && node --check public/app.js && node --check public/i18n.js && node --check public/aether-ai.js && node --check public/ath-info.js && node --check public/admin.js"
   },
-  "dependencies": {
-    "pdfkit": "^0.20.2"
-  },
-  "engines": {
-    "node": ">=20 <23"
-  },
+  "dependencies": {"pdfkit": "^0.20.2"},
+  "engines": {"node": ">=20 <23"},
   "packageManager": "npm@10.8.2"
 }
