@@ -16,7 +16,7 @@ const X={
 '● Connected':['● Terhubung','● 已连接','● Conectado','● متصل','● Подключено','● 연결됨','● 接続済み','● Đã kết nối','● Conectado']};
 const n=s=>String(s||'').trim().replace(/\s+/g,' '),B=new WeakMap(),R={};Object.entries(X).forEach(([k,a])=>a.forEach(v=>R[n(v)]=k));
 function lang(){return(localStorage.getItem('aether-mining-lang')||document.documentElement.lang||'en').toLowerCase().split('-')[0]}
-function apply(){const c=lang(),i=L.indexOf(c);document.querySelectorAll('body *').forEach(e=>{if(e.children.length||['SCRIPT','STYLE'].includes(e.tagName))return;const q=n(e.textContent);if(X[q])B.set(e,q);else if(R[q])B.set(e,R[q]);else if(!B.has(e))B.set(e,q);const k=n(B.get(e)),v=X[k];if(c==='en'&&v)e.textContent=k;else if(i>=0&&v?.[i])e.textContent=v[i]})}
+function apply(){const c=lang(),i=L.indexOf(c);document.querySelectorAll('a,button,span,strong,small').forEach(e=>{if(e.children.length||['SCRIPT','STYLE'].includes(e.tagName))return;const q=n(e.textContent);if(X[q])B.set(e,q);else if(R[q])B.set(e,R[q]);else if(!B.has(e))B.set(e,q);const k=n(B.get(e)),v=X[k];if(c==='en'&&v)e.textContent=k;else if(i>=0&&v?.[i])e.textContent=v[i]})}
 function schedule(){requestAnimationFrame(apply)}
 window.addEventListener('aether-language-change',schedule);
 window.addEventListener('aether-language-refresh',schedule);
