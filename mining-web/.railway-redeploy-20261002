@@ -1,3 +1,3 @@
-ATH Mining mobile+i18n correction deploy
-Requested source: latest main HEAD after 4487aff4eeaaa1b65691f4d3e9f0d284f2c55590
-Reason: stop translation reversion, expose language selector, single-column mobile cards, cache-bust assets, validate all i18n layers
+ATH Mining i18n performance hotfix
+Requested source: latest main after ce46b6ba42c5563468e0f317a6256f5b5637f9c8
+Reason: remove continuous MutationObservers and language event fanout loops; switch to event-driven translation; bump asset rev v5
