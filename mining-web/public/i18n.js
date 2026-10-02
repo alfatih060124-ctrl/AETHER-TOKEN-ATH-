@@ -100,14 +100,59 @@ const R={
 'Tokens are released automatically according to schedule.':['Token dilepas otomatis sesuai jadwal.','代币按计划自动释放。','Los tokens se liberan automáticamente según el calendario.','يتم تحرير التوكنات تلقائياً حسب الجدول.','Токены автоматически разблокируются по графику.','토큰은 일정에 따라 자동 해제됩니다.','トークンはスケジュールに従って自動解除されます。','Token được mở tự động theo lịch.','Os tokens são liberados automaticamente conforme o cronograma.'],
 'Invite friends, grow the community, and increase your mining bonus.':['Undang teman, kembangkan komunitas, dan tingkatkan bonus mining Anda.','邀请朋友、壮大社区并提高挖矿奖励。','Invita amigos, haz crecer la comunidad y aumenta tu bono de minería.','ادعُ الأصدقاء ونمِّ المجتمع وزد مكافأة التعدين.','Приглашайте друзей, развивайте сообщество и увеличивайте бонус майнинга.','친구를 초대하고 커뮤니티를 성장시켜 마이닝 보너스를 높이세요.','友達を招待し、コミュニティを成長させ、マイニングボーナスを増やしましょう。','Mời bạn bè, phát triển cộng đồng và tăng thưởng khai thác.','Convide amigos, amplie a comunidade e aumente seu bônus de mineração.'],
 'Fail-closed until the verified contract is connected.':['Fail-closed sampai kontrak terverifikasi terhubung.','在已验证合约连接前保持故障关闭。','Fail-closed hasta conectar el contrato verificado.','يبقى النظام مغلقاً بأمان حتى ربط العقد الموثق.','Fail-closed до подключения проверенного контракта.','검증된 컨트랙트 연결 전까지 fail-closed 유지.','検証済みコントラクト接続までfail-closedを維持。','Giữ fail-closed cho đến khi hợp đồng đã xác minh được kết nối.','Fail-closed até o contrato verificado ser conectado.'],
+'Whitepaper':['Whitepaper','白皮书','Whitepaper','الورقة البيضاء','Whitepaper','백서','ホワイトペーパー','Whitepaper','Whitepaper'],
+'Roadmap':['Peta Jalan','路线图','Hoja de Ruta','خارطة الطريق','Дорожная карта','로드맵','ロードマップ','Lộ trình','Roteiro'],
+'Developers':['Pengembang','开发者','Desarrolladores','المطورون','Разработчики','개발자','開発者','Nhà phát triển','Desenvolvedores'],
+'ATH TOKEN DOCUMENTATION':['DOKUMENTASI TOKEN ATH','ATH 代币文档','DOCUMENTACIÓN DEL TOKEN ATH','توثيق توكن ATH','ДОКУМЕНТАЦИЯ ТОКЕНА ATH','ATH 토큰 문서','ATHトークンドキュメント','TÀI LIỆU TOKEN ATH','DOCUMENTAÇÃO DO TOKEN ATH'],
+'Download Whitepaper PDF':['Unduh Whitepaper PDF','下载白皮书 PDF','Descargar Whitepaper PDF','تنزيل الورقة البيضاء PDF','Скачать Whitepaper PDF','백서 PDF 다운로드','ホワイトペーパーPDFをダウンロード','Tải Whitepaper PDF','Baixar Whitepaper PDF'],
+'View Roadmap':['Lihat Peta Jalan','查看路线图','Ver Hoja de Ruta','عرض خارطة الطريق','Посмотреть дорожную карту','로드맵 보기','ロードマップを見る','Xem lộ trình','Ver Roteiro'],
+'BUILD WITH GATES, NOT PROMISES':['DIBANGUN DENGAN GATE, BUKAN JANJI','以门槛构建，而非承诺','CONSTRUIR CON CONTROLES, NO PROMESAS','نبني عبر بوابات تحقق لا وعود','СТРОИМ ЧЕРЕЗ КОНТРОЛЬНЫЕ ЭТАПЫ, А НЕ ОБЕЩАНИЯ','약속이 아닌 검증 게이트로 구축','約束ではなくゲートで構築','XÂY DỰNG BẰNG CỔNG KIỂM SOÁT, KHÔNG PHẢI LỜI HỨA','CONSTRUIR COM GATES, NÃO PROMESSAS'],
+'ATH Roadmap':['Peta Jalan ATH','ATH 路线图','Hoja de Ruta ATH','خارطة طريق ATH','Дорожная карта ATH','ATH 로드맵','ATHロードマップ','Lộ trình ATH','Roteiro ATH'],
+'PROTOCOL & CREATIVE TEAM':['TIM PROTOKOL & KREATIF','协议与创意团队','EQUIPO DE PROTOCOLO Y CREATIVO','فريق البروتوكول والإبداع','КОМАНДА ПРОТОКОЛА И КРЕАТИВА','프로토콜 & 크리에이티브 팀','プロトコル＆クリエイティブチーム','ĐỘI NGŨ GIAO THỨC & SÁNG TẠO','EQUIPE DE PROTOCOLO & CRIAÇÃO'],
+'Developer Team':['Tim Pengembang','开发团队','Equipo de Desarrollo','فريق المطورين','Команда разработчиков','개발팀','開発チーム','Đội ngũ phát triển','Equipe de Desenvolvimento'],
+'COMPLETE':['SELESAI','已完成','COMPLETO','مكتمل','ЗАВЕРШЕНО','완료','完了','HOÀN THÀNH','CONCLUÍDO'],
+'NEXT GATE':['GATE BERIKUTNYA','下一关卡','SIGUIENTE CONTROL','البوابة التالية','СЛЕДУЮЩИЙ ЭТАП','다음 게이트','次のゲート','CỔNG TIẾP THEO','PRÓXIMO GATE'],
+'PLANNED':['DIRENCANAKAN','计划中','PLANIFICADO','مخطط','ЗАПЛАНИРОВАНО','계획됨','計画済み','ĐÃ LÊN KẾ HOẠCH','PLANEJADO'],
+'REQUIRED':['WAJIB','必需','REQUERIDO','مطلوب','ОБЯЗАТЕЛЬНО','필수','必須','BẮT BUỘC','OBRIGATÓRIO'],
+'GATED':['TERGATE','受控','CONTROLADO','مقيد ببوابة','ЗА ГЕЙТОМ','게이트 적용','ゲート管理','CÓ KIỂM SOÁT','COM GATE'],
+'FUTURE':['MASA DEPAN','未来','FUTURO','مستقبلي','БУДУЩЕЕ','미래','将来','TƯƠNG LAI','FUTURO'],
+'Protocol Foundation':['Fondasi Protokol','协议基础','Fundación del Protocolo','أساس البروتوكول','Основа протокола','프로토콜 기반','プロトコル基盤','Nền tảng giao thức','Base do Protocolo'],
+'Validation & Interfaces':['Validasi & Antarmuka','验证与界面','Validación e Interfaces','التحقق والواجهات','Валидация и интерфейсы','검증 & 인터페이스','検証とインターフェース','Xác thực & Giao diện','Validação & Interfaces'],
+'BSC Testnet Deployment':['Deployment BSC Testnet','BSC 测试网部署','Despliegue en BSC Testnet','نشر BSC Testnet','Развертывание BSC Testnet','BSC 테스트넷 배포','BSC Testnetデプロイ','Triển khai BSC Testnet','Deploy na BSC Testnet'],
+'Wallet Integration':['Integrasi Wallet','钱包集成','Integración de Wallet','تكامل المحفظة','Интеграция кошелька','지갑 통합','ウォレット統合','Tích hợp ví','Integração de Wallet'],
+'Production Security':['Keamanan Produksi','生产安全','Seguridad de Producción','أمن الإنتاج','Безопасность продакшена','프로덕션 보안','本番セキュリティ','Bảo mật sản xuất','Segurança de Produção'],
+'Mainnet & Liquidity':['Mainnet & Likuiditas','主网与流动性','Mainnet y Liquidez','Mainnet والسيولة','Mainnet и ликвидность','메인넷 & 유동성','Mainnetと流動性','Mainnet & Thanh khoản','Mainnet & Liquidez'],
+'Ecosystem Expansion':['Ekspansi Ekosistem','生态扩展','Expansión del Ecosistema','توسيع النظام البيئي','Расширение экосистемы','생태계 확장','エコシステム拡張','Mở rộng hệ sinh thái','Expansão do Ecossistema'],
+'Total Supply':['Total Pasokan','总供应量','Suministro Total','إجمالي المعروض','Общее предложение','총 공급량','総供給量','Tổng cung','Oferta Total'],
+'Mining Reserve':['Cadangan Mining','挖矿储备','Reserva de Minería','احتياطي التعدين','Резерв майнинга','마이닝 리저브','マイニング準備金','Dự trữ khai thác','Reserva de Mineração'],
+'Liquidity Reserve':['Cadangan Likuiditas','流动性储备','Reserva de Liquidez','احتياطي السيولة','Резерв ликвидности','유동성 리저브','流動性準備金','Dự trữ thanh khoản','Reserva de Liquidez'],
+'Team / Dev':['Tim / Dev','团队 / 开发','Equipo / Dev','الفريق / التطوير','Команда / Dev','팀 / 개발','チーム / Dev','Đội ngũ / Dev','Equipe / Dev'],
+'Marketing':['Marketing','市场营销','Marketing','التسويق','Маркетинг','마케팅','マーケティング','Marketing','Marketing'],
+'0x0000… or blank':['0x0000… atau kosong','0x0000… 或留空','0x0000… o vacío','0x0000… أو اتركه فارغاً','0x0000… или пусто','0x0000… 또는 비워두기','0x0000… または空欄','0x0000… hoặc để trống','0x0000… ou vazio'],
 'People · Utility · Community · A Brighter Tomorrow':['Manusia · Utilitas · Komunitas · Masa Depan Lebih Cerah','人 · 实用性 · 社区 · 更光明的未来','Personas · Utilidad · Comunidad · Un Mañana Más Brillante','الناس · المنفعة · المجتمع · غد أكثر إشراقاً','Люди · Полезность · Сообщество · Светлое будущее','사람 · 유틸리티 · 커뮤니티 · 더 밝은 내일','人々 · ユーティリティ · コミュニティ · より明るい未来','Con người · Tiện ích · Cộng đồng · Ngày mai tươi sáng hơn','Pessoas · Utilidade · Comunidade · Um Amanhã Mais Brilhante']
 };
-const norm=s=>String(s||'').trim().replace(/\s+/g,' ');const O=new WeakMap();let busy=false;
+const norm=s=>String(s||'').trim().replace(/\s+/g,' ');
+const O=new WeakMap(),P=new WeakMap();let busy=false;
 const reverse={};Object.entries(R).forEach(([en,a])=>a.forEach(v=>{reverse[norm(v)]=en}));
-function code(){const x=localStorage.getItem('aether-mining-lang')||navigator.language||'en';return langs[x]?x:(langs[x.split('-')[0]]?x.split('-')[0]:'en')}
-function map(c){if(c==='en')return null;const i=L.indexOf(c);const m={};Object.entries(R).forEach(([k,v])=>m[k]=v[i]);return m}
-function tr(c){if(busy)return;busy=true;const m=map(c);document.querySelectorAll('body *').forEach(e=>{if(['SCRIPT','STYLE','OPTION'].includes(e.tagName)||e.children.length)return;const now=norm(e.textContent);if(R[now])O.set(e,now);else if(reverse[now])O.set(e,reverse[now]);else if(!O.has(e))O.set(e,now);const base=norm(O.get(e));const val=m?.[base]??base;if(norm(e.textContent)!==val)e.textContent=val});busy=false}
-function set(c){if(!langs[c])c='en';localStorage.setItem('aether-mining-lang',c);document.documentElement.lang=c;document.documentElement.dir=c==='ar'?'rtl':'ltr';const s=document.getElementById('aetherLangSelect');if(s)s.value=c;tr(c);window.dispatchEvent(new CustomEvent('aether-language-change',{detail:{language:c}}))}
-function init(){let s=document.getElementById('aetherLangSelect');if(!s){s=document.createElement('select');s.id='aetherLangSelect';s.className='aether-lang-select';Object.entries(langs).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;s.appendChild(o)});const host=document.querySelector('.nav-actions')||document.querySelector('header')||document.body;host.prepend(s)}s.addEventListener('change',()=>set(s.value));set(code());new MutationObserver(()=>tr(code())).observe(document.body,{subtree:true,childList:true,characterData:true})}
+function code(){const x=(localStorage.getItem('aether-mining-lang')||localStorage.getItem('aetherMiningLang')||navigator.language||'en').toLowerCase();return langs[x]?x:(langs[x.split('-')[0]]?x.split('-')[0]:'en')}
+function translated(base,c){if(!R[base])return null;if(c==='en')return base;const i=L.indexOf(c);return i>=0?(R[base]?.[i]||base):base}
+function tr(c){if(busy)return;busy=true;
+  document.querySelectorAll('body *').forEach(e=>{
+    if(['SCRIPT','STYLE','OPTION'].includes(e.tagName)||e.children.length)return;
+    const now=norm(e.textContent);
+    if(R[now])O.set(e,now);else if(reverse[now])O.set(e,reverse[now]);
+    const base=norm(O.get(e)||'');const val=translated(base,c);
+    if(val!==null&&norm(e.textContent)!==val)e.textContent=val;
+  });
+  document.querySelectorAll('[placeholder]').forEach(e=>{
+    const now=norm(e.getAttribute('placeholder'));
+    if(R[now])P.set(e,now);else if(reverse[now])P.set(e,reverse[now]);
+    const base=norm(P.get(e)||'');const val=translated(base,c);
+    if(val!==null&&now!==val)e.setAttribute('placeholder',val);
+  });
+  busy=false;
+}
+function set(c){if(!langs[c])c='en';localStorage.setItem('aether-mining-lang',c);localStorage.setItem('aetherMiningLang',c);document.documentElement.lang=c;document.documentElement.dir=c==='ar'?'rtl':'ltr';const s=document.getElementById('aetherLangSelect');if(s)s.value=c;tr(c);window.dispatchEvent(new CustomEvent('aether-language-change',{detail:{language:c}}))}
+function init(){let s=document.getElementById('aetherLangSelect');if(!s){s=document.createElement('select');s.id='aetherLangSelect';s.className='aether-lang-select';s.setAttribute('aria-label','Language');Object.entries(langs).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;s.appendChild(o)});const host=document.querySelector('.nav-actions')||document.querySelector('header')||document.body;host.prepend(s)}if(!s.dataset.i18nBound){s.dataset.i18nBound='1';s.addEventListener('change',()=>set(s.value))}set(code());let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;tr(code())})}).observe(document.body,{subtree:true,childList:true,characterData:true})}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();
