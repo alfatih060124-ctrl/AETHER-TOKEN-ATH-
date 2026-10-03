@@ -63,6 +63,7 @@ const STAKING_ABI = [
 const ORACLE_ABI = [
   "function getPrice() view returns (uint256)",
   "function PRICE_DECIMALS() view returns (uint256)",
+  "function miningPriceSource() view returns (address)",
 ];
 
 const DEV_VESTING_ABI = [
@@ -196,6 +197,7 @@ async function main() {
     totalActiveStakedUSDT,
     oraclePrice,
     oracleDecimals,
+    oracleMiningPriceSource,
     vestingToken,
     vestingBeneficiary,
     developmentAllocation,
@@ -251,6 +253,7 @@ async function main() {
     staking.totalActiveStakedUSDT(),
     oracle.getPrice(),
     oracle.PRICE_DECIMALS(),
+    oracle.miningPriceSource(),
     vesting.athToken(),
     vesting.beneficiary(),
     vesting.TOTAL_ALLOCATION(),
@@ -281,7 +284,7 @@ async function main() {
   assertEq(miningBalance, sevenHundredM, "Mining 700M reserve");
   assertEq(miningAllocation, sevenHundredM, "Mining allocation constant");
   assertEq(powerPrice, ethers.parseEther("0.001"), "Power price");
-  assertEq(baseReward, ethers.parseEther("1"), "Base daily reward");
+  assertEq(baseReward, ethers.parseEther("10"), "Base daily reward");
   assertEq(maxDays, 180n, "Mining days");
   assertEq(claimOpenOffset, 300n, "00:05 UTC claim offset");
   assertEq(boosterHash, 100n, "Power Booster hash");
@@ -294,7 +297,7 @@ async function main() {
   assertEq(maxMinerPage, 200n, "Miner registry page cap");
   assertEq(powerBoosterPrice, ethers.parseEther("0.001"), "Initial Power Booster price");
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
-  assertEq(miningReferencePrice, 100_000n, "Unified ATH $0.10 protocol reference price");
+  assertEq(miningReferencePrice, 100_000n, "ATH starting protocol price $0.10");
 
   for (const [label, value] of [
     ["totalMined", totalMined],
@@ -323,7 +326,8 @@ async function main() {
   assertEq(packageCount, 6n, "Staking package count");
   assertEq(principalLiabilityATH, 0n, "Staking initial principal liability");
   assertEq(totalActiveStakedUSDT, 0n, "Staking initial active USDT");
-  assertEq(oraclePrice, 10_000_000n, "ATH staking reference price $0.10");
+  assertEq(oraclePrice, 10_000_000n, "ATH Staking starting price $0.10");
+  if (!eqAddr(oracleMiningPriceSource, miningAddress)) throw new Error("Staking oracle Mining price source mismatch");
   assertEq(oracleDecimals, 8n, "ATH staking oracle decimals");
 
   if (!eqAddr(vestingToken, tokenAddress)) throw new Error("Development vesting token mismatch");
