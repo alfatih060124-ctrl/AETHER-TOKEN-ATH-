@@ -56,7 +56,7 @@ The deployer private key remains operator-controlled and must be stored only as 
 13. Vesting tranches total exactly 100%: 10% + 5% + 5% + 80%.
 14. TeamTokenLock holds 50,000,000 ATH before the cliff.
 15. TeamTokenLock releases the full team allocation only after the cliff.
-16. Display price starts at $3.00 reference value.
+16. ATH Mining protocol reference price is fixed at $0.10, aligned with ATH Staking.
 
 ## Deployment boundary
 
