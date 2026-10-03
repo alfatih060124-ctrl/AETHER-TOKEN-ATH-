@@ -60,39 +60,34 @@ async function main() {
 
   const owner = roleAddress("OWNER_ADDRESS");
   const treasury = roleAddress("TREASURY_ADDRESS");
-  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
-  const teamBeneficiary = roleAddress("TEAM_BENEFICIARY");
+  const presaleWallet = roleAddress("PRESALE_WALLET");
   const marketingWallet = roleAddress("MARKETING_WALLET");
-  const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
-
-  if (teamLockDays !== 365) {
-    throw new Error("TEAM_LOCK_DAYS must be exactly 365 per the final ATH tokenomics decision");
-  }
+  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
+  const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
   const deployerBalance = await hre.ethers.provider.getBalance(deployer.address);
   if (deployerBalance <= 0n) throw new Error("Deployer has zero BNB balance");
 
-  const latestBlock = await hre.ethers.provider.getBlock("latest");
-  if (!latestBlock) throw new Error("Unable to read latest block");
-  const releaseTime = Number(latestBlock.timestamp) + teamLockDays * 24 * 60 * 60;
-
-  console.log("Network          :", hre.network.name);
-  console.log("Chain ID         :", chainId);
-  console.log("Deployer         :", deployer.address);
-  console.log("Deployer BNB     :", hre.ethers.formatEther(deployerBalance));
-  console.log("Testnet role mode:", singleWalletMode ? "DEPLOYER_FOR_ALL_ROLES" : "EXPLICIT_ADDRESSES");
-  console.log("Owner / multisig :", owner);
-  console.log("Treasury         :", treasury);
-  console.log("Liquidity wallet :", liquidityWallet);
-  console.log("Team beneficiary :", teamBeneficiary);
-  console.log("Marketing wallet :", marketingWallet);
-  console.log("Team lock days   :", teamLockDays);
+  console.log("Network               :", hre.network.name);
+  console.log("Chain ID              :", chainId);
+  console.log("Deployer              :", deployer.address);
+  console.log("Deployer BNB          :", hre.ethers.formatEther(deployerBalance));
+  console.log("Testnet role mode     :", singleWalletMode ? "DEPLOYER_FOR_ALL_ROLES" : "EXPLICIT_ADDRESSES");
+  console.log("Owner / multisig      :", owner);
+  console.log("Mining treasury       :", treasury);
+  console.log("Staking presale       :", presaleWallet);
+  console.log("Staking marketing     :", marketingWallet);
+  console.log("Staking liquidity     :", liquidityWallet);
+  console.log("Staking reserve       :", stakingReserveWallet);
+  console.log("Development beneficiary:", developmentBeneficiary);
 
   const ATHToken = await hre.ethers.getContractFactory("ATHToken");
   const token = await ATHToken.deploy(deployer.address);
   await token.waitForDeployment();
   const tokenAddress = await token.getAddress();
 
+  // Mining v3.3 is intentionally deployed unchanged.
   const MiningAirdrop = await hre.ethers.getContractFactory("MiningAirdrop");
   const mining = await MiningAirdrop.deploy(tokenAddress, treasury, owner);
   await mining.waitForDeployment();
@@ -152,34 +147,82 @@ async function main() {
     }
   }
 
-  const TeamTokenLock = await hre.ethers.getContractFactory("TeamTokenLock");
-  const teamLock = await TeamTokenLock.deploy(tokenAddress, teamBeneficiary, releaseTime);
-  await teamLock.waitForDeployment();
-  const teamLockAddress = await teamLock.getAddress();
+  const Oracle = await hre.ethers.getContractFactory("ATHStakingPriceOracle");
+  const oracle = await Oracle.deploy();
+  await oracle.waitForDeployment();
+  const oracleAddress = await oracle.getAddress();
 
-  const miningAllocation = hre.ethers.parseUnits("700000000", 18);
-  const liquidityAllocation = hre.ethers.parseUnits("200000000", 18);
-  const teamAllocation = hre.ethers.parseUnits("50000000", 18);
-  const marketingAllocation = hre.ethers.parseUnits("50000000", 18);
+  const Staking = await hre.ethers.getContractFactory("ATHStaking");
+  const staking = await Staking.deploy(tokenAddress, oracleAddress, owner);
+  await staking.waitForDeployment();
+  const stakingAddress = await staking.getAddress();
+
+  const DevelopmentVesting = await hre.ethers.getContractFactory("ATHDevelopmentVesting");
+  const developmentVesting = await DevelopmentVesting.deploy(tokenAddress, developmentBeneficiary);
+  await developmentVesting.waitForDeployment();
+  const developmentVestingAddress = await developmentVesting.getAddress();
+
+  const miningAllocation = hre.ethers.parseEther("700000000");
+  const stakingRewardPool = hre.ethers.parseEther("160000000");
+  const stakingPresale = hre.ethers.parseEther("30000000");
+  const stakingMarketing = hre.ethers.parseEther("50000000");
+  const stakingDevelopment = hre.ethers.parseEther("30000000");
+  const stakingLiquidity = hre.ethers.parseEther("20000000");
+  const stakingReserve = hre.ethers.parseEther("10000000");
+  const stakingEcosystem = hre.ethers.parseEther("300000000");
+
+  const stakingBreakdown =
+    stakingRewardPool +
+    stakingPresale +
+    stakingMarketing +
+    stakingDevelopment +
+    stakingLiquidity +
+    stakingReserve;
+
+  if (stakingBreakdown !== stakingEcosystem) {
+    throw new Error("Staking 300M allocation arithmetic mismatch");
+  }
 
   await (await token.transfer(miningAddress, miningAllocation)).wait();
-  await (await token.transfer(liquidityWallet, liquidityAllocation)).wait();
-  await (await token.transfer(teamLockAddress, teamAllocation)).wait();
-  await (await token.transfer(marketingWallet, marketingAllocation)).wait();
 
-  let expectedDeployerATH = 0n;
-  if (liquidityWallet.toLowerCase() === deployer.address.toLowerCase()) {
-    expectedDeployerATH += liquidityAllocation;
-  }
-  if (marketingWallet.toLowerCase() === deployer.address.toLowerCase()) {
-    expectedDeployerATH += marketingAllocation;
-  }
+  await (await token.approve(stakingAddress, stakingRewardPool)).wait();
+  await (await staking.fundRewards(stakingRewardPool)).wait();
 
+  await (await token.transfer(developmentVestingAddress, stakingDevelopment)).wait();
+  await (await token.transfer(presaleWallet, stakingPresale)).wait();
+  await (await token.transfer(marketingWallet, stakingMarketing)).wait();
+  await (await token.transfer(liquidityWallet, stakingLiquidity)).wait();
+  await (await token.transfer(stakingReserveWallet, stakingReserve)).wait();
+
+  const expectedByAddress = new Map();
+  function addExpected(address, amount) {
+    const key = address.toLowerCase();
+    expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
+  }
+  addExpected(presaleWallet, stakingPresale);
+  addExpected(marketingWallet, stakingMarketing);
+  addExpected(liquidityWallet, stakingLiquidity);
+  addExpected(stakingReserveWallet, stakingReserve);
+
+  const expectedDeployerATH = expectedByAddress.get(deployer.address.toLowerCase()) || 0n;
   const remaining = await token.balanceOf(deployer.address);
   if (remaining !== expectedDeployerATH) {
     throw new Error(
       `Unexpected deployer ATH balance: got ${remaining}, expected ${expectedDeployerATH}`
     );
+  }
+
+  if ((await token.balanceOf(miningAddress)) !== miningAllocation) {
+    throw new Error("Mining allocation is not exactly 700M ATH");
+  }
+  if ((await staking.rewardReserveATH()) !== stakingRewardPool) {
+    throw new Error("Staking reward reserve is not exactly 160M ATH");
+  }
+  if ((await token.balanceOf(developmentVestingAddress)) !== stakingDevelopment) {
+    throw new Error("Development vesting is not exactly 30M ATH");
+  }
+  if ((await oracle.getPrice()) !== 10_000_000n) {
+    throw new Error("ATH Staking reference price is not $0.10");
   }
 
   if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
@@ -188,27 +231,50 @@ async function main() {
 
   const manifest = {
     engineVersion: "3.3.0",
+    stakingVersion: "1.0.0",
+    tokenomicsVersion: "2.0",
     network: hre.network.name,
     chainId,
     deployer: deployer.address,
     testnetSingleWalletMode: singleWalletMode,
     owner,
     treasury,
-    liquidityWallet,
-    teamBeneficiary,
+    presaleWallet,
     marketingWallet,
-    teamLockDays,
-    teamReleaseAt: releaseTime,
+    liquidityWallet,
+    stakingReserveWallet,
+    developmentBeneficiary,
     contracts: {
       ATH_TOKEN_ADDRESS: tokenAddress,
       ATH_MINING_ADDRESS: miningAddress,
-      ATH_TEAM_LOCK_ADDRESS: teamLockAddress,
+      ATH_STAKING_ADDRESS: stakingAddress,
+      ATH_STAKING_ORACLE_ADDRESS: oracleAddress,
+      ATH_DEVELOPMENT_VESTING_ADDRESS: developmentVestingAddress,
     },
     allocationsATH: {
+      totalSupply: "1000000000",
       mining: "700000000",
-      liquidity: "200000000",
-      teamLocked: "50000000",
-      marketing: "50000000",
+      stakingEcosystem: "300000000",
+      stakingBreakdown: {
+        rewardPool: "160000000",
+        presale: "30000000",
+        marketing: "50000000",
+        developmentVesting: "30000000",
+        liquidity: "20000000",
+        reserve: "10000000",
+      },
+    },
+    stakingRules: {
+      referencePriceUSD: "0.10",
+      minimumStakeUSDT: "10",
+      directReferralPct: 10,
+      networkLevels: 10,
+      packageDailyRatePct: ["0.35", "0.45", "0.55", "0.65", "0.75", "0.85"],
+      packageLockDays: [180, 180, 365, 365, 730, 730],
+      rewardPoolATH: "160000000",
+      developmentVestingATH: "30000000",
+      developmentCliffMonths: 2,
+      developmentActiveMonths: 33,
     },
     miningRules: {
       baseRewardATH: "1",
@@ -234,12 +300,13 @@ async function main() {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
 
   console.log("\n========== ATH DEPLOYMENT ==========");
-  console.log("ATH_TOKEN       =", tokenAddress);
-  console.log("MINING_AIRDROP  =", miningAddress);
-  console.log("TEAM_TOKEN_LOCK =", teamLockAddress);
-  console.log("TEAM_RELEASE_AT =", releaseTime);
-  console.log("DEPLOYER_ADDRESS=", deployer.address);
-  console.log("MANIFEST        =", manifestPath);
+  console.log("ATH_TOKEN                  =", tokenAddress);
+  console.log("MINING_AIRDROP             =", miningAddress);
+  console.log("ATH_STAKING                =", stakingAddress);
+  console.log("ATH_STAKING_ORACLE         =", oracleAddress);
+  console.log("ATH_DEVELOPMENT_VESTING    =", developmentVestingAddress);
+  console.log("DEPLOYER_ADDRESS           =", deployer.address);
+  console.log("MANIFEST                   =", manifestPath);
   console.log("====================================");
 }
 
