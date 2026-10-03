@@ -1093,11 +1093,9 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
         return _isEligibleRewardDay(users[account], _utcDayId(block.timestamp));
     }
 
-    /** @return priceInMicroUSD Example: $3.001 = 3,001,000. */
+    /** @return priceInMicroUSD Fixed ATH protocol reference: $0.10 = 100,000 micro-USD. */
     function getCurrentPrice() external view returns (uint256 priceInMicroUSD) {
-        uint256 minedWhole = totalMined / 1 ether;
-        uint256 steps = minedWhole / 10_000;
-        priceInMicroUSD = 3_000_000 + (steps * 1_000);
+        priceInMicroUSD = 100_000;
     }
 
     function contractBalance() external view returns (uint256) {
