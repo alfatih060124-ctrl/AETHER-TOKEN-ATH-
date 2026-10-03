@@ -11,6 +11,7 @@
 - [x] Booster: 0.001 BNB, +100 Hash, reward x2.
 - [x] Vesting: 10% @30d, 5% @60d, 5% @90d, 80% @180d.
 - [x] ATH pre-listing official price is fixed at $0.37 in ATHPriceRegistry; a live DEX price is separate until the 15,000-holder gate and explicit official-listing activation.
+- [x] ATH Presale deploys PAUSED/fail-closed; opening requires an explicit owner `unpause()` transaction after deployment checks.
 - [x] Treasury is owner-updatable.
 - [x] Mining reserve protection prevents allocating rewards beyond funded reserve.
 

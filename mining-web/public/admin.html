@@ -49,6 +49,8 @@
       <article><small>Listing Holder Gate</small><strong id="holderGate">0 / 15,000</strong><span id="listingState">Pending</span></article>
       <article><small>Staking Contract</small><strong id="stakingState">Pending</strong><span id="stakingAddress">—</span></article>
       <article><small>Staking Principal</small><strong id="stakingPrincipal">0 ATH</strong><span>Protected user principal liability</span></article>
+      <article><small>Presale Status</small><strong id="presaleState">Pending</strong><span id="presaleAddress">—</span></article>
+      <article><small>Presale Price</small><strong id="presalePrice">$0.070</strong><span id="presaleProgress">0 / 30,000,000 ATH</span></article>
     </section>
 
     <section class="panel">
@@ -57,12 +59,15 @@
         <span class="policy">1,000,000,000 ATH FIXED</span>
       </div>
       <div class="allocation-grid">
-        <div><strong>700M</strong><span>70% Mining Reward</span><small>Smart-contract reserve</small></div>
-        <div><strong>200M</strong><span>20% Liquidity</span><small>Held for later listing phase</small></div>
-        <div><strong>50M</strong><span>5% Team & Dev</span><small>365-day cliff lock</small></div>
-        <div><strong>50M</strong><span>5% Marketing</span><small>Promotion allocation</small></div>
+        <div><strong>700M</strong><span>Mining Reward</span><small>70% · Mining smart-contract reserve</small></div>
+        <div><strong>160M</strong><span>Staking Reward Pool</span><small>16% · protected reward reserve</small></div>
+        <div><strong>30M</strong><span>ATH Presale</span><small>3% · $0.070 stepped pricing</small></div>
+        <div><strong>50M</strong><span>Marketing</span><small>5% · ecosystem growth</small></div>
+        <div><strong>30M</strong><span>Development Vesting</span><small>3% · vesting contract</small></div>
+        <div><strong>20M</strong><span>Liquidity</span><small>2% · later listing phase</small></div>
+        <div><strong>10M</strong><span>Ecosystem Reserve</span><small>1% · reserve allocation</small></div>
       </div>
-      <div class="listing-rule"><span>Listing policy</span><strong>&gt;15,000 organic/original holders target</strong><small>Current holder count requires an indexer/explorer source; this panel does not fabricate it.</small></div>
+      <div class="listing-rule"><span>Listing policy</span><strong>15,000 holder target</strong><small>ATH Price Registry records the gate; official market mode still requires explicit activation.</small></div>
     </section>
 
     <section class="two-col">
@@ -88,6 +93,30 @@
           <button id="unpauseTokenBtn" class="btn" disabled>Unpause ATH</button>
         </div>
       </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><span class="eyebrow">ATH PRESALE</span><h2>Sale control & monitoring</h2></div>
+        <span class="policy">OWNER-GATED · FAIL-CLOSED</span>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="row"><span>Presale Owner</span><code id="presaleOwner">—</code></div>
+          <div class="row"><span>Payment Treasury</span><code id="presaleTreasury">—</code></div>
+          <div class="row"><span>Payment Token</span><code id="presalePaymentToken">—</code></div>
+        </div>
+        <div>
+          <div class="row"><span>ATH Sold</span><strong id="presaleSoldAdmin">0 ATH</strong></div>
+          <div class="row"><span>ATH Remaining</span><strong id="presaleRemainingAdmin">30,000,000 ATH</strong></div>
+          <div class="row"><span>Payment Collected</span><strong id="presaleCollectedAdmin">0</strong></div>
+        </div>
+      </div>
+      <p class="muted">Presale deploys PAUSED. Opening or pausing the sale requires the on-chain Presale owner. Mainnet writes remain blocked unless the separate admin mainnet gate is enabled.</p>
+      <div class="button-row">
+        <button id="openPresaleBtn" class="btn gold" disabled>Open Presale</button>
+        <button id="pausePresaleBtn" class="btn danger" disabled>Pause Presale</button>
+      </div>
     </section>
 
     <section class="panel">

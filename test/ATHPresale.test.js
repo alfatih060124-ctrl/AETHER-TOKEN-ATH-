@@ -44,8 +44,9 @@ describe("AETHER ATH Presale", function () {
   });
 
   it("raises price by exactly $0.001 after each complete 100,000 ATH sold", async function () {
-    const { buyer, treasury, usd, presale, unit } = await deployFixture();
+    const { owner, buyer, treasury, usd, presale, unit } = await deployFixture();
 
+    await presale.connect(owner).unpause();
     const athAmount = ethers.parseEther("100000");
     expect(await presale.quotePaymentForATH(athAmount)).to.equal(7_000n * unit);
 
@@ -58,8 +59,9 @@ describe("AETHER ATH Presale", function () {
   });
 
   it("prices a purchase correctly when it crosses a 100k tranche boundary", async function () {
-    const { buyer, presale, unit } = await deployFixture();
+    const { owner, buyer, presale, unit } = await deployFixture();
 
+    await presale.connect(owner).unpause();
     // 100,000 ATH × $0.070 = $7,000
     //  50,000 ATH × $0.071 = $3,550
     // total = $10,550
@@ -72,8 +74,9 @@ describe("AETHER ATH Presale", function () {
   });
 
   it("sells the final live tranche at $0.369 and reaches $0.370 exactly at sold out", async function () {
-    const { buyer, presale, unit } = await deployFixture();
+    const { owner, buyer, presale, unit } = await deployFixture();
 
+    await presale.connect(owner).unpause();
     const first = ethers.parseEther("29900000");
     const firstQuote = await presale.quotePaymentForATH(first);
     await presale.connect(buyer).buyATH(first, firstQuote);
@@ -99,10 +102,16 @@ describe("AETHER ATH Presale", function () {
     expect(quote).to.equal(6_585_000n * unit);
   });
 
-  it("enforces max-payment protection, pause controls, and protected unsold reserve", async function () {
+  it("deploys fail-closed and enforces max-payment, pause controls, and protected reserve", async function () {
     const { owner, buyer, other, ath, presale, unit } = await deployFixture();
 
+    expect(await presale.paused()).to.equal(true);
     const amount = ethers.parseEther("100000");
+    await expect(
+      presale.connect(buyer).buyATH(amount, 7_000n * unit)
+    ).to.be.revertedWithCustomError(presale, "EnforcedPause");
+
+    await presale.connect(owner).unpause();
     await expect(
       presale.connect(buyer).buyATH(amount, (7_000n * unit) - 1n)
     ).to.be.revertedWith("payment exceeds max");

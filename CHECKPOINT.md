@@ -331,7 +331,7 @@ Completed without any blockchain deployment transaction:
 - Owner wallet is the write authorization boundary; no private key is stored in the browser UI.
 - Mainnet admin writes are fail-closed behind `ADMIN_MAINNET_WRITES_ENABLED=true`.
 - Read-only metrics prepared for miners, mined allocation, vesting liability, reserve, Power/Booster counts and revenue basis.
-- Tokenomics policy shown as 700M / 200M / 50M / 50M.
+- Tokenomics policy shown as 700M Mining + 300M Staking ecosystem (160M rewards / 30M Presale / 50M marketing / 30M development vesting / 20M liquidity / 10M reserve).
 - Listing policy records the >15,000 organic/original holder target without fabricating a live holder count.
 - Admin actions prepared for Mining pause/unpause, ATH token pause/unpause, treasury update, and pause-gated excess reserve recovery.
 - Team lock UI fixed to the 365-day policy.
@@ -350,3 +350,14 @@ Completed without any blockchain deployment transaction:
 - Added unified Mining + Staking portal, responsive Staking UI, stake/claim/withdraw workflow, and 10-language Staking translation layer.
 - Mainnet remains fail-closed; no LIVE/mainnet deployment was enabled.
 - QC evidence: source self-check PASS, web i18n QC PASS, **40 contract tests PASS**, ABI export PASS, local release rehearsal PASS, web /health + /config runtime smoke PASS.
+
+## 2026-10-03 — Presale Fail-Closed + Unified Control Panel
+
+- ATH Presale remains **30,000,000 ATH**: opens **$0.070**, rises **+$0.001 per complete 100,000 ATH sold**, final live tranche **$0.369**, sold-out reference **$0.370**.
+- `ATHPresale` now deploys **PAUSED by default**. Sale opening requires an explicit owner `unpause()` transaction after deployment verification.
+- Public Presale storefront uses the contract-native quote as the **exact max payment**. If the stepped price advances before confirmation, the purchase reverts and must be re-quoted rather than silently allowing a higher payment.
+- Holder wallet pays BNB network gas for Presale approval/purchase transactions.
+- Presale storefront now has a dedicated 10-language translation layer.
+- Control Panel monitors Price Registry, Staking principal, Presale price/sold/remaining/payment metrics, and exposes owner-gated **Open Presale / Pause Presale** actions.
+- Control Panel tokenomics corrected to **700M Mining + 300M Staking ecosystem**: 160M reward / 30M Presale / 50M marketing / 30M development vesting / 20M liquidity / 10M reserve.
+- Mainnet and admin Mainnet writes remain fail-closed.

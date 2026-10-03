@@ -58,6 +58,7 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         paymentToken = IERC20Metadata(paymentToken_);
         paymentUnit = 10 ** uint256(decimals_);
         treasury = treasury_;
+        _pause(); // fail-closed: owner explicitly opens Presale after deployment checks.
 
         require(
             START_PRICE_USD8 + (TOTAL_PRICE_STEPS * PRICE_STEP_USD8) == FINAL_PRICE_USD8,

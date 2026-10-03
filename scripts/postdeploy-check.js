@@ -379,7 +379,7 @@ async function main() {
   if (!eqAddr(presalePayment, presalePaymentToken)) throw new Error("Presale payment token mismatch");
   if (!eqAddr(presaleTreasury, presaleWallet)) throw new Error("Presale treasury mismatch");
   if (!eqAddr(presaleOwner, ownerExpected)) throw new Error("Presale owner mismatch");
-  if (presalePaused) throw new Error("Presale unexpectedly paused");
+  if (!presalePaused) throw new Error("Presale must deploy PAUSED until explicit operator opening");
   assertEq(presaleStartPrice, 7_000_000n, "Presale opening price $0.07");
   assertEq(presalePriceStep, 100_000n, "Presale price step $0.001");
   assertEq(presaleFinalPrice, 37_000_000n, "Presale sold-out price $0.37");

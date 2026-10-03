@@ -19,14 +19,14 @@
     "ATHPresale": {
       "abiFile": "deployments/abi/ATHPresale.v1.json",
       "abiSha256": "8924c17d6e5ffc0ba8fd2178217c38d7aee640996a492a6b692bba91f86c0bdb",
-      "deployedBytecodeSha256": "f417040d41b7ba80213278665e6a3b6e4756d923edc4eebddea51f5eba6b8136",
+      "deployedBytecodeSha256": "8f338ea88769fda5277b22fd90f260f30676bcc27d770fd57f1cc65c3048c7cf",
       "deployedBytecodeBytes": 3975
     },
     "MiningAirdrop": {
       "abiFile": "deployments/abi/MiningAirdrop.v3.3.json",
       "abiSha256": "761ae3c0f701d4f9486f5c2fd03cf5c037138fa02566a789889efa3746405a02",
-      "deployedBytecodeSha256": "78b27eb414ad64dd252f56570b5053e27c4491dd160ae2b340d3d45d70907d6d",
-      "deployedBytecodeBytes": 20468
+      "deployedBytecodeSha256": "8253e43c2ad70e5d36541b8f9cdb11c793a1b6e2bcc37c96456b4813437e713e",
+      "deployedBytecodeBytes": 20536
     },
     "ATHStaking": {
       "abiFile": "deployments/abi/ATHStaking.v1.json",
