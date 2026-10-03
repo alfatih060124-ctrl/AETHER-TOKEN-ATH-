@@ -77,6 +77,8 @@ function configPayload() {
     stakingAddress: (process.env.ATH_STAKING_ADDRESS || "").trim(),
     stakingOracleAddress: (process.env.ATH_STAKING_ORACLE_ADDRESS || "").trim(),
     priceRegistryAddress: (process.env.ATH_PRICE_REGISTRY_ADDRESS || "").trim(),
+    presaleAddress: (process.env.ATH_PRESALE_ADDRESS || "").trim(),
+    presalePaymentToken: (process.env.PRESALE_PAYMENT_TOKEN || "").trim(),
     tokenAddress: (process.env.ATH_TOKEN_ADDRESS || "").trim(),
     teamLockAddress: (process.env.ATH_TEAM_LOCK_ADDRESS || "").trim(),
     liquidityWallet: (process.env.PUBLIC_LIQUIDITY_WALLET || "").trim(),
@@ -178,6 +180,7 @@ const server = http.createServer((req, res) => {
         contractConfigured: Boolean(cfg.miningAddress),
         stakingConfigured: Boolean(cfg.stakingAddress),
         priceRegistryConfigured: Boolean(cfg.priceRegistryAddress),
+        presaleConfigured: Boolean(cfg.presaleAddress && cfg.presalePaymentToken),
         mainnetEnabled: cfg.mainnetEnabled,
         aiAssistant: {
           available: true,
