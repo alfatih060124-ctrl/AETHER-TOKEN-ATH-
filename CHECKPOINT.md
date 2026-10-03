@@ -3,8 +3,8 @@
 ## 2026-10-03 ECOSYSTEM TOKENOMICS v2 — MINING LOCK + STAKING v1
 
 - ATH fixed supply remains **1,000,000,000 ATH**; no post-deployment mint.
-- **Mining remains 700,000,000 ATH; reward, Power, Booster, referral, vesting, keeper, and reserve mechanics remain locked.**
-- `contracts/MiningAirdrop.sol` was changed only at `getCurrentPrice()` to align the ATH protocol reference price with the ecosystem-wide $0.10 value.
+- **Mining remains 700,000,000 ATH.** Power, Booster, referral, vesting, keeper, and reserve mechanics remain locked; base reward is now **10 ATH/day**.
+- `contracts/MiningAirdrop.sol` now uses `BASE_REWARD = 10 ATH` and `getCurrentPrice()` = **$0.10 + $0.001 × floor(totalMined / 100,000 ATH)**.
 - **Staking ecosystem allocation: 300,000,000 ATH**.
 - Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
 - Unified ATH protocol price starts at **1 ATH = $0.10** across Staking and Mining, increasing **$0.001 per complete 100,000 ATH mined**.
@@ -15,9 +15,10 @@
 - Staking principal liability is separated from the 160M reward reserve; referral/network rewards cannot consume protected principal.
 - Existing stake economics are snapshotted; later package edits cannot rewrite existing rate/lock terms.
 - Development Vesting: 30M ATH, 2-month cliff, 33 active vesting months; final month settles exactly 100% with no stranded 1% residual.
-- Full automated suite: **37/37 PASS** (25 Mining-era tests + 12 Staking/Vesting tests).
+- Full automated suite: **37/37 PASS** (25 Mining tests + 12 Staking/Vesting tests) on the authorized VM.
+- Local release rehearsal: **PASS** with 11 ATH/day for a +10% referral example.
+- GitHub Actions runner is currently **externally blocked before job start** because GitHub reports the account is locked due to a billing issue; this is not a code/test failure.
 - ABI export: **PASS**.
-- Local release rehearsal: **PASS**.
 - Local rehearsal proves exact supply conservation: 700M Mining + 300M Staking = 1B ATH.
 - Railway validator deployment `26b5913f-b2b0-4f73-b481-d840db2f1b02`: **SUCCESS**, healthcheck **PASSED**.
 - Mainnet remains **fail-closed**. No blockchain deployment transaction was executed by this change.
