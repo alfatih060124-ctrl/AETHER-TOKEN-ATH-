@@ -23,7 +23,7 @@ This register separates original blueprint requirements from later operator-appr
 
 ### 1. Daily reward clock
 
-- Base reward is 1 ATH per eligible UTC mining day.
+- Base reward is 10 ATH per eligible UTC mining day.
 - Reward becomes claimable at 00:05:00 UTC.
 - Claim deadline is 23:59:59 UTC.
 - An unclaimed daily reward expires permanently at the next UTC day boundary.
