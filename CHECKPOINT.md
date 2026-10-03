@@ -7,8 +7,8 @@
 - `contracts/MiningAirdrop.sol` was changed only at `getCurrentPrice()` to align the ATH protocol reference price with the ecosystem-wide $0.10 value.
 - **Staking ecosystem allocation: 300,000,000 ATH**.
 - Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
-- Unified ATH protocol reference valuation: **1 ATH = $0.10** across Staking and Mining.
-- Staking uses immutable `ATHStakingPriceOracle` at $0.10; Mining `getCurrentPrice()` now returns the equivalent fixed $0.10 micro-USD reference.
+- Unified ATH protocol price starts at **1 ATH = $0.10** across Staking and Mining, increasing **$0.001 per complete 100,000 ATH mined**.
+- `ATHStakingPriceOracle` now reads Mining `getCurrentPrice()` so Staking and Mining use the same live protocol price.
 - Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
 - Staking packages: Starter 0.35%/180d, Basic 0.45%/180d, Silver 0.55%/365d, Gold 0.65%/365d, Platinum 0.75%/730d, Diamond 0.85%/730d.
 - Direct referral: 10%; network reward: 10 levels (8%, 5%, 3%, 2%, 1%, then 0.5% for Levels 6–10).
@@ -46,7 +46,7 @@
 
 This section supersedes conflicting v3.2 booster/vesting assumptions lower in this historical checkpoint.
 
-- Base reward remains **1 ATH per eligible UTC day**.
+- Base reward is now **10 ATH per eligible UTC day**.
 - Daily reward opens **00:05:00 UTC** and expires after **23:59:59 UTC** if not claimed.
 - Referral multiplier is applied first.
 - **Power Booster** multiplies the referral-adjusted reward by **2x**, lasts **30 days**, and adds 100 Hash.
@@ -84,7 +84,7 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - Rehearsal verifies the full fixed-supply allocation: 700M mining / 200M liquidity / 50M team lock / 50M marketing.
 - Team lock is verified at 365 days and deployer residual ATH is verified at zero.
 - Holder smoke flow verifies a real protocol path: Power activation, referral-effective reward, daily claim, initial vesting, Cycle-1 burn/rollover and final 60/40 conservation.
-- Latest rehearsal evidence: 1 referral => 1.1 ATH daily reward; 1.1 ATH vesting position; 0.088 ATH Cycle-1 burn; 0.616 ATH Cycle-1 rollover.
+- Latest reward model: 1 referral (+10%) => 11 ATH daily reward; 11 ATH vesting position; 0.88 ATH Cycle-1 burn; 6.16 ATH Cycle-1 rollover.
 - Local release rehearsal runs with `npm run release:smoke:local` and requires no BNB/tBNB.
 - Full gate remains green: source self-check PASSED, syntax check PASSED, **25/25 automated tests PASS**, ABI export PASS, local release rehearsal PASS.
 - This rehearsal does not create public blockchain addresses and does not alter Testnet/Mainnet gates.
