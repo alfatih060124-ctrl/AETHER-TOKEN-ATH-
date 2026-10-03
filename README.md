@@ -9,7 +9,7 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 - No post-deployment mint function.
 - **Mining: 700,000,000 ATH**.
 - **Staking ecosystem: 300,000,000 ATH**.
-- Unified ATH protocol price starts at **1 ATH = $0.10** across Mining and Staking, then rises **$0.001 per complete 100,000 ATH mined**.
+- Unified ATH official pre-listing reference price is **1 ATH = $0.37** across Mining, Staking, P2P and AETHER Wallet. A live DEX price may be visible separately, but the official price remains fixed until the **15,000-holder listing gate** and explicit listing activation.
 
 ### Staking 300M breakdown
 
@@ -39,7 +39,7 @@ See `docs/BLUEPRINT_DECISIONS.md`.
 
 Staking is a separate smart-contract module that uses the same ATH token.
 
-- ATH price source: starts at **$0.10 per ATH** and follows the unified Mining price schedule (**+$0.001 / 100,000 ATH mined**).
+- ATH price source: **ATHPriceRegistry** with a fixed **$0.37 pre-listing reference**, a **15,000-holder target**, and a one-way switch to live market pricing only after official listing activation.
 - Minimum stake: **$10 USDT-equivalent**.
 - Six packages: Starter, Basic, Silver, Gold, Platinum, Diamond.
 - Daily rates: **0.35%–0.85%**.

@@ -36,7 +36,8 @@ const missingSafe = safeRequired.filter((name) => !process.env[name]);
 
 console.log("ATH Testnet Readiness Report");
 console.log("tokenomics:", "1B ATH = 700M Mining + 300M Staking");
-console.log("stakingReferencePriceUSD:", "0.10");
+console.log("preListingReferencePriceUSD:", "0.37");
+console.log("officialListingHolderTarget:", "15000");
 console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
 console.log("safeConfig:", missingSafe.length === 0 ? "READY" : "MISSING");
 console.log("deploymentConfig:", missingDeployConfig.length === 0 ? "READY" : "BLOCKED");

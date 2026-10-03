@@ -31,18 +31,23 @@ async function main() {
   const token = await Token.deploy(deployer.address);
   await token.waitForDeployment();
 
-  // Deploy Mining with current reward and protocol pricing rules.
+  const PriceRegistry = await hre.ethers.getContractFactory("ATHPriceRegistry");
+  const priceRegistry = await PriceRegistry.deploy(deployer.address);
+  await priceRegistry.waitForDeployment();
+
+  // Deploy Mining with current reward rules and the unified ATH price registry.
   const Mining = await hre.ethers.getContractFactory("MiningAirdrop");
   const mining = await Mining.deploy(
     await token.getAddress(),
     miningTreasury.address,
+    await priceRegistry.getAddress(),
     deployer.address
   );
   await mining.waitForDeployment();
 
-  // Staking accounting uses the unified ATH protocol price from Mining.
+  // Staking accounting uses the same unified ATH price registry.
   const Oracle = await hre.ethers.getContractFactory("ATHStakingPriceOracle");
-  const oracle = await Oracle.deploy(await mining.getAddress());
+  const oracle = await Oracle.deploy(await priceRegistry.getAddress());
   await oracle.waitForDeployment();
 
   const Staking = await hre.ethers.getContractFactory("ATHStaking");
@@ -88,7 +93,10 @@ async function main() {
   assertEq(await token.balanceOf(liquidity.address), liquidityAllocation, "Staking liquidity allocation");
   assertEq(await token.balanceOf(stakingReserveWallet.address), reserveAllocation, "Staking reserve allocation");
   assertEq(await token.balanceOf(deployer.address), 0n, "deployer residual ATH");
-  assertEq(await oracle.getPrice(), 10_000_000n, "Unified ATH starting price $0.10");
+  assertEq(await priceRegistry.getPrice(), 37_000_000n, "ATH pre-listing price $0.37");
+  assertEq(await priceRegistry.HOLDER_TARGET(), 15_000n, "ATH holder listing target");
+  assertEq(await oracle.getPrice(), 37_000_000n, "Unified ATH Staking price $0.37");
+  assertEq(await mining.getCurrentPrice(), 370_000n, "Unified ATH Mining price $0.37");
   assertEq(await mining.MINING_POOL_ALLOCATION(), miningAllocation, "Mining allocation constant");
   assertEq(await mining.MAX_VESTING_CYCLES(), 12n, "Mining vesting cycles");
   assertEq(await mining.CYCLE_BURN_PCT(), 10n, "Mining cycle burn");
@@ -150,7 +158,7 @@ async function main() {
   );
 
   // ---------------- Staking v1 smoke flow ----------------
-  // Use 100 ATH from the Staking presale allocation to fund a $10 stake at $0.10/ATH.
+  // Fund enough ATH for a $10 stake at the fixed $0.37 pre-listing reference price.
   await (await token.connect(presale).transfer(stakingUser.address, hre.ethers.parseEther("100"))).wait();
   await (await token.connect(stakingUser).approve(await staking.getAddress(), hre.ethers.parseEther("100"))).wait();
 
@@ -161,10 +169,12 @@ async function main() {
     stakingReferrer.address
   )).wait();
 
-  assertEq(await staking.principalLiabilityATH(), hre.ethers.parseEther("100"), "Staking principal liability");
+  const stakingPrincipalATH = 27027027027027027027n;
+  const stakingDirectReferralATH = 2702702702702702702n;
+  assertEq(await staking.principalLiabilityATH(), stakingPrincipalATH, "Staking principal liability");
   assertEq(
     (await token.balanceOf(stakingReferrer.address)) - refBefore,
-    hre.ethers.parseEther("10"),
+    stakingDirectReferralATH,
     "Staking direct referral reward"
   );
 
@@ -178,13 +188,13 @@ async function main() {
 
   assertEq(
     (await token.balanceOf(stakingUser.address)) - stakeUserBefore,
-    hre.ethers.parseEther("0.35"),
-    "Staking $0.035 reward converts to 0.35 ATH at $0.10"
+    94594594594594594n,
+    "Staking $0.035 reward converts at $0.37"
   );
   assertEq(
     (await token.balanceOf(stakingReferrer.address)) - stakingRefNetworkBefore,
-    hre.ethers.parseEther("0.028"),
-    "Staking level-1 network reward"
+    7567567567567567n,
+    "Staking level-1 network reward at $0.37"
   );
 
   const evidence = {
@@ -193,6 +203,7 @@ async function main() {
     stakingVersion: "1.0",
     tokenomicsVersion: "2.0",
     token: await token.getAddress(),
+    priceRegistry: await priceRegistry.getAddress(),
     mining: await mining.getAddress(),
     staking: await staking.getAddress(),
     stakingOracle: await oracle.getAddress(),
@@ -210,7 +221,8 @@ async function main() {
         reserve: "10000000",
       },
     },
-    stakingReferencePriceUSD: "0.10",
+    preListingReferencePriceUSD: "0.37",
+    listingHolderTarget: "15000",
     miningHolderFlow: {
       referralCount: "1",
       dailyRewardATH: hre.ethers.formatEther(status.reward),
@@ -224,11 +236,11 @@ async function main() {
     stakingHolderFlow: {
       package: "Starter",
       stakeUSDT: "10",
-      principalATH: "100",
-      directReferralATH: "10",
+      principalATH: "27.027027027027027027",
+      directReferralATH: "2.702702702702702702",
       dailyRewardUSDT: "0.035",
-      dailyRewardATH: "0.35",
-      level1NetworkATH: "0.028",
+      dailyRewardATH: "0.094594594594594594",
+      level1NetworkATH: "0.007567567567567567",
     },
   };
 

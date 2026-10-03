@@ -11,6 +11,10 @@ interface IATHBurnable is IERC20 {
     function burn(uint256 amount) external;
 }
 
+interface IATHPriceRegistrySource {
+    function getPrice() external view returns (uint256 priceUSD8);
+}
+
 /**
  * @title Aether ATH Mining Engine v3.3
  * @notice Transparent UTC daily rewards, referral + booster multipliers,
@@ -22,6 +26,7 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IATHBurnable public immutable athToken;
+    IATHPriceRegistrySource public immutable priceRegistry;
 
     uint256 public constant POWER_PRICE = 0.001 ether;
     uint256 public constant BASE_REWARD = 10 ether;
@@ -247,13 +252,15 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event ExcessTokenWithdrawn(address indexed to, uint256 amount);
 
-    constructor(address _athToken, address _treasury, address initialOwner)
+    constructor(address _athToken, address _treasury, address _priceRegistry, address initialOwner)
         Ownable(initialOwner)
     {
         require(_athToken != address(0), "Invalid token");
         require(_treasury != address(0), "Invalid treasury");
+        require(_priceRegistry != address(0), "Invalid price registry");
         require(initialOwner != address(0), "Invalid owner");
         athToken = IATHBurnable(_athToken);
+        priceRegistry = IATHPriceRegistrySource(_priceRegistry);
         treasury = _treasury;
     }
 
@@ -1093,11 +1100,10 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
         return _isEligibleRewardDay(users[account], _utcDayId(block.timestamp));
     }
 
-    /** @return priceInMicroUSD ATH protocol reference in 6-decimal micro-USD. */
+    /// @notice Compatibility getter for Mining UI/ABI. The unified registry is the source of truth.
+    /// @return priceInMicroUSD ATH official price in 6-decimal micro-USD.
     function getCurrentPrice() external view returns (uint256 priceInMicroUSD) {
-        uint256 minedWhole = totalMined / 1 ether;
-        uint256 steps = minedWhole / 100_000;
-        priceInMicroUSD = 100_000 + (steps * 1_000);
+        priceInMicroUSD = priceRegistry.getPrice() / 100;
     }
 
     function contractBalance() external view returns (uint256) {

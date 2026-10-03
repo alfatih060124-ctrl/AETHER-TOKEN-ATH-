@@ -14,6 +14,7 @@ const TOKEN_ABI = [
 
 const MINING_ABI = [
   "function athToken() view returns (address)",
+  "function priceRegistry() view returns (address)",
   "function treasury() view returns (address)",
   "function owner() view returns (address)",
   "function paused() view returns (bool)",
@@ -44,6 +45,18 @@ const MINING_ABI = [
   "function getCurrentPrice() view returns (uint256)",
 ];
 
+const PRICE_REGISTRY_ABI = [
+  "function getPrice() view returns (uint256)",
+  "function getReferencePrice() view returns (uint256)",
+  "function PRICE_DECIMALS() view returns (uint256)",
+  "function PRE_LISTING_PRICE() view returns (uint256)",
+  "function HOLDER_TARGET() view returns (uint256)",
+  "function recordedHolderCount() view returns (uint256)",
+  "function priceMode() view returns (uint8)",
+  "function officialListingActivated() view returns (bool)",
+  "function marketPriceOracle() view returns (address)",
+];
+
 const STAKING_ABI = [
   "function athToken() view returns (address)",
   "function priceOracle() view returns (address)",
@@ -62,8 +75,9 @@ const STAKING_ABI = [
 
 const ORACLE_ABI = [
   "function getPrice() view returns (uint256)",
+  "function getMarketPrice() view returns (uint256)",
   "function PRICE_DECIMALS() view returns (uint256)",
-  "function miningPriceSource() view returns (address)",
+  "function priceRegistry() view returns (address)",
 ];
 
 const DEV_VESTING_ABI = [
@@ -108,6 +122,7 @@ async function assertCode(provider, address, label) {
 async function main() {
   const rpcUrl = required("BSC_TESTNET_RPC");
   const tokenAddress = requiredAddress("ATH_TOKEN_ADDRESS");
+  const priceRegistryAddress = requiredAddress("ATH_PRICE_REGISTRY_ADDRESS");
   const miningAddress = requiredAddress("ATH_MINING_ADDRESS");
   const stakingAddress = requiredAddress("ATH_STAKING_ADDRESS");
   const oracleAddress = requiredAddress("ATH_STAKING_ORACLE_ADDRESS");
@@ -134,9 +149,16 @@ async function main() {
   const latestBlock = await provider.getBlock("latest");
   if (!latestBlock) throw new Error("Unable to read latest BSC Testnet block");
 
-  const [tokenCodeBytes, miningCodeBytes, stakingCodeBytes, oracleCodeBytes, developmentVestingCodeBytes] =
-    await Promise.all([
+  const [
+    tokenCodeBytes,
+    priceRegistryCodeBytes,
+    miningCodeBytes,
+    stakingCodeBytes,
+    oracleCodeBytes,
+    developmentVestingCodeBytes,
+  ] = await Promise.all([
       assertCode(provider, tokenAddress, "ATH token"),
+      assertCode(provider, priceRegistryAddress, "ATHPriceRegistry"),
       assertCode(provider, miningAddress, "MiningAirdrop"),
       assertCode(provider, stakingAddress, "ATHStaking"),
       assertCode(provider, oracleAddress, "ATHStakingPriceOracle"),
@@ -144,6 +166,7 @@ async function main() {
     ]);
 
   const token = new ethers.Contract(tokenAddress, TOKEN_ABI, provider);
+  const priceRegistry = new ethers.Contract(priceRegistryAddress, PRICE_REGISTRY_ABI, provider);
   const mining = new ethers.Contract(miningAddress, MINING_ABI, provider);
   const staking = new ethers.Contract(stakingAddress, STAKING_ABI, provider);
   const oracle = new ethers.Contract(oracleAddress, ORACLE_ABI, provider);
@@ -154,6 +177,7 @@ async function main() {
     tokenOwner,
     tokenPaused,
     miningToken,
+    miningPriceRegistry,
     miningOwner,
     treasury,
     miningPaused,
@@ -182,6 +206,15 @@ async function main() {
     globalBurned,
     liability,
     miningReferencePrice,
+    registryPrice,
+    registryReferencePrice,
+    registryDecimals,
+    registryPreListingPrice,
+    registryHolderTarget,
+    registryRecordedHolderCount,
+    registryPriceMode,
+    registryOfficialListing,
+    registryMarketOracle,
     stakingToken,
     stakingOracle,
     stakingOwner,
@@ -197,7 +230,7 @@ async function main() {
     totalActiveStakedUSDT,
     oraclePrice,
     oracleDecimals,
-    oracleMiningPriceSource,
+    oraclePriceRegistry,
     vestingToken,
     vestingBeneficiary,
     developmentAllocation,
@@ -210,6 +243,7 @@ async function main() {
     token.owner(),
     token.paused(),
     mining.athToken(),
+    mining.priceRegistry(),
     mining.owner(),
     mining.treasury(),
     mining.paused(),
@@ -238,6 +272,15 @@ async function main() {
     mining.globalBurned(),
     mining.outstandingVestingLiability(),
     mining.getCurrentPrice(),
+    priceRegistry.getPrice(),
+    priceRegistry.getReferencePrice(),
+    priceRegistry.PRICE_DECIMALS(),
+    priceRegistry.PRE_LISTING_PRICE(),
+    priceRegistry.HOLDER_TARGET(),
+    priceRegistry.recordedHolderCount(),
+    priceRegistry.priceMode(),
+    priceRegistry.officialListingActivated(),
+    priceRegistry.marketPriceOracle(),
     staking.athToken(),
     staking.priceOracle(),
     staking.owner(),
@@ -253,7 +296,7 @@ async function main() {
     staking.totalActiveStakedUSDT(),
     oracle.getPrice(),
     oracle.PRICE_DECIMALS(),
-    oracle.miningPriceSource(),
+    oracle.priceRegistry(),
     vesting.athToken(),
     vesting.beneficiary(),
     vesting.TOTAL_ALLOCATION(),
@@ -278,6 +321,7 @@ async function main() {
 
   // Mining v3.3 locked invariants.
   if (!eqAddr(miningToken, tokenAddress)) throw new Error("Mining contract token mismatch");
+  if (!eqAddr(miningPriceRegistry, priceRegistryAddress)) throw new Error("Mining price registry mismatch");
   if (!eqAddr(miningOwner, ownerExpected)) throw new Error("Mining owner mismatch");
   if (!eqAddr(treasury, treasuryExpected)) throw new Error("Mining treasury mismatch");
   if (miningPaused) throw new Error("Mining unexpectedly paused");
@@ -297,7 +341,19 @@ async function main() {
   assertEq(maxMinerPage, 200n, "Miner registry page cap");
   assertEq(powerBoosterPrice, ethers.parseEther("0.001"), "Initial Power Booster price");
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
-  assertEq(miningReferencePrice, 100_000n, "ATH starting protocol price $0.10");
+  assertEq(miningReferencePrice, 370_000n, "ATH pre-listing Mining price $0.37");
+
+  assertEq(registryPrice, 37_000_000n, "ATH registry official pre-listing price $0.37");
+  assertEq(registryReferencePrice, 37_000_000n, "ATH registry reference price $0.37");
+  assertEq(registryDecimals, 8n, "ATH registry price decimals");
+  assertEq(registryPreListingPrice, 37_000_000n, "ATH registry fixed price constant");
+  assertEq(registryHolderTarget, 15_000n, "ATH official listing holder target");
+  assertEq(registryRecordedHolderCount, 0n, "ATH initial recorded holder count");
+  assertEq(registryPriceMode, 0n, "ATH pre-listing price mode");
+  if (registryOfficialListing) throw new Error("ATH official listing unexpectedly active");
+  if (!eqAddr(registryMarketOracle, ethers.ZeroAddress)) {
+    throw new Error("ATH market oracle should be unset on initial deployment");
+  }
 
   for (const [label, value] of [
     ["totalMined", totalMined],
@@ -326,8 +382,8 @@ async function main() {
   assertEq(packageCount, 6n, "Staking package count");
   assertEq(principalLiabilityATH, 0n, "Staking initial principal liability");
   assertEq(totalActiveStakedUSDT, 0n, "Staking initial active USDT");
-  assertEq(oraclePrice, 10_000_000n, "ATH Staking starting price $0.10");
-  if (!eqAddr(oracleMiningPriceSource, miningAddress)) throw new Error("Staking oracle Mining price source mismatch");
+  assertEq(oraclePrice, 37_000_000n, "ATH Staking pre-listing price $0.37");
+  if (!eqAddr(oraclePriceRegistry, priceRegistryAddress)) throw new Error("Staking oracle price registry mismatch");
   assertEq(oracleDecimals, 8n, "ATH staking oracle decimals");
 
   if (!eqAddr(vestingToken, tokenAddress)) throw new Error("Development vesting token mismatch");
@@ -374,6 +430,7 @@ async function main() {
     testnetSingleWalletMode: singleWalletMode,
     contracts: {
       tokenAddress,
+      priceRegistryAddress,
       miningAddress,
       stakingAddress,
       oracleAddress,
@@ -381,6 +438,7 @@ async function main() {
     },
     codeBytes: {
       token: tokenCodeBytes,
+      priceRegistry: priceRegistryCodeBytes,
       mining: miningCodeBytes,
       staking: stakingCodeBytes,
       oracle: oracleCodeBytes,
@@ -397,9 +455,11 @@ async function main() {
       liquidity: "20000000",
       reserve: "10000000",
     },
-    stakingReferencePriceUSD: "0.10",
+    preListingReferencePriceUSD: "0.37",
+    listingHolderTarget: 15000,
+    priceMode: "PRE_LISTING_FIXED",
     stakingDestinationBalancesATH: destinationBalances,
-    miningInternalDisplayMetricUSD: (Number(legacyMiningDisplayPrice) / 1_000_000).toFixed(3),
+    miningReferencePriceUSD: (Number(miningReferencePrice) / 1_000_000).toFixed(3),
     checkedAt: new Date().toISOString(),
   };
 

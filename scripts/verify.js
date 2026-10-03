@@ -35,6 +35,7 @@ async function main() {
   if (isMainnet && chainId !== 56) throw new Error(`BSC Mainnet chain mismatch: ${chainId}`);
 
   const token = requiredAddressAny(["ATH_TOKEN_ADDRESS", "ATH_TOKEN"]);
+  const priceRegistry = requiredAddress("ATH_PRICE_REGISTRY_ADDRESS");
   const mining = requiredAddressAny(["ATH_MINING_ADDRESS", "MINING_AIRDROP"]);
   const staking = requiredAddress("ATH_STAKING_ADDRESS");
   const oracle = requiredAddress("ATH_STAKING_ORACLE_ADDRESS");
@@ -50,6 +51,7 @@ async function main() {
   console.log("Verifying ATH contracts on", hre.network.name, "chain", chainId);
   console.log("Testnet single-wallet mode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("ATH token:", token);
+  console.log("ATH price registry:", priceRegistry);
   console.log("Mining:", mining);
   console.log("Staking:", staking);
   console.log("Staking oracle:", oracle);
@@ -61,13 +63,18 @@ async function main() {
   });
 
   await hre.run("verify:verify", {
+    address: priceRegistry,
+    constructorArguments: [owner],
+  });
+
+  await hre.run("verify:verify", {
     address: mining,
-    constructorArguments: [token, treasury, owner],
+    constructorArguments: [token, treasury, priceRegistry, owner],
   });
 
   await hre.run("verify:verify", {
     address: oracle,
-    constructorArguments: [],
+    constructorArguments: [priceRegistry],
   });
 
   await hre.run("verify:verify", {

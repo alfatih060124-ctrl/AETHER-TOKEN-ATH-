@@ -117,7 +117,8 @@ async function main() {
   console.log("stakingReserveWallet:", stakingReserveWallet);
   console.log("developmentBeneficiary:", developmentBeneficiary);
   console.log("tokenomics:", "700M Mining + 300M Staking");
-  console.log("stakingReferencePriceUSD:", "0.10");
+  console.log("preListingReferencePriceUSD:", "0.37");
+console.log("officialListingHolderTarget:", "15000");
   console.log("privateKey: [REDACTED]");
 
   if (!isTestnet) {

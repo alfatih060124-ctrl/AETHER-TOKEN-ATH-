@@ -1,0 +1,44 @@
+{
+  "format": 2,
+  "miningVersion": "3.3.0",
+  "stakingVersion": "1.0.0",
+  "tokenomicsVersion": "2.0",
+  "contracts": {
+    "ATHToken": {
+      "abiFile": "deployments/abi/ATHToken.json",
+      "abiSha256": "52ce0fae84c94b4bed5f0fe1b80d49ebd7dd9929acb4e18f5429c7a63cc2cd73",
+      "deployedBytecodeSha256": "34255d8c46d2fb58e5501b5eb27f2f7b3a26d88fa01a84bfd629cfffc519786b",
+      "deployedBytecodeBytes": 2747
+    },
+    "ATHPriceRegistry": {
+      "abiFile": "deployments/abi/ATHPriceRegistry.v1.json",
+      "abiSha256": "7366539508966daafe7e993ddf5f60396db9fce7d8b334066fe1ae46b90bef6d",
+      "deployedBytecodeSha256": "8db0ec7d1575142d825dc1cf368e6eb500fc2ab6564e0445013e912d8591c082",
+      "deployedBytecodeBytes": 1880
+    },
+    "MiningAirdrop": {
+      "abiFile": "deployments/abi/MiningAirdrop.v3.3.json",
+      "abiSha256": "761ae3c0f701d4f9486f5c2fd03cf5c037138fa02566a789889efa3746405a02",
+      "deployedBytecodeSha256": "78b27eb414ad64dd252f56570b5053e27c4491dd160ae2b340d3d45d70907d6d",
+      "deployedBytecodeBytes": 20468
+    },
+    "ATHStaking": {
+      "abiFile": "deployments/abi/ATHStaking.v1.json",
+      "abiSha256": "d91f7368c8ad85776c6e1bcfbb2beb6850e9361db1f2a831654fcb68660acf1b",
+      "deployedBytecodeSha256": "ebce0014912969dc8d31e4800b18f34e48565c4cdba2a2520c79b26d6eca294f",
+      "deployedBytecodeBytes": 8401
+    },
+    "ATHStakingPriceOracle": {
+      "abiFile": "deployments/abi/ATHStakingPriceOracle.v1.json",
+      "abiSha256": "c1f48a3b55f201fe5286f495b53d41c7c2a200364223039e1bc3d87b0e5b4ff3",
+      "deployedBytecodeSha256": "b7d6d4b3aed5f0dbab37c8646db3a3b05520e29ac841213823ea42dc51046a62",
+      "deployedBytecodeBytes": 561
+    },
+    "ATHDevelopmentVesting": {
+      "abiFile": "deployments/abi/ATHDevelopmentVesting.v1.json",
+      "abiSha256": "d65061254f4959e98da6e70b844669df329eafbbc3434e028e31da5f2d1b9832",
+      "deployedBytecodeSha256": "9c9c9be419a43b9a78b73aad7ad492b3a18995987a033cfe8ac908a73252c5fc",
+      "deployedBytecodeBytes": 1284
+    }
+  }
+}

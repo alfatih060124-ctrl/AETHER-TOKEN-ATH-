@@ -87,9 +87,15 @@ async function main() {
   await token.waitForDeployment();
   const tokenAddress = await token.getAddress();
 
-  // Deploy ATH Mining with current protocol reward and pricing rules.
+  // Unified ATH price source: $0.37 official pre-listing reference, 15,000 holder gate.
+  const PriceRegistry = await hre.ethers.getContractFactory("ATHPriceRegistry");
+  const priceRegistry = await PriceRegistry.deploy(owner);
+  await priceRegistry.waitForDeployment();
+  const priceRegistryAddress = await priceRegistry.getAddress();
+
+  // Deploy ATH Mining v3.3 unchanged except for consuming the unified price registry.
   const MiningAirdrop = await hre.ethers.getContractFactory("MiningAirdrop");
-  const mining = await MiningAirdrop.deploy(tokenAddress, treasury, owner);
+  const mining = await MiningAirdrop.deploy(tokenAddress, treasury, priceRegistryAddress, owner);
   await mining.waitForDeployment();
   const miningAddress = await mining.getAddress();
 
@@ -148,7 +154,7 @@ async function main() {
   }
 
   const Oracle = await hre.ethers.getContractFactory("ATHStakingPriceOracle");
-  const oracle = await Oracle.deploy(miningAddress);
+  const oracle = await Oracle.deploy(priceRegistryAddress);
   await oracle.waitForDeployment();
   const oracleAddress = await oracle.getAddress();
 
@@ -221,8 +227,17 @@ async function main() {
   if ((await token.balanceOf(developmentVestingAddress)) !== stakingDevelopment) {
     throw new Error("Development vesting is not exactly 30M ATH");
   }
-  if ((await oracle.getPrice()) !== 10_000_000n) {
-    throw new Error("ATH unified starting reference price is not $0.10");
+  if ((await priceRegistry.getPrice()) !== 37_000_000n) {
+    throw new Error("ATH pre-listing reference price is not $0.37");
+  }
+  if ((await priceRegistry.HOLDER_TARGET()) !== 15_000n) {
+    throw new Error("ATH official listing holder target is not 15,000");
+  }
+  if ((await priceRegistry.officialListingActivated()) !== false) {
+    throw new Error("ATH official listing must be inactive at deployment");
+  }
+  if ((await oracle.getPrice()) !== 37_000_000n) {
+    throw new Error("ATH Staking oracle is not reading the $0.37 registry price");
   }
 
   if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
@@ -246,6 +261,7 @@ async function main() {
     developmentBeneficiary,
     contracts: {
       ATH_TOKEN_ADDRESS: tokenAddress,
+      ATH_PRICE_REGISTRY_ADDRESS: priceRegistryAddress,
       ATH_MINING_ADDRESS: miningAddress,
       ATH_STAKING_ADDRESS: stakingAddress,
       ATH_STAKING_ORACLE_ADDRESS: oracleAddress,
@@ -264,8 +280,16 @@ async function main() {
         reserve: "10000000",
       },
     },
+    priceRules: {
+      preListingReferencePriceUSD: "0.37",
+      holderTarget: 15000,
+      preListingMode: "PRE_LISTING_FIXED",
+      officialListingActivated: false,
+      dexMarketPriceMayBeVisibleBeforeListing: true,
+      officialPriceSwitch: "MARKET_AFTER_HOLDER_GATE_AND_OPERATOR_ACTIVATION",
+    },
     stakingRules: {
-      referencePriceUSD: "0.10",
+      referencePriceUSD: "0.37",
       minimumStakeUSDT: "10",
       directReferralPct: 10,
       networkLevels: 10,
@@ -277,7 +301,7 @@ async function main() {
       developmentActiveMonths: 33,
     },
     miningRules: {
-      baseRewardATH: "1",
+      baseRewardATH: "10",
       claimOpenUtc: "00:05:00",
       claimCloseUtc: "23:59:59",
       powerPriceBNB: "0.001",
@@ -301,6 +325,7 @@ async function main() {
 
   console.log("\n========== ATH DEPLOYMENT ==========");
   console.log("ATH_TOKEN                  =", tokenAddress);
+  console.log("ATH_PRICE_REGISTRY         =", priceRegistryAddress);
   console.log("MINING_AIRDROP             =", miningAddress);
   console.log("ATH_STAKING                =", stakingAddress);
   console.log("ATH_STAKING_ORACLE         =", oracleAddress);
