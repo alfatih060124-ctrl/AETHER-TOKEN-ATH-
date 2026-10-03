@@ -154,8 +154,8 @@ function streamWhitepaper(res) {
     "Liquidity-lock gate: must be confirmed before Mainnet activation.",
     "Mining reserve protection: allocated but unclaimed vesting liabilities are protected from excess-reserve withdrawal.",
     "Administrative controls include emergency pause, treasury update, and pause-gated excess reserve recovery.",
-    "Permissionless reward-transparency batch functions remain capped at 50 accounts and use an on-chain miner registry paginated at 200 accounts."
-    "AETHER does not sponsor production holder gas. Holder state-changing actions are signed by the holder wallet and paid in BNB by the holder; any keeper wallet is Testnet/audit tooling only."
+    "Permissionless reward-transparency batch functions remain capped at 50 accounts and use an on-chain miner registry paginated at 200 accounts.",
+    "AETHER does not sponsor production holder gas. Holder state-changing actions are signed by the holder wallet and paid in BNB by the holder; any keeper wallet is Testnet/audit tooling only.",
     "Browser transactions use the connected wallet for signing; private deployment keys are not embedded in the public web interface."
   ], y + 10);
 
