@@ -19,6 +19,11 @@ const contracts = [
     output: "ATHPriceRegistry.v1.json",
   },
   {
+    name: "ATHPresale",
+    artifact: path.join(ROOT, "artifacts", "contracts", "ATHPresale.sol", "ATHPresale.json"),
+    output: "ATHPresale.v1.json",
+  },
+  {
     name: "MiningAirdrop",
     artifact: path.join(ROOT, "artifacts", "contracts", "MiningAirdrop.sol", "MiningAirdrop.json"),
     output: "MiningAirdrop.v3.3.json",
@@ -83,6 +88,26 @@ for (const spec of contracts) {
       "PRE_LISTING_PRICE",
       "priceMode",
       "officialListingActivated",
+    ]);
+  }
+
+  if (spec.name === "ATHPresale") {
+    requiredFunctions(artifact.abi, [
+      "currentPriceUSD8",
+      "remainingATH",
+      "soldOut",
+      "quotePaymentForATH",
+      "buyATH",
+      "START_PRICE_USD8",
+      "PRICE_STEP_USD8",
+      "FINAL_PRICE_USD8",
+      "STEP_SIZE_ATH",
+      "SALE_ALLOCATION_ATH",
+      "TOTAL_PRICE_STEPS",
+      "totalSoldATH",
+      "totalPaymentCollected",
+      "pause",
+      "unpause",
     ]);
   }
 

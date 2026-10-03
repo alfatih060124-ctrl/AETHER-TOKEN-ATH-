@@ -1,12 +1,13 @@
 const singleWalletMode = process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
 
 const deployRequired = singleWalletMode
-  ? ["PRIVATE_KEY"]
+  ? ["PRIVATE_KEY", "PRESALE_PAYMENT_TOKEN"]
   : [
       "PRIVATE_KEY",
       "OWNER_ADDRESS",
       "TREASURY_ADDRESS",
       "PRESALE_WALLET",
+      "PRESALE_PAYMENT_TOKEN",
       "MARKETING_WALLET",
       "LIQUIDITY_WALLET",
       "STAKING_RESERVE_WALLET",
@@ -38,6 +39,7 @@ console.log("ATH Testnet Readiness Report");
 console.log("tokenomics:", "1B ATH = 700M Mining + 300M Staking");
 console.log("preListingReferencePriceUSD:", "0.37");
 console.log("officialListingHolderTarget:", "15000");
+console.log("presale:", "$0.07 open / +$0.001 per 100,000 ATH / 30M allocation / $0.37 sold-out");
 console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
 console.log("safeConfig:", missingSafe.length === 0 ? "READY" : "MISSING");
 console.log("deploymentConfig:", missingDeployConfig.length === 0 ? "READY" : "BLOCKED");

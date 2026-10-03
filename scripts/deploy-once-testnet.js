@@ -31,6 +31,7 @@ if (!process.env.PRIVATE_KEY) {
 const existing = [
   "ATH_TOKEN_ADDRESS",
   "ATH_PRICE_REGISTRY_ADDRESS",
+  "ATH_PRESALE_ADDRESS",
   "ATH_MINING_ADDRESS",
   "ATH_STAKING_ADDRESS",
   "ATH_STAKING_ORACLE_ADDRESS",
@@ -79,6 +80,7 @@ const contracts = manifest.contracts || {};
 for (const name of [
   "ATH_TOKEN_ADDRESS",
   "ATH_PRICE_REGISTRY_ADDRESS",
+  "ATH_PRESALE_ADDRESS",
   "ATH_MINING_ADDRESS",
   "ATH_STAKING_ADDRESS",
   "ATH_STAKING_ORACLE_ADDRESS",

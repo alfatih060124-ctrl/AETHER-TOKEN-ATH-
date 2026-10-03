@@ -36,6 +36,8 @@ async function main() {
 
   const token = requiredAddressAny(["ATH_TOKEN_ADDRESS", "ATH_TOKEN"]);
   const priceRegistry = requiredAddress("ATH_PRICE_REGISTRY_ADDRESS");
+  const presale = requiredAddress("ATH_PRESALE_ADDRESS");
+  const presalePaymentToken = requiredAddress("PRESALE_PAYMENT_TOKEN");
   const mining = requiredAddressAny(["ATH_MINING_ADDRESS", "MINING_AIRDROP"]);
   const staking = requiredAddress("ATH_STAKING_ADDRESS");
   const oracle = requiredAddress("ATH_STAKING_ORACLE_ADDRESS");
@@ -46,12 +48,14 @@ async function main() {
   const roleAddress = (name) => singleWalletMode ? deployerAddress : requiredAddress(name);
   const owner = roleAddress("OWNER_ADDRESS");
   const treasury = roleAddress("TREASURY_ADDRESS");
+  const presaleTreasury = roleAddress("PRESALE_WALLET");
   const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
   console.log("Verifying ATH contracts on", hre.network.name, "chain", chainId);
   console.log("Testnet single-wallet mode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("ATH token:", token);
   console.log("ATH price registry:", priceRegistry);
+  console.log("ATH presale:", presale);
   console.log("Mining:", mining);
   console.log("Staking:", staking);
   console.log("Staking oracle:", oracle);
@@ -65,6 +69,11 @@ async function main() {
   await hre.run("verify:verify", {
     address: priceRegistry,
     constructorArguments: [owner],
+  });
+
+  await hre.run("verify:verify", {
+    address: presale,
+    constructorArguments: [token, presalePaymentToken, presaleTreasury, owner],
   });
 
   await hre.run("verify:verify", {

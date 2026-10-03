@@ -79,6 +79,7 @@ async function main() {
   const owner = roleAddress("OWNER_ADDRESS");
   const treasury = roleAddress("TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
+  const presalePaymentToken = address("PRESALE_PAYMENT_TOKEN");
   const marketingWallet = roleAddress("MARKETING_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
@@ -111,7 +112,11 @@ async function main() {
   console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("owner:", owner);
   console.log("treasury:", treasury);
-  console.log("presaleWallet:", presaleWallet);
+  console.log("presaleTreasury:", presaleWallet);
+  console.log("presalePaymentToken:", presalePaymentToken);
+  console.log("presaleOpeningPriceUSD:", "0.07");
+  console.log("presalePriceStepUSD:", "0.001 / 100000 ATH sold");
+  console.log("presaleSoldOutPriceUSD:", "0.37");
   console.log("marketingWallet:", marketingWallet);
   console.log("liquidityWallet:", liquidityWallet);
   console.log("stakingReserveWallet:", stakingReserveWallet);

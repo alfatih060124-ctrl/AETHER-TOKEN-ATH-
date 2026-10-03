@@ -14,7 +14,7 @@ ATH Staking v1 is a new module beside ATH Mining.
 | Allocation | ATH | Share of Staking Allocation |
 | --- | ---: | ---: |
 | Reward Pool | 160,000,000 | 53.33% |
-| Presale | 30,000,000 | 10.00% |
+| Presale | 30,000,000 | 10.00% | Opens $0.070; +$0.001 / 100,000 ATH sold; sold-out reference $0.370 |
 | Marketing | 50,000,000 | 16.67% |
 | Development Vesting | 30,000,000 | 10.00% |
 | Liquidity | 20,000,000 | 6.67% |

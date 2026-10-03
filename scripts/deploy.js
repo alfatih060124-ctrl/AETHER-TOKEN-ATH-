@@ -61,6 +61,7 @@ async function main() {
   const owner = roleAddress("OWNER_ADDRESS");
   const treasury = roleAddress("TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
+  const presalePaymentToken = requiredAddress("PRESALE_PAYMENT_TOKEN");
   const marketingWallet = roleAddress("MARKETING_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
@@ -76,7 +77,8 @@ async function main() {
   console.log("Testnet role mode     :", singleWalletMode ? "DEPLOYER_FOR_ALL_ROLES" : "EXPLICIT_ADDRESSES");
   console.log("Owner / multisig      :", owner);
   console.log("Mining treasury       :", treasury);
-  console.log("Staking presale       :", presaleWallet);
+  console.log("Presale treasury      :", presaleWallet);
+  console.log("Presale payment token :", presalePaymentToken);
   console.log("Staking marketing     :", marketingWallet);
   console.log("Staking liquidity     :", liquidityWallet);
   console.log("Staking reserve       :", stakingReserveWallet);
@@ -163,6 +165,16 @@ async function main() {
   await staking.waitForDeployment();
   const stakingAddress = await staking.getAddress();
 
+  const Presale = await hre.ethers.getContractFactory("ATHPresale");
+  const presale = await Presale.deploy(
+    tokenAddress,
+    presalePaymentToken,
+    presaleWallet,
+    owner
+  );
+  await presale.waitForDeployment();
+  const presaleAddress = await presale.getAddress();
+
   const DevelopmentVesting = await hre.ethers.getContractFactory("ATHDevelopmentVesting");
   const developmentVesting = await DevelopmentVesting.deploy(tokenAddress, developmentBeneficiary);
   await developmentVesting.waitForDeployment();
@@ -195,7 +207,7 @@ async function main() {
   await (await staking.fundRewards(stakingRewardPool)).wait();
 
   await (await token.transfer(developmentVestingAddress, stakingDevelopment)).wait();
-  await (await token.transfer(presaleWallet, stakingPresale)).wait();
+  await (await token.transfer(presaleAddress, stakingPresale)).wait();
   await (await token.transfer(marketingWallet, stakingMarketing)).wait();
   await (await token.transfer(liquidityWallet, stakingLiquidity)).wait();
   await (await token.transfer(stakingReserveWallet, stakingReserve)).wait();
@@ -205,7 +217,6 @@ async function main() {
     const key = address.toLowerCase();
     expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
   }
-  addExpected(presaleWallet, stakingPresale);
   addExpected(marketingWallet, stakingMarketing);
   addExpected(liquidityWallet, stakingLiquidity);
   addExpected(stakingReserveWallet, stakingReserve);
@@ -226,6 +237,21 @@ async function main() {
   }
   if ((await token.balanceOf(developmentVestingAddress)) !== stakingDevelopment) {
     throw new Error("Development vesting is not exactly 30M ATH");
+  }
+  if ((await token.balanceOf(presaleAddress)) !== stakingPresale) {
+    throw new Error("ATH Presale contract is not funded with exactly 30M ATH");
+  }
+  if ((await presale.START_PRICE_USD8()) !== 7_000_000n) {
+    throw new Error("ATH Presale does not open at $0.07");
+  }
+  if ((await presale.PRICE_STEP_USD8()) !== 100_000n) {
+    throw new Error("ATH Presale price step is not $0.001");
+  }
+  if ((await presale.FINAL_PRICE_USD8()) !== 37_000_000n) {
+    throw new Error("ATH Presale sell-out price is not $0.37");
+  }
+  if ((await presale.STEP_SIZE_ATH()) !== hre.ethers.parseEther("100000")) {
+    throw new Error("ATH Presale step size is not 100,000 ATH");
   }
   if ((await priceRegistry.getPrice()) !== 37_000_000n) {
     throw new Error("ATH pre-listing reference price is not $0.37");
@@ -255,6 +281,7 @@ async function main() {
     owner,
     treasury,
     presaleWallet,
+    presalePaymentToken,
     marketingWallet,
     liquidityWallet,
     stakingReserveWallet,
@@ -262,6 +289,7 @@ async function main() {
     contracts: {
       ATH_TOKEN_ADDRESS: tokenAddress,
       ATH_PRICE_REGISTRY_ADDRESS: priceRegistryAddress,
+      ATH_PRESALE_ADDRESS: presaleAddress,
       ATH_MINING_ADDRESS: miningAddress,
       ATH_STAKING_ADDRESS: stakingAddress,
       ATH_STAKING_ORACLE_ADDRESS: oracleAddress,
@@ -287,6 +315,16 @@ async function main() {
       officialListingActivated: false,
       dexMarketPriceMayBeVisibleBeforeListing: true,
       officialPriceSwitch: "MARKET_AFTER_HOLDER_GATE_AND_OPERATOR_ACTIVATION",
+    },
+    presaleRules: {
+      allocationATH: "30000000",
+      openingPriceUSD: "0.07",
+      priceStepUSD: "0.001",
+      stepSizeATH: "100000",
+      totalSteps: 300,
+      soldOutPriceUSD: "0.37",
+      paymentToken: presalePaymentToken,
+      treasury: presaleWallet,
     },
     stakingRules: {
       referencePriceUSD: "0.37",
@@ -326,6 +364,7 @@ async function main() {
   console.log("\n========== ATH DEPLOYMENT ==========");
   console.log("ATH_TOKEN                  =", tokenAddress);
   console.log("ATH_PRICE_REGISTRY         =", priceRegistryAddress);
+  console.log("ATH_PRESALE                =", presaleAddress);
   console.log("MINING_AIRDROP             =", miningAddress);
   console.log("ATH_STAKING                =", stakingAddress);
   console.log("ATH_STAKING_ORACLE         =", oracleAddress);
