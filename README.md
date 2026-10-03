@@ -9,7 +9,7 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 - No post-deployment mint function.
 - **Mining: 700,000,000 ATH**.
 - **Staking ecosystem: 300,000,000 ATH**.
-- ATH Staking v1 reference valuation: **1 ATH = $0.10**.
+- Unified ATH protocol reference valuation: **1 ATH = $0.10** across Staking and the Mining display metric.
 
 ### Staking 300M breakdown
 
@@ -20,9 +20,9 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 - Liquidity: **20,000,000 ATH**.
 - Ecosystem Reserve: **10,000,000 ATH**.
 
-## Mining v3.3 — source locked
+## Mining v3.3 — mechanics locked
 
-MiningAirdrop v3.3 is intentionally unchanged by the Staking expansion.
+Mining reward, Power, Booster, referral, vesting, keeper, and reserve mechanics remain unchanged. Only the ATH protocol reference-price metric is aligned to the ecosystem-wide **$0.10 per ATH** value.
 
 - Mining allocation: **700,000,000 ATH**.
 - Base reward: **1 ATH/day**.
