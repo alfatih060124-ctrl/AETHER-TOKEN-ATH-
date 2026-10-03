@@ -23,10 +23,11 @@ ATH Staking v1 is a new module beside ATH Mining.
 
 ## Staking valuation
 
-- Protocol reference valuation: **1 ATH = $0.10**.
-- Oracle representation: 8 decimals; $0.10 = 10,000,000.
-- ATHStakingPriceOracle v1 is immutable: there is no owner price setter.
-- This reference value is used for staking accounting and does not guarantee a public-market price.
+- Unified protocol price starts at **1 ATH = $0.10**.
+- Mining raises the protocol price by **$0.001 for each complete 100,000 ATH mined**.
+- Oracle representation uses 8 decimals; the $0.10 starting price is 10,000,000.
+- ATHStakingPriceOracle has an immutable Mining price-source address and no owner price setter.
+- Staking accounting reads the same live protocol price as Mining; this is not a guarantee of public-market price.
 
 ## Packages
 
@@ -87,7 +88,7 @@ Staking principal and reward reserve are separate accounting liabilities.
 
 - `ATHToken.sol`: existing fixed 1B ATH token; unchanged.
 - `MiningAirdrop.sol`: Mining v3.3; source-locked and unchanged.
-- `ATHStakingPriceOracle.sol`: immutable $0.10 staking reference price.
+- `ATHStakingPriceOracle.sol`: immutable Mining price-source binding; starts at $0.10 and follows the unified stepped ATH price.
 - `ATHStaking.sol`: packages, principal, reward reserve, direct referral and 10-level network reward.
 - `ATHDevelopmentVesting.sol`: 30M development vesting.
 
