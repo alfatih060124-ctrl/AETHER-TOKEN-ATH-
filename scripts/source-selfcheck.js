@@ -63,7 +63,8 @@ must(mining, /event RewardExpired/, "Mining lock: RewardExpired remains present"
 must(mining, /event VestingCycleEntered/, "Mining lock: VestingCycleEntered remains present");
 must(mining, /event ATHBurned/, "Mining lock: ATHBurned remains present");
 must(mining, /event VestingFinalSettled/, "Mining lock: VestingFinalSettled remains present");
-must(mining, /function setBoosterPrices[\s\S]*external onlyOwner/, "Mining lock: booster prices remain owner-controlled");\nmust(mining, /function processVestingPosition[\\s\\S]*require\\(msg\\.sender == account, "Holder only"\\)/, "Mining gas policy: explicit vesting processing is holder-paid");
+must(mining, /function setBoosterPrices[\s\S]*external onlyOwner/, "Mining lock: booster prices remain owner-controlled");
+must(mining, /function processVestingPosition[\s\S]*require\(msg\.sender == account, "Holder only"\)/, "Mining gas policy: explicit vesting processing is holder-paid");
 
 for (const expected of [
   "if (count >= 46) return 15_000",
