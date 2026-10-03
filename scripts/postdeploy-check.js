@@ -180,7 +180,7 @@ async function main() {
     globalClaimed,
     globalBurned,
     liability,
-    legacyMiningDisplayPrice,
+    miningReferencePrice,
     stakingToken,
     stakingOracle,
     stakingOwner,
@@ -294,7 +294,7 @@ async function main() {
   assertEq(maxMinerPage, 200n, "Miner registry page cap");
   assertEq(powerBoosterPrice, ethers.parseEther("0.001"), "Initial Power Booster price");
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
-  assertEq(legacyMiningDisplayPrice, 3_000_000n, "Locked Mining internal display metric");
+  assertEq(miningReferencePrice, 100_000n, "Unified ATH $0.10 protocol reference price");
 
   for (const [label, value] of [
     ["totalMined", totalMined],
