@@ -1,5 +1,18 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
+## 2026-10-03 ON-CHAIN PRESALE STOREFRONT — DONE IN SOURCE
+
+- Added a public **ATH On-chain Presale storefront** under `#buy-ath`.
+- Storefront reads `currentPriceUSD8()`, `totalSoldATH()`, `remainingATH()` and `quotePaymentForATH()` directly from `ATHPresale`.
+- Buyer flow is wallet-signed: connect wallet -> stablecoin approval when required -> `buyATH(athAmount,maxPaymentAmount)` -> ATH delivered directly to buyer wallet.
+- Payment token goes directly from buyer wallet to the Presale treasury through the contract; there is no manual admin payment flow.
+- Buyer max-payment protection includes a UI 1% ceiling and the contract enforces `maxPaymentAmount`.
+- Holder pays BSC network gas for approval/purchase transactions; AETHER does not subsidize holder gas.
+- Runtime remains fail-closed until `ATH_PRESALE_ADDRESS` and `PRESALE_PAYMENT_TOKEN` are configured.
+- Source self-check: PASS. Web/Whitepaper syntax gate: PASS. Full automated suite: **47/47 PASS**. Local Presale/Mining/Staking release rehearsal: PASS.
+- Local web serving QC: `/`, `/presale.js`, `/config`, and `/health` return HTTP 200; Presale health flag correctly reports false when addresses are not configured.
+
+
 ## 2026-10-03 ECOSYSTEM TOKENOMICS v2 — MINING LOCK + STAKING v1
 
 - ATH fixed supply remains **1,000,000,000 ATH**; no post-deployment mint.
