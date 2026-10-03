@@ -31,7 +31,7 @@ async function main() {
   const token = await Token.deploy(deployer.address);
   await token.waitForDeployment();
 
-  // Mining v3.3 deployment remains unchanged.
+  // Deploy Mining with current reward and protocol pricing rules.
   const Mining = await hre.ethers.getContractFactory("MiningAirdrop");
   const mining = await Mining.deploy(
     await token.getAddress(),
@@ -40,9 +40,9 @@ async function main() {
   );
   await mining.waitForDeployment();
 
-  // Staking v1 is separate from Mining.
+  // Staking accounting uses the unified ATH protocol price from Mining.
   const Oracle = await hre.ethers.getContractFactory("ATHStakingPriceOracle");
-  const oracle = await Oracle.deploy();
+  const oracle = await Oracle.deploy(await mining.getAddress());
   await oracle.waitForDeployment();
 
   const Staking = await hre.ethers.getContractFactory("ATHStaking");
@@ -88,7 +88,7 @@ async function main() {
   assertEq(await token.balanceOf(liquidity.address), liquidityAllocation, "Staking liquidity allocation");
   assertEq(await token.balanceOf(stakingReserveWallet.address), reserveAllocation, "Staking reserve allocation");
   assertEq(await token.balanceOf(deployer.address), 0n, "deployer residual ATH");
-  assertEq(await oracle.getPrice(), 10_000_000n, "Staking ATH reference price $0.10");
+  assertEq(await oracle.getPrice(), 10_000_000n, "Unified ATH starting price $0.10");
   assertEq(await mining.MINING_POOL_ALLOCATION(), miningAllocation, "Mining allocation constant");
   assertEq(await mining.MAX_VESTING_CYCLES(), 12n, "Mining vesting cycles");
   assertEq(await mining.CYCLE_BURN_PCT(), 10n, "Mining cycle burn");
@@ -97,7 +97,7 @@ async function main() {
   assertEq(await mining.MAX_KEEPER_BATCH(), 50n, "Mining keeper batch cap");
   assertEq(await mining.MAX_MINER_PAGE(), 200n, "Mining miner registry page cap");
 
-  // ---------------- Mining v3.3 smoke flow (unchanged) ----------------
+  // ---------------- Mining smoke flow ----------------
   const block = await hre.ethers.provider.getBlock("latest");
   const day = Math.floor(Number(block.timestamp) / 86400);
   const openAt = day * 86400 + 300;
@@ -127,20 +127,20 @@ async function main() {
   await (await mining.snapshotDailyRewards([miningHolder.address])).wait();
   const status = await mining.getDailyRewardStatus(miningHolder.address, rewardDay);
   assertEq(status.status, 1n, "Mining daily reward status");
-  assertEq(status.reward, hre.ethers.parseEther("1.1"), "Mining referral-adjusted reward");
+  assertEq(status.reward, hre.ethers.parseEther("11"), "Mining referral-adjusted reward");
 
   await (await mining.connect(miningHolder).claimDaily()).wait();
 
   const dash = await mining.getVestingDashboard(miningHolder.address, 0);
-  assertEq(dash.amount, hre.ethers.parseEther("1.1"), "Mining vesting claim amount");
-  assertEq(dash.unlock30, hre.ethers.parseEther("0.11"), "Mining 30-day unlock");
-  assertEq(dash.unlock60, hre.ethers.parseEther("0.055"), "Mining 60-day unlock");
-  assertEq(dash.unlock90, hre.ethers.parseEther("0.055"), "Mining 90-day unlock");
-  assertEq(dash.cyclePrincipal, hre.ethers.parseEther("0.88"), "Mining cycle principal");
+  assertEq(dash.amount, hre.ethers.parseEther("11"), "Mining vesting claim amount");
+  assertEq(dash.unlock30, hre.ethers.parseEther("1.1"), "Mining 30-day unlock");
+  assertEq(dash.unlock60, hre.ethers.parseEther("0.55"), "Mining 60-day unlock");
+  assertEq(dash.unlock90, hre.ethers.parseEther("0.55"), "Mining 90-day unlock");
+  assertEq(dash.cyclePrincipal, hre.ethers.parseEther("8.8"), "Mining cycle principal");
 
   const cycle1 = await mining.getVestingCyclePreview(miningHolder.address, 0, 1);
-  assertEq(cycle1.burnedAmount, hre.ethers.parseEther("0.088"), "Mining cycle-1 burn");
-  assertEq(cycle1.rolloverAmount, hre.ethers.parseEther("0.616"), "Mining cycle-1 rollover");
+  assertEq(cycle1.burnedAmount, hre.ethers.parseEther("0.88"), "Mining cycle-1 burn");
+  assertEq(cycle1.rolloverAmount, hre.ethers.parseEther("6.16"), "Mining cycle-1 rollover");
 
   const finalPreview = await mining.previewFinalSettlement(miningHolder.address, 0);
   assertEq(
