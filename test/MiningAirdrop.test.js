@@ -466,8 +466,8 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(await token.balanceOf(await mining.getAddress())).to.equal(liability);
   });
 
-  it("starts display price at $3.00 in micro-USD", async function () {
+  it("keeps the ATH protocol reference price fixed at $0.10 in micro-USD", async function () {
     const { mining } = await deployFixture();
-    expect(await mining.getCurrentPrice()).to.equal(3_000_000n);
+    expect(await mining.getCurrentPrice()).to.equal(100_000n);
   });
 });
