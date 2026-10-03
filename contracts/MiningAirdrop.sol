@@ -538,6 +538,7 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
         whenNotPaused
         nonReentrant
     {
+        require(msg.sender == account, "Holder only");
         _processVestingPosition(account, positionIndex);
     }
 
