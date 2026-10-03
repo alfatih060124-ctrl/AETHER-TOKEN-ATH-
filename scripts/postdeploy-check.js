@@ -1,7 +1,8 @@
 const { ethers } = require("ethers");
 const fs = require("fs");
 
-const ENGINE_VERSION = "3.3.0";
+const MINING_VERSION = "3.3.0";
+const STAKING_VERSION = "1.0.0";
 const DAY = 24 * 60 * 60;
 
 const TOKEN_ABI = [
@@ -43,10 +44,34 @@ const MINING_ABI = [
   "function getCurrentPrice() view returns (uint256)",
 ];
 
-const LOCK_ABI = [
-  "function token() view returns (address)",
+const STAKING_ABI = [
+  "function athToken() view returns (address)",
+  "function priceOracle() view returns (address)",
+  "function owner() view returns (address)",
+  "function paused() view returns (bool)",
+  "function STAKING_ECOSYSTEM_ALLOCATION() view returns (uint256)",
+  "function MAX_REWARD_POOL() view returns (uint256)",
+  "function MIN_STAKE_USDT() view returns (uint256)",
+  "function REFERRAL_BPS() view returns (uint256)",
+  "function packageCount() view returns (uint256)",
+  "function rewardReserveATH() view returns (uint256)",
+  "function totalRewardFundedATH() view returns (uint256)",
+  "function principalLiabilityATH() view returns (uint256)",
+  "function totalActiveStakedUSDT() view returns (uint256)",
+];
+
+const ORACLE_ABI = [
+  "function getPrice() view returns (uint256)",
+  "function PRICE_DECIMALS() view returns (uint256)",
+];
+
+const DEV_VESTING_ABI = [
+  "function athToken() view returns (address)",
   "function beneficiary() view returns (address)",
-  "function releaseTime() view returns (uint256)",
+  "function TOTAL_ALLOCATION() view returns (uint256)",
+  "function CLIFF_MONTHS() view returns (uint256)",
+  "function ACTIVE_VESTING_MONTHS() view returns (uint256)",
+  "function claimedATH() view returns (uint256)",
 ];
 
 function required(name) {
@@ -83,7 +108,9 @@ async function main() {
   const rpcUrl = required("BSC_TESTNET_RPC");
   const tokenAddress = requiredAddress("ATH_TOKEN_ADDRESS");
   const miningAddress = requiredAddress("ATH_MINING_ADDRESS");
-  const teamLockAddress = requiredAddress("ATH_TEAM_LOCK_ADDRESS");
+  const stakingAddress = requiredAddress("ATH_STAKING_ADDRESS");
+  const oracleAddress = requiredAddress("ATH_STAKING_ORACLE_ADDRESS");
+  const developmentVestingAddress = requiredAddress("ATH_DEVELOPMENT_VESTING_ADDRESS");
 
   const singleWalletMode = process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
   const deployerAddress = singleWalletMode ? requiredAddress("DEPLOYER_ADDRESS") : null;
@@ -91,9 +118,11 @@ async function main() {
 
   const ownerExpected = roleAddress("OWNER_ADDRESS");
   const treasuryExpected = roleAddress("TREASURY_ADDRESS");
-  const teamExpected = roleAddress("TEAM_BENEFICIARY");
-  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const presaleWallet = roleAddress("PRESALE_WALLET");
   const marketingWallet = roleAddress("MARKETING_WALLET");
+  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
+  const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const network = await provider.getNetwork();
@@ -104,15 +133,20 @@ async function main() {
   const latestBlock = await provider.getBlock("latest");
   if (!latestBlock) throw new Error("Unable to read latest BSC Testnet block");
 
-  const [tokenCodeBytes, miningCodeBytes, teamLockCodeBytes] = await Promise.all([
-    assertCode(provider, tokenAddress, "ATH token"),
-    assertCode(provider, miningAddress, "MiningAirdrop"),
-    assertCode(provider, teamLockAddress, "TeamTokenLock"),
-  ]);
+  const [tokenCodeBytes, miningCodeBytes, stakingCodeBytes, oracleCodeBytes, developmentVestingCodeBytes] =
+    await Promise.all([
+      assertCode(provider, tokenAddress, "ATH token"),
+      assertCode(provider, miningAddress, "MiningAirdrop"),
+      assertCode(provider, stakingAddress, "ATHStaking"),
+      assertCode(provider, oracleAddress, "ATHStakingPriceOracle"),
+      assertCode(provider, developmentVestingAddress, "ATHDevelopmentVesting"),
+    ]);
 
   const token = new ethers.Contract(tokenAddress, TOKEN_ABI, provider);
   const mining = new ethers.Contract(miningAddress, MINING_ABI, provider);
-  const lock = new ethers.Contract(teamLockAddress, LOCK_ABI, provider);
+  const staking = new ethers.Contract(stakingAddress, STAKING_ABI, provider);
+  const oracle = new ethers.Contract(oracleAddress, ORACLE_ABI, provider);
+  const vesting = new ethers.Contract(developmentVestingAddress, DEV_VESTING_ABI, provider);
 
   const [
     totalSupply,
@@ -146,11 +180,29 @@ async function main() {
     globalClaimed,
     globalBurned,
     liability,
-    currentPrice,
-    lockToken,
-    teamBeneficiary,
-    releaseTime,
-    teamLockBalance,
+    legacyMiningDisplayPrice,
+    stakingToken,
+    stakingOracle,
+    stakingOwner,
+    stakingPaused,
+    stakingAllocation,
+    maxRewardPool,
+    minStakeUSDT,
+    referralBps,
+    packageCount,
+    rewardReserveATH,
+    totalRewardFundedATH,
+    principalLiabilityATH,
+    totalActiveStakedUSDT,
+    oraclePrice,
+    oracleDecimals,
+    vestingToken,
+    vestingBeneficiary,
+    developmentAllocation,
+    developmentCliffMonths,
+    developmentActiveMonths,
+    developmentClaimed,
+    developmentBalance,
   ] = await Promise.all([
     token.totalSupply(),
     token.owner(),
@@ -184,31 +236,50 @@ async function main() {
     mining.globalBurned(),
     mining.outstandingVestingLiability(),
     mining.getCurrentPrice(),
-    lock.token(),
-    lock.beneficiary(),
-    lock.releaseTime(),
-    token.balanceOf(teamLockAddress),
+    staking.athToken(),
+    staking.priceOracle(),
+    staking.owner(),
+    staking.paused(),
+    staking.STAKING_ECOSYSTEM_ALLOCATION(),
+    staking.MAX_REWARD_POOL(),
+    staking.MIN_STAKE_USDT(),
+    staking.REFERRAL_BPS(),
+    staking.packageCount(),
+    staking.rewardReserveATH(),
+    staking.totalRewardFundedATH(),
+    staking.principalLiabilityATH(),
+    staking.totalActiveStakedUSDT(),
+    oracle.getPrice(),
+    oracle.PRICE_DECIMALS(),
+    vesting.athToken(),
+    vesting.beneficiary(),
+    vesting.TOTAL_ALLOCATION(),
+    vesting.CLIFF_MONTHS(),
+    vesting.ACTIVE_VESTING_MONTHS(),
+    vesting.claimedATH(),
+    token.balanceOf(developmentVestingAddress),
   ]);
 
   const oneBillion = ethers.parseEther("1000000000");
   const sevenHundredM = ethers.parseEther("700000000");
-  const twoHundredM = ethers.parseEther("200000000");
+  const threeHundredM = ethers.parseEther("300000000");
+  const oneSixtyM = ethers.parseEther("160000000");
+  const thirtyM = ethers.parseEther("30000000");
   const fiftyM = ethers.parseEther("50000000");
+  const twentyM = ethers.parseEther("20000000");
+  const tenM = ethers.parseEther("10000000");
 
   assertEq(totalSupply, oneBillion, "ATH total supply");
   if (!eqAddr(tokenOwner, ownerExpected)) throw new Error("ATH token owner mismatch");
   if (tokenPaused) throw new Error("ATH token unexpectedly paused after deployment");
+
+  // Mining v3.3 locked invariants.
   if (!eqAddr(miningToken, tokenAddress)) throw new Error("Mining contract token mismatch");
   if (!eqAddr(miningOwner, ownerExpected)) throw new Error("Mining owner mismatch");
-  if (!eqAddr(treasury, treasuryExpected)) throw new Error("Treasury mismatch");
-  if (miningPaused) throw new Error("Mining contract unexpectedly paused after deployment");
-
-  assertEq(miningBalance, sevenHundredM, "Mining 70% reserve");
+  if (!eqAddr(treasury, treasuryExpected)) throw new Error("Mining treasury mismatch");
+  if (miningPaused) throw new Error("Mining unexpectedly paused");
+  assertEq(miningBalance, sevenHundredM, "Mining 700M reserve");
   assertEq(miningAllocation, sevenHundredM, "Mining allocation constant");
-  assertEq(teamLockBalance, fiftyM, "Team 5% allocation");
-  if (!eqAddr(lockToken, tokenAddress)) throw new Error("Team lock token mismatch");
-  if (!eqAddr(teamBeneficiary, teamExpected)) throw new Error("Team beneficiary mismatch");
-
   assertEq(powerPrice, ethers.parseEther("0.001"), "Power price");
   assertEq(baseReward, ethers.parseEther("1"), "Base daily reward");
   assertEq(maxDays, 180n, "Mining days");
@@ -216,14 +287,14 @@ async function main() {
   assertEq(boosterHash, 100n, "Power Booster hash");
   assertEq(boosterDuration, BigInt(30 * DAY), "Power Booster duration");
   assertEq(doublePowerMinReferrals, 5n, "Double Power referral gate");
-  assertEq(maxVestingCycles, 12n, "Maximum vesting cycles");
-  assertEq(cycleBurnPct, 10n, "Cycle entry burn");
-  assertEq(finalBurnPct, 60n, "Final settlement burn");
+  assertEq(maxVestingCycles, 12n, "Maximum mining vesting cycles");
+  assertEq(cycleBurnPct, 10n, "Mining cycle entry burn");
+  assertEq(finalBurnPct, 60n, "Mining final settlement burn");
   assertEq(keeperBatchMax, 50n, "Reward keeper batch cap");
   assertEq(maxMinerPage, 200n, "Miner registry page cap");
   assertEq(powerBoosterPrice, ethers.parseEther("0.001"), "Initial Power Booster price");
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
-  assertEq(currentPrice, 3_000_000n, "ATH initial display price");
+  assertEq(legacyMiningDisplayPrice, 3_000_000n, "Locked Mining internal display metric");
 
   for (const [label, value] of [
     ["totalMined", totalMined],
@@ -238,79 +309,93 @@ async function main() {
     assertEq(value, 0n, label);
   }
 
-  const remainingLockSeconds = Number(releaseTime) - Number(latestBlock.timestamp);
-  const minExpectedLock = 364 * DAY;
-  const maxExpectedLock = 365 * DAY;
-  if (remainingLockSeconds < minExpectedLock || remainingLockSeconds > maxExpectedLock) {
-    throw new Error("Team lock does not match the fixed 365-day ATH policy");
+  // Staking v1 invariants.
+  if (!eqAddr(stakingToken, tokenAddress)) throw new Error("Staking token mismatch");
+  if (!eqAddr(stakingOracle, oracleAddress)) throw new Error("Staking oracle mismatch");
+  if (!eqAddr(stakingOwner, ownerExpected)) throw new Error("Staking owner mismatch");
+  if (stakingPaused) throw new Error("Staking unexpectedly paused");
+  assertEq(stakingAllocation, threeHundredM, "Staking ecosystem allocation");
+  assertEq(maxRewardPool, oneSixtyM, "Staking reward pool cap");
+  assertEq(rewardReserveATH, oneSixtyM, "Staking initial reward reserve");
+  assertEq(totalRewardFundedATH, oneSixtyM, "Staking initial reward funded");
+  assertEq(minStakeUSDT, ethers.parseEther("10"), "Staking minimum");
+  assertEq(referralBps, 1000n, "Direct referral rate");
+  assertEq(packageCount, 6n, "Staking package count");
+  assertEq(principalLiabilityATH, 0n, "Staking initial principal liability");
+  assertEq(totalActiveStakedUSDT, 0n, "Staking initial active USDT");
+  assertEq(oraclePrice, 10_000_000n, "ATH staking reference price $0.10");
+  assertEq(oracleDecimals, 8n, "ATH staking oracle decimals");
+
+  if (!eqAddr(vestingToken, tokenAddress)) throw new Error("Development vesting token mismatch");
+  if (!eqAddr(vestingBeneficiary, developmentBeneficiary)) {
+    throw new Error("Development beneficiary mismatch");
   }
+  assertEq(developmentAllocation, thirtyM, "Development allocation");
+  assertEq(developmentBalance, thirtyM, "Development funded balance");
+  assertEq(developmentCliffMonths, 2n, "Development cliff months");
+  assertEq(developmentActiveMonths, 33n, "Development active vesting months");
+  assertEq(developmentClaimed, 0n, "Development claimed initial state");
 
   const expectedByAddress = new Map();
   function addExpected(address, amount) {
     const key = address.toLowerCase();
     expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
   }
-  addExpected(liquidityWallet, twoHundredM);
+  addExpected(presaleWallet, thirtyM);
   addExpected(marketingWallet, fiftyM);
+  addExpected(liquidityWallet, twentyM);
+  addExpected(stakingReserveWallet, tenM);
 
   const destinationBalances = {};
   for (const [addressKey, expected] of expectedByAddress.entries()) {
     const actual = await token.balanceOf(addressKey);
     if (actual !== expected) {
       throw new Error(
-        `ATH destination allocation mismatch for ${addressKey}: got ${actual}, expected ${expected}`
+        `ATH staking destination mismatch for ${addressKey}: got ${actual}, expected ${expected}`
       );
     }
     destinationBalances[addressKey] = ethers.formatEther(actual);
   }
 
+  const totalAllocated =
+    sevenHundredM + oneSixtyM + thirtyM + thirtyM + fiftyM + twentyM + tenM;
+  assertEq(totalAllocated, oneBillion, "700M Mining + 300M Staking conservation");
+
   const report = {
-    engineVersion: ENGINE_VERSION,
+    miningVersion: MINING_VERSION,
+    stakingVersion: STAKING_VERSION,
+    tokenomicsVersion: "2.0",
     chainId: 97,
     blockNumber: latestBlock.number,
     testnetSingleWalletMode: singleWalletMode,
-    tokenAddress,
-    miningAddress,
-    teamLockAddress,
+    contracts: {
+      tokenAddress,
+      miningAddress,
+      stakingAddress,
+      oracleAddress,
+      developmentVestingAddress,
+    },
     codeBytes: {
       token: tokenCodeBytes,
       mining: miningCodeBytes,
-      teamLock: teamLockCodeBytes,
+      staking: stakingCodeBytes,
+      oracle: oracleCodeBytes,
+      developmentVesting: developmentVestingCodeBytes,
     },
-    owner: tokenOwner,
-    treasury,
-    teamBeneficiary,
-    teamReleaseAt: Number(releaseTime),
     totalSupplyATH: ethers.formatEther(totalSupply),
-    miningPoolATH: ethers.formatEther(miningBalance),
-    teamLockedATH: ethers.formatEther(teamLockBalance),
-    allocationDestinationsATH: destinationBalances,
-    initialDisplayPriceUSD: (Number(currentPrice) / 1_000_000).toFixed(3),
-    miningRules: {
-      baseRewardATH: ethers.formatEther(baseReward),
-      claimOpenUtc: "00:05:00",
-      claimCloseUtc: "23:59:59",
-      powerPriceBNB: ethers.formatEther(powerPrice),
-      powerBoosterPriceBNB: ethers.formatEther(powerBoosterPrice),
-      doublePowerBoosterPriceBNB: ethers.formatEther(doublePowerBoosterPrice),
-      boosterDurationDays: Number(boosterDuration) / DAY,
-      doublePowerMinReferrals: Number(doublePowerMinReferrals),
-      maxVestingCycles: Number(maxVestingCycles),
-      cycleBurnPct: Number(cycleBurnPct),
-      finalBurnPct: Number(finalBurnPct),
-      keeperBatchMax: Number(keeperBatchMax),
-      minerPageMax: Number(maxMinerPage),
+    allocationsATH: {
+      mining: "700000000",
+      stakingEcosystem: "300000000",
+      rewardPool: "160000000",
+      presale: "30000000",
+      marketing: "50000000",
+      developmentVesting: "30000000",
+      liquidity: "20000000",
+      reserve: "10000000",
     },
-    zeroState: {
-      totalMined: totalMined.toString(),
-      totalPowerSold: totalPowerSold.toString(),
-      totalBoosterSold: totalBoosterSold.toString(),
-      totalDoublePowerBoosterSold: totalDoublePowerBoosterSold.toString(),
-      totalMiners: totalMiners.toString(),
-      globalClaimed: globalClaimed.toString(),
-      globalBurned: globalBurned.toString(),
-      outstandingVestingLiability: liability.toString(),
-    },
+    stakingReferencePriceUSD: "0.10",
+    stakingDestinationBalancesATH: destinationBalances,
+    miningInternalDisplayMetricUSD: (Number(legacyMiningDisplayPrice) / 1_000_000).toFixed(3),
     checkedAt: new Date().toISOString(),
   };
 
@@ -319,8 +404,9 @@ async function main() {
     "deployments/bsc-testnet-verified.json",
     JSON.stringify(report, null, 2) + "\n"
   );
+
   console.log(JSON.stringify(report, null, 2));
-  console.log("ATH BSC Testnet v3.3 postdeploy verification PASSED");
+  console.log("ATH BSC Testnet Mining v3.3 + Staking v1 postdeploy verification PASSED");
 }
 
 main().catch((err) => {
