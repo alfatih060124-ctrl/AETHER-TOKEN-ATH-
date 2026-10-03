@@ -31,7 +31,9 @@ if (!process.env.PRIVATE_KEY) {
 const existing = [
   "ATH_TOKEN_ADDRESS",
   "ATH_MINING_ADDRESS",
-  "ATH_TEAM_LOCK_ADDRESS",
+  "ATH_STAKING_ADDRESS",
+  "ATH_STAKING_ORACLE_ADDRESS",
+  "ATH_DEVELOPMENT_VESTING_ADDRESS",
 ].filter((name) => process.env[name]);
 
 if (existing.length > 0) {
@@ -63,19 +65,30 @@ if (!fs.existsSync(manifestPath)) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-if (manifest.engineVersion !== "3.3.0") {
-  fail("Unexpected deployment manifest version: " + String(manifest.engineVersion));
+if (manifest.engineVersion !== "3.3.0" || manifest.stakingVersion !== "1.0.0") {
+  fail(
+    "Unexpected deployment manifest versions: mining=" +
+      String(manifest.engineVersion) +
+      ", staking=" +
+      String(manifest.stakingVersion)
+  );
 }
 
 const contracts = manifest.contracts || {};
-for (const name of ["ATH_TOKEN_ADDRESS", "ATH_MINING_ADDRESS", "ATH_TEAM_LOCK_ADDRESS"]) {
+for (const name of [
+  "ATH_TOKEN_ADDRESS",
+  "ATH_MINING_ADDRESS",
+  "ATH_STAKING_ADDRESS",
+  "ATH_STAKING_ORACLE_ADDRESS",
+  "ATH_DEVELOPMENT_VESTING_ADDRESS",
+]) {
   if (!contracts[name]) fail("Deployment manifest missing " + name);
   process.env[name] = contracts[name];
 }
 process.env.DEPLOYER_ADDRESS = manifest.deployer;
 
-console.log("Deployment transactions confirmed. Running v3.3 post-deploy invariants.");
+console.log("Deployment transactions confirmed. Running Mining v3.3 + Staking v1 post-deploy invariants.");
 run("npm", ["run", "postdeploy:testnet"]);
 
-console.log("ATH one-shot BSC Testnet v3.3 deployment + postdeploy verification PASSED.");
+console.log("ATH one-shot BSC Testnet Mining v3.3 + Staking v1 deployment + postdeploy verification PASSED.");
 console.log("Persist the verified addresses from deployments/bscTestnet.json, then restore TESTNET_DEPLOY_APPROVED=false.");
