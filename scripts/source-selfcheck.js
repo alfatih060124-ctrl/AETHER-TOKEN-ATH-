@@ -29,7 +29,7 @@ console.log("OK: no post-deployment mint() function");
 must(mining, /POWER_PRICE\s*=\s*0\.001 ether/, "Mining lock: Power price is 0.001 BNB");
 must(mining, /powerBoosterPrice\s*=\s*0\.001 ether/, "Mining lock: Power Booster default price is 0.001 BNB");
 must(mining, /doublePowerBoosterPrice\s*=\s*0\.001 ether/, "Mining lock: Double Power Booster default price is 0.001 BNB");
-must(mining, /BASE_REWARD\s*=\s*1 ether/, "Mining lock: base reward is 1 ATH");
+must(mining, /BASE_REWARD\s*=\s*10 ether/, "Mining rule: base reward is 10 ATH");
 must(mining, /MAX_DAYS\s*=\s*180/, "Mining lock: window is 180 days");
 must(mining, /MINING_POOL_ALLOCATION\s*=\s*700_000_000 ether/, "Mining lock: allocation is 700,000,000 ATH");
 must(mining, /PCT_30\s*=\s*10/, "Mining lock: 30d vesting tranche is 10%");
@@ -90,8 +90,11 @@ must(staking, /principalLiabilityATH/, "Staking protects principal liability");
 must(staking, /rewardReserveATH/, "Staking separates reward reserve");
 must(staking, /recoverExcessATH[\s\S]*onlyOwner whenPaused/, "Staking excess recovery is owner-only and pause-gated");
 
-must(stakingOracle, /ATH_PRICE_USD8\s*=\s*10_000_000/, "Staking reference price is $0.10");
-must(stakingOracle, /function getPrice\(\) external pure/, "Staking price is immutable in v1");
+must(mining, /steps\s*=\s*minedWhole\s*\/\s*100_000/, "Mining price step is every 100,000 ATH mined");
+must(mining, /priceInMicroUSD\s*=\s*100_000\s*\+\s*\(steps\s*\*\s*1_000\)/, "Mining price starts at $0.10 and adds $0.001 per step");
+must(stakingOracle, /miningPriceSource/, "Staking oracle uses Mining as the ATH price source");
+must(stakingOracle, /function getPrice\(\) external view/, "Staking oracle reads the live protocol price");
+must(stakingOracle, /getCurrentPrice\(\) \* 100/, "Staking converts Mining micro-USD to USD8");
 
 must(developmentVesting, /TOTAL_ALLOCATION\s*=\s*30_000_000 ether/, "Development vesting allocation is 30,000,000 ATH");
 must(developmentVesting, /CLIFF_MONTHS\s*=\s*2/, "Development vesting cliff is 2 months");
@@ -131,4 +134,4 @@ for (const gate of [
 }
 console.log("OK: Mainnet release gates remain fail-closed");
 
-console.log("\nAETHER ATH Mining lock + Staking v1 source self-check PASSED.");
+console.log("\nAETHER ATH Mining + unified Staking price source self-check PASSED.");
