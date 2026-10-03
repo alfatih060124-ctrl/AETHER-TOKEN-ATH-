@@ -31,7 +31,7 @@ Mining keeps the existing Power, Booster, referral, vesting, keeper, and reserve
 - Power Booster: **2x / 30 days**.
 - Double Power: **3x on top of Power**, requires at least 5 referrals.
 - Recurring vesting: **12 cycles** with cycle burn and final 60/40 settlement.
-- Keeper/miner registry and Mining security gates remain intact.
+- Keeper/miner registry and Mining security gates remain intact. Production holder transactions are not gas-sponsored by AETHER; holders pay network gas from their own BNB.
 
 See `docs/BLUEPRINT_DECISIONS.md`.
 
