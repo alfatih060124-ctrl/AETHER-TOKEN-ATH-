@@ -1,5 +1,27 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
+## 2026-10-03 ECOSYSTEM TOKENOMICS v2 — MINING LOCK + STAKING v1
+
+- ATH fixed supply remains **1,000,000,000 ATH**; no post-deployment mint.
+- **Mining remains 700,000,000 ATH and MiningAirdrop v3.3 is source-locked.**
+- Git compare from pre-Staking baseline to current Staking implementation confirms `contracts/MiningAirdrop.sol` was not modified.
+- **Staking ecosystem allocation: 300,000,000 ATH**.
+- Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
+- ATH Staking v1 reference valuation: **1 ATH = $0.10** using immutable `ATHStakingPriceOracle`.
+- The locked Mining v3.3 internal display-price metric is not rewritten by this Staking expansion.
+- Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
+- Staking packages: Starter 0.35%/180d, Basic 0.45%/180d, Silver 0.55%/365d, Gold 0.65%/365d, Platinum 0.75%/730d, Diamond 0.85%/730d.
+- Direct referral: 10%; network reward: 10 levels (8%, 5%, 3%, 2%, 1%, then 0.5% for Levels 6–10).
+- Staking principal liability is separated from the 160M reward reserve; referral/network rewards cannot consume protected principal.
+- Existing stake economics are snapshotted; later package edits cannot rewrite existing rate/lock terms.
+- Development Vesting: 30M ATH, 2-month cliff, 33 active vesting months; final month settles exactly 100% with no stranded 1% residual.
+- Full automated suite: **37/37 PASS** (25 Mining-era tests + 12 Staking/Vesting tests).
+- ABI export: **PASS**.
+- Local release rehearsal: **PASS**.
+- Local rehearsal proves exact supply conservation: 700M Mining + 300M Staking = 1B ATH.
+- Railway validator deployment `26b5913f-b2b0-4f73-b481-d840db2f1b02`: **SUCCESS**, healthcheck **PASSED**.
+- Mainnet remains **fail-closed**. No blockchain deployment transaction was executed by this change.
+
 ## 2026-10-03 CURRENT LOCK — WEB / CONTROL PANEL / TESTNET PREFLIGHT
 
 - ATH Mining multilingual production: **PASS + LOCK**.
@@ -128,14 +150,19 @@ The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC 
 23. Full validation is GREEN.
 24A. BSC Testnet RPC + single-wallet Testnet mode validated without blockchain deployment.
 
-## FINAL TOKENOMICS LOCK
+## FINAL TOKENOMICS LOCK — ECOSYSTEM v2
 
 - Total supply: **1,000,000,000 ATH**.
-- Mining reward reserve: **700,000,000 ATH (70%)**.
-- Liquidity reserve: **200,000,000 ATH (20%)**; held for the later listing phase, not used by the mining engine.
-- Team & Dev: **50,000,000 ATH (5%)**, fixed to an exact **365-day / 12-month lock**.
-- Marketing & promotion: **50,000,000 ATH (5%)**.
-- Mainnet liquidity remains a separate later launch decision; no Mainnet liquidity is opened by the Testnet deployment.
+- Mining reward reserve: **700,000,000 ATH (70%)** — Mining v3.3 remains locked and unchanged.
+- Staking ecosystem: **300,000,000 ATH (30%)**.
+  - Reward Pool: 160,000,000 ATH.
+  - Presale: 30,000,000 ATH.
+  - Marketing: 50,000,000 ATH.
+  - Development Vesting: 30,000,000 ATH.
+  - Liquidity: 20,000,000 ATH.
+  - Ecosystem Reserve: 10,000,000 ATH.
+- Staking reference valuation: **1 ATH = $0.10**.
+- Mainnet liquidity remains a separate later launch decision; no Mainnet liquidity is opened by Testnet deployment.
 
 ## LATEST GREEN EVIDENCE
 
