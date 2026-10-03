@@ -6,9 +6,11 @@ const deployRequired = singleWalletMode
       "PRIVATE_KEY",
       "OWNER_ADDRESS",
       "TREASURY_ADDRESS",
-      "TEAM_BENEFICIARY",
-      "LIQUIDITY_WALLET",
+      "PRESALE_WALLET",
       "MARKETING_WALLET",
+      "LIQUIDITY_WALLET",
+      "STAKING_RESERVE_WALLET",
+      "DEVELOPMENT_BENEFICIARY",
     ];
 
 const verificationRequired = [
@@ -18,7 +20,6 @@ const verificationRequired = [
 const safeRequired = [
   "BSC_TESTNET_RPC",
   "ATH_CHAIN_ID",
-  "TEAM_LOCK_DAYS",
   "TESTNET_USE_DEPLOYER_ROLES",
 ];
 
@@ -34,6 +35,8 @@ const missingVerificationConfig = verificationRequired.filter((name) => !process
 const missingSafe = safeRequired.filter((name) => !process.env[name]);
 
 console.log("ATH Testnet Readiness Report");
+console.log("tokenomics:", "1B ATH = 700M Mining + 300M Staking");
+console.log("stakingReferencePriceUSD:", "0.10");
 console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
 console.log("safeConfig:", missingSafe.length === 0 ? "READY" : "MISSING");
 console.log("deploymentConfig:", missingDeployConfig.length === 0 ? "READY" : "BLOCKED");
