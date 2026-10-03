@@ -10,7 +10,7 @@
 - [x] Referral multiplier: +10% to +50% by supplied tiers.
 - [x] Booster: 0.001 BNB, +100 Hash, reward x2.
 - [x] Vesting: 10% @30d, 5% @60d, 5% @90d, 80% @180d.
-- [x] Display price formula: $3.00 + $0.001 / 10,000 ATH mined.
+- [x] ATH protocol reference price: fixed at $0.10 across Mining and Staking.
 - [x] Treasury is owner-updatable.
 - [x] Mining reserve protection prevents allocating rewards beyond funded reserve.
 
