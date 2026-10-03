@@ -11,7 +11,7 @@ async function increase(seconds) {
 
 describe("AETHER ATH Staking v1", function () {
   let owner, user, referrer, second, treasury;
-  let token, oracle, staking;
+  let token, mining, oracle, staking;
 
   beforeEach(async function () {
     [owner, user, referrer, second, treasury] = await ethers.getSigners();
@@ -20,8 +20,12 @@ describe("AETHER ATH Staking v1", function () {
     token = await Token.deploy(owner.address);
     await token.waitForDeployment();
 
+    const Mining = await ethers.getContractFactory("MiningAirdrop");
+    mining = await Mining.deploy(await token.getAddress(), treasury.address, owner.address);
+    await mining.waitForDeployment();
+
     const Oracle = await ethers.getContractFactory("ATHStakingPriceOracle");
-    oracle = await Oracle.deploy();
+    oracle = await Oracle.deploy(await mining.getAddress());
     await oracle.waitForDeployment();
 
     const Staking = await ethers.getContractFactory("ATHStaking");
@@ -41,9 +45,10 @@ describe("AETHER ATH Staking v1", function () {
     await staking.fundRewards(ethers.parseEther("1000000"));
   });
 
-  it("keeps ATH fixed at 1B while staking uses a separate $0.10 reference price", async function () {
+  it("keeps ATH fixed at 1B while Staking uses the unified Mining price source starting at $0.10", async function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
     expect(await oracle.getPrice()).to.equal(10_000_000n);
+    expect(await oracle.miningPriceSource()).to.equal(await mining.getAddress());
     expect(await staking.getATHAmount(ethers.parseEther("10"))).to.equal(
       ethers.parseEther("100")
     );
