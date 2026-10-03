@@ -100,7 +100,7 @@ This section supersedes conflicting v3.2 booster/vesting assumptions lower in th
 - Added paginated `getMiners(offset,limit)` with a **200-account page cap**, eliminating daily historical-log scans and external holder databases for keeper discovery.
 - Keeper runtime is fail-closed: `KEEPER_ENABLED=false` performs no RPC call and no transaction.
 - Keeper runtime defaults to dry-run, is **BSC Testnet chain 97 only**, and rejects Mainnet in v3.3.
-- Keeper wallet is designed as a dedicated gas-only wallet with no owner, treasury, vesting, Booster-price, or token-control authority.
+- Production policy: **AETHER does not sponsor holder gas**. Holder-initiated Power, Booster, daily claim and vested-ATH claim transactions are paid from the holder wallet. Explicit vesting processing is holder-only. The keeper runtime remains Testnet/audit tooling only and must not be funded as a Mainnet holder-gas subsidy.
 - Deployment and post-deploy invariant scripts verify `MAX_KEEPER_BATCH=50` and `MAX_MINER_PAGE=200`.
 - Release ABI export requires the keeper batch functions and miner registry getters.
 - Runbook: `docs/REWARD_KEEPER_RUNBOOK.md`.
