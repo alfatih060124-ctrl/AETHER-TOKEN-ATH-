@@ -101,7 +101,7 @@ function streamWhitepaper(res) {
   y = body(doc, "The ATH mining engine is a reward-allocation protocol. Users activate a 180-day mining window by purchasing Power. Each successful UTC daily claim creates its own auditable vesting position backed by the pre-funded ATH reserve.", y);
 
   card(doc, 50, y + 12, 153, 86, "Power", "0.001 BNB", "Activates one 180-day mining window");
-  card(doc, 221, y + 12, 153, 86, "Base Reward", "1 ATH/day", "Opens 00:05 UTC; missed reward expires");
+  card(doc, 221, y + 12, 153, 86, "Base Reward", "10 ATH/day", "Opens 00:05 UTC; missed reward expires");
   card(doc, 392, y + 12, 153, 86, "Power Booster", "2x / 30 days", "+100 Hash; price stored on-chain");
 
   y = heading(doc, "Claim Logic", "Daily Allocation Rules", y + 128);
@@ -117,7 +117,7 @@ function streamWhitepaper(res) {
   ], y);
 
   y = heading(doc, "Protocol Reference Metric", "ATH Reference Price", y + 10);
-  y = body(doc, "The mining contract exposes a fixed ATH protocol reference price of $0.10 per ATH, aligned with ATH Staking. This is an internal protocol reference metric only. It is not an exchange quote, guaranteed sale price, redemption promise, or investment-return forecast.", y);
+  y = body(doc, "The ATH protocol price starts at $0.10 per ATH and increases by $0.001 for each complete 100,000 ATH mined. ATH Staking reads the same Mining price source so both modules remain synchronized. This is an internal protocol reference metric only. It is not an exchange quote, guaranteed sale price, redemption promise, or investment-return forecast.", y);
 
   doc.addPage();
   pageBase(doc, 4, "Rewards and Vesting");
