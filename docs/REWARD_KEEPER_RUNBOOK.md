@@ -50,7 +50,7 @@ The batch/page caps limit gas and RPC exposure and prevent unbounded loops.
 
 ## Keeper wallet security model
 
-Use a dedicated **gas-only Testnet keeper wallet**.
+Use a dedicated **gas-only Testnet keeper wallet for audit/testing only**. Production/Mainnet holder gas must not be subsidized by AETHER.
 
 The keeper wallet must:
 - not be the ATH owner,
@@ -118,11 +118,6 @@ The keeper is therefore an evidence/automation layer, not a custody or reward-au
 
 ## Mainnet policy
 
-ATH v3.3 keeper runtime is Testnet-only.
+ATH v3.3 keeper runtime is Testnet-only. **Mainnet policy is no AETHER-funded keeper gas for holder operations.** Holders pay the network gas for their own state-changing transactions.
 
-Do not enable a Mainnet keeper until:
-- independent smart-contract audit passes,
-- production multisig is finalized,
-- Mainnet deployment is explicitly approved,
-- liquidity-lock decision is finalized,
-- keeper gas wallet and monitoring are separately reviewed.
+Do not enable an AETHER-funded Mainnet keeper for holder operations. Permissionless batch functions remain available as protocol transparency utilities, but AETHER does not fund or schedule them as a production gas subsidy.
