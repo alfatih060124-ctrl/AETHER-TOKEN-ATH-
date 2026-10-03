@@ -116,8 +116,8 @@ function streamWhitepaper(res) {
     "The mining reserve must be funded before claims can allocate rewards."
   ], y);
 
-  y = heading(doc, "Protocol Display Metric", "ATH Display Price Formula", y + 10);
-  y = body(doc, "The mining contract exposes a protocol display metric beginning at $3.000 and adding $0.001 for each 10,000 whole ATH allocated by successful mining claims. This is an internal protocol metric only. It is not an exchange quote, guaranteed sale price, valuation, redemption promise, or investment-return forecast.", y);
+  y = heading(doc, "Protocol Reference Metric", "ATH Reference Price", y + 10);
+  y = body(doc, "The mining contract exposes a fixed ATH protocol reference price of $0.10 per ATH, aligned with ATH Staking. This is an internal protocol reference metric only. It is not an exchange quote, guaranteed sale price, redemption promise, or investment-return forecast.", y);
 
   doc.addPage();
   pageBase(doc, 4, "Rewards and Vesting");
