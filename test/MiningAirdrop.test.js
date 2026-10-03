@@ -81,13 +81,13 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
   });
 
-  it("makes exactly 1 ATH claimable from 00:05 UTC and records transparent reward data", async function () {
+  it("makes exactly 10 ATH claimable from 00:05 UTC and records transparent reward data", async function () {
     const { alice, mining } = await deployFixture();
     await buyPowerBeforeOpen(mining, alice);
 
     const dayId = Math.floor(Number(await time.latest()) / DAY);
     const statusBefore = await mining.getDailyRewardStatus(alice.address, dayId);
-    expect(statusBefore.reward).to.equal(ethers.parseEther("1"));
+    expect(statusBefore.reward).to.equal(ethers.parseEther("10"));
     expect(statusBefore.referralBonusBps).to.equal(0n);
     expect(statusBefore.boosterMultiplier).to.equal(10000n);
     expect(statusBefore.status).to.equal(1n);
@@ -98,7 +98,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
       .and.to.emit(mining, "VestingCreated");
 
     const info = await mining.getUserInfo(alice.address);
-    expect(info.totalAllocated).to.equal(ethers.parseEther("1"));
+    expect(info.totalAllocated).to.equal(ethers.parseEther("10"));
     expect(info.positionsCount).to.equal(1n);
   });
 
@@ -121,7 +121,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
 
     const info = await mining.getUserInfo(alice.address);
     expect(info.currentDay).to.equal(3n);
-    expect(info.totalAllocated).to.equal(ethers.parseEther("1"));
+    expect(info.totalAllocated).to.equal(ethers.parseEther("10"));
   });
 
   it("applies referral first and Power Booster x2 second", async function () {
@@ -135,7 +135,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
 
     await mining.connect(alice).claimDaily();
     const info = await mining.getUserInfo(alice.address);
-    expect(info.totalAllocated).to.equal(ethers.parseEther("2.2"));
+    expect(info.totalAllocated).to.equal(ethers.parseEther("22"));
     expect(info.referralCount).to.equal(1n);
     expect(info.totalHash).to.equal(100n);
   });
@@ -159,9 +159,9 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     await moveToCurrentUtcOpen();
     await mining.connect(alice).claimDaily();
 
-    // 5 referrals = +10%; 1 * 1.1 * 2 * 3 = 6.6 ATH.
+    // 5 referrals = +10%; 10 * 1.1 * 2 * 3 = 66 ATH.
     const info = await mining.getUserInfo(alice.address);
-    expect(info.totalAllocated).to.equal(ethers.parseEther("6.6"));
+    expect(info.totalAllocated).to.equal(ethers.parseEther("66"));
     expect(info.boosterMultiplier).to.equal(60000n);
   });
 
@@ -188,7 +188,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     await mining.connect(alice).claimDaily();
 
     const info = await mining.getUserInfo(alice.address);
-    expect(info.totalAllocated).to.equal(ethers.parseEther("3"));
+    expect(info.totalAllocated).to.equal(ethers.parseEther("30"));
     expect(info.boosterMultiplier).to.equal(10000n);
   });
 
@@ -223,7 +223,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
 
     await mining.connect(alice).claimDaily();
     const info = await mining.getUserInfo(alice.address);
-    expect(info.totalAllocated).to.equal(ethers.parseEther("1"));
+    expect(info.totalAllocated).to.equal(ethers.parseEther("10"));
   });
 
 
@@ -273,7 +273,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
 
     for (const user of [alice, bob, carol]) {
       const status = await mining.getDailyRewardStatus(user.address, dayId);
-      expect(status.reward).to.equal(ethers.parseEther("1"));
+      expect(status.reward).to.equal(ethers.parseEther("10"));
       expect(status.status).to.equal(1n);
     }
   });
@@ -316,25 +316,25 @@ describe("AETHER ATH Mining Engine v3.3", function () {
       .to.be.revertedWith("Invalid keeper batch");
   });
 
-  it("exposes the complete 1 ATH initial vesting and Cycle 1 preview on-chain", async function () {
+  it("exposes the complete 10 ATH initial vesting and Cycle 1 preview on-chain", async function () {
     const { alice, mining } = await deployFixture();
     await buyPowerBeforeOpen(mining, alice);
     await mining.connect(alice).claimDaily();
 
     const [position] = await mining.getVestingPositionSummary(alice.address, 0);
-    expect(position.amount).to.equal(ethers.parseEther("1"));
-    expect(position.initial30).to.equal(ethers.parseEther("0.1"));
-    expect(position.initial60).to.equal(ethers.parseEther("0.05"));
-    expect(position.initial90).to.equal(ethers.parseEther("0.05"));
-    expect(position.cyclePrincipal).to.equal(ethers.parseEther("0.8"));
+    expect(position.amount).to.equal(ethers.parseEther("10"));
+    expect(position.initial30).to.equal(ethers.parseEther("1"));
+    expect(position.initial60).to.equal(ethers.parseEther("0.5"));
+    expect(position.initial90).to.equal(ethers.parseEther("0.5"));
+    expect(position.cyclePrincipal).to.equal(ethers.parseEther("8"));
 
     const cycle = await mining.previewVestingCycle(alice.address, 0, 1);
-    expect(cycle.incomingAmount).to.equal(ethers.parseEther("0.8"));
-    expect(cycle.burnedAmount).to.equal(ethers.parseEther("0.08"));
-    expect(cycle.unlock30).to.equal(ethers.parseEther("0.08"));
-    expect(cycle.unlock60).to.equal(ethers.parseEther("0.04"));
-    expect(cycle.unlock90).to.equal(ethers.parseEther("0.04"));
-    expect(cycle.rolloverAmount).to.equal(ethers.parseEther("0.56"));
+    expect(cycle.incomingAmount).to.equal(ethers.parseEther("8"));
+    expect(cycle.burnedAmount).to.equal(ethers.parseEther("0.8"));
+    expect(cycle.unlock30).to.equal(ethers.parseEther("0.8"));
+    expect(cycle.unlock60).to.equal(ethers.parseEther("0.4"));
+    expect(cycle.unlock90).to.equal(ethers.parseEther("0.4"));
+    expect(cycle.rolloverAmount).to.equal(ethers.parseEther("5.6"));
   });
 
   it("provides flat explorer-friendly vesting data for holders", async function () {
@@ -343,18 +343,18 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     await mining.connect(alice).claimDaily();
 
     const dashboard = await mining.getVestingDashboard(alice.address, 0);
-    expect(dashboard.amount).to.equal(ethers.parseEther("1"));
-    expect(dashboard.unlock30).to.equal(ethers.parseEther("0.1"));
-    expect(dashboard.unlock60).to.equal(ethers.parseEther("0.05"));
-    expect(dashboard.unlock90).to.equal(ethers.parseEther("0.05"));
-    expect(dashboard.cyclePrincipal).to.equal(ethers.parseEther("0.8"));
+    expect(dashboard.amount).to.equal(ethers.parseEther("10"));
+    expect(dashboard.unlock30).to.equal(ethers.parseEther("1"));
+    expect(dashboard.unlock60).to.equal(ethers.parseEther("0.5"));
+    expect(dashboard.unlock90).to.equal(ethers.parseEther("0.5"));
+    expect(dashboard.cyclePrincipal).to.equal(ethers.parseEther("8"));
     expect(dashboard.currentCycle).to.equal(0n);
     expect(dashboard.burnedSoFar).to.equal(0n);
 
     const cycle = await mining.getVestingCyclePreview(alice.address, 0, 1);
-    expect(cycle.incomingAmount).to.equal(ethers.parseEther("0.8"));
-    expect(cycle.burnedAmount).to.equal(ethers.parseEther("0.08"));
-    expect(cycle.rolloverAmount).to.equal(ethers.parseEther("0.56"));
+    expect(cycle.incomingAmount).to.equal(ethers.parseEther("8"));
+    expect(cycle.burnedAmount).to.equal(ethers.parseEther("0.8"));
+    expect(cycle.rolloverAmount).to.equal(ethers.parseEther("5.6"));
 
     const final = await mining.previewFinalSettlement(alice.address, 0);
     expect(final.principal + final.burn60 + final.distribution40).to.be.greaterThan(0n);
@@ -374,12 +374,12 @@ describe("AETHER ATH Mining Engine v3.3", function () {
       .to.emit(mining, "VestingCycleEntered")
       .and.to.emit(mining, "ATHBurned");
 
-    expect(await mining.globalBurned()).to.equal(ethers.parseEther("0.08"));
-    expect(await token.totalSupply()).to.equal(supplyBefore - ethers.parseEther("0.08"));
-    expect(await mining.outstandingVestingLiability()).to.equal(ethers.parseEther("0.92"));
+    expect(await mining.globalBurned()).to.equal(ethers.parseEther("0.8"));
+    expect(await token.totalSupply()).to.equal(supplyBefore - ethers.parseEther("0.8"));
+    expect(await mining.outstandingVestingLiability()).to.equal(ethers.parseEther("9.2"));
   });
 
-  it("settles all 12 cycles and final 60/40 split to the exact 1 ATH model", async function () {
+  it("settles all 12 cycles and final 60/40 split to the exact 10 ATH model", async function () {
     const { alice, token, mining } = await deployFixture();
     await buyPowerBeforeOpen(mining, alice);
     await mining.connect(alice).claimDaily();
@@ -388,7 +388,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     await time.increaseTo(Number(position.startTime) + (13 * 180 * DAY));
 
     await mining.processVestingPosition(alice.address, 0);
-    const expected = modelFinal(ethers.parseEther("1"));
+    const expected = modelFinal(ethers.parseEther("10"));
 
     expect(await mining.globalBurned()).to.equal(expected.burned);
 
@@ -402,7 +402,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(summary.totalClaimed).to.equal(expected.distributed);
     expect(summary.totalBurned).to.equal(expected.burned);
     expect(summary.totalStillVesting).to.equal(0n);
-    expect(expected.distributed + expected.burned).to.equal(ethers.parseEther("1"));
+    expect(expected.distributed + expected.burned).to.equal(ethers.parseEther("10"));
   });
 
   it("does not allocate rewards when the ATH mining reserve is unfunded", async function () {
@@ -466,7 +466,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(await token.balanceOf(await mining.getAddress())).to.equal(liability);
   });
 
-  it("keeps the ATH protocol reference price fixed at $0.10 in micro-USD", async function () {
+  it("starts ATH at $0.10 and keeps the first step until 100,000 ATH are mined", async function () {
     const { mining } = await deployFixture();
     expect(await mining.getCurrentPrice()).to.equal(100_000n);
   });
