@@ -87,7 +87,7 @@ async function main() {
   await token.waitForDeployment();
   const tokenAddress = await token.getAddress();
 
-  // Mining v3.3 is intentionally deployed unchanged.
+  // Deploy ATH Mining with current protocol reward and pricing rules.
   const MiningAirdrop = await hre.ethers.getContractFactory("MiningAirdrop");
   const mining = await MiningAirdrop.deploy(tokenAddress, treasury, owner);
   await mining.waitForDeployment();
@@ -127,7 +127,7 @@ async function main() {
 
   const expectedRules = [
     [powerPrice, hre.ethers.parseEther("0.001"), "POWER_PRICE"],
-    [baseReward, hre.ethers.parseEther("1"), "BASE_REWARD"],
+    [baseReward, hre.ethers.parseEther("10"), "BASE_REWARD"],
     [maxDays, 180n, "MAX_DAYS"],
     [claimOpenOffset, 300n, "CLAIM_OPEN_OFFSET"],
     [boosterHash, 100n, "BOOSTER_HASH"],
@@ -148,7 +148,7 @@ async function main() {
   }
 
   const Oracle = await hre.ethers.getContractFactory("ATHStakingPriceOracle");
-  const oracle = await Oracle.deploy();
+  const oracle = await Oracle.deploy(miningAddress);
   await oracle.waitForDeployment();
   const oracleAddress = await oracle.getAddress();
 
@@ -222,7 +222,7 @@ async function main() {
     throw new Error("Development vesting is not exactly 30M ATH");
   }
   if ((await oracle.getPrice()) !== 10_000_000n) {
-    throw new Error("ATH Staking reference price is not $0.10");
+    throw new Error("ATH unified starting reference price is not $0.10");
   }
 
   if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
