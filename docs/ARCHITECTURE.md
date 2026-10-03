@@ -31,7 +31,7 @@ Each daily claim creates one vesting position. This preserves a complete on-chai
 
 ## 7. Price Display Engine
 
-The on-chain function returns a fixed ATH protocol reference price of $0.10 per ATH, aligned with ATH Staking. It is an internal protocol reference metric, not a market oracle, redemption value, or guaranteed trading price.
+The on-chain Mining price starts at $0.10 per ATH and increases by $0.001 for each complete 100,000 ATH mined. ATH Staking reads the same Mining price source through ATHStakingPriceOracle, keeping one protocol price across both modules. It is an internal protocol reference metric, not a market oracle, redemption value, or guaranteed trading price.
 
 ## 8. Aether Wallet Runtime Adapter
 
