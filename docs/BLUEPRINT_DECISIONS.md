@@ -2,15 +2,22 @@
 
 This register separates original blueprint requirements from later operator-approved ATH Mining v3.3 rules. The v3.3 rules below supersede conflicting v3.2 assumptions.
 
-## Fixed token policy
+## Fixed token policy — Ecosystem Tokenomics v2
 
 - Token: Aether (ATH), BEP-20.
-- Fixed initial supply: 1,000,000,000 ATH.
-- Mining reserve: 700,000,000 ATH (70%).
-- Liquidity reserve: 200,000,000 ATH (20%).
-- Team & Dev: 50,000,000 ATH (5%), fixed to a 365-day lock.
-- Marketing: 50,000,000 ATH (5%).
-- Display price begins at $3.00 and adds $0.001 per 10,000 ATH allocated by successful mining claims.
+- Fixed initial supply remains **1,000,000,000 ATH**. No post-deployment mint function exists.
+- **Mining reserve remains locked at 700,000,000 ATH (70%)**. MiningAirdrop v3.3 rules, reward clock, boosters, referral tiers, vesting/burn, keeper and Mining UI are not modified by the Staking expansion.
+- **Staking ecosystem allocation is 300,000,000 ATH (30%)**.
+- Staking 300M breakdown:
+  - Reward Pool: 160,000,000 ATH.
+  - Presale: 30,000,000 ATH.
+  - Marketing: 50,000,000 ATH.
+  - Development Vesting: 30,000,000 ATH.
+  - Liquidity: 20,000,000 ATH.
+  - Ecosystem Reserve: 10,000,000 ATH.
+- ATH Staking v1 reference valuation is **1 ATH = $0.10**.
+- The locked Mining v3.3 contract still exposes its historical internal display-price metric. That metric is not changed because Mining is source-locked and must not be rewritten; Staking v1 uses the separate immutable $0.10 oracle.
+- The Staking reference valuation is a protocol accounting value, not a guarantee of an external market price.
 
 ## Operator-approved Mining v3.3 rules
 
