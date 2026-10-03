@@ -78,14 +78,11 @@ async function main() {
 
   const owner = roleAddress("OWNER_ADDRESS");
   const treasury = roleAddress("TREASURY_ADDRESS");
-  const teamBeneficiary = roleAddress("TEAM_BENEFICIARY");
-  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const presaleWallet = roleAddress("PRESALE_WALLET");
   const marketingWallet = roleAddress("MARKETING_WALLET");
-
-  const teamLockDays = Number(required("TEAM_LOCK_DAYS"));
-  if (teamLockDays !== 365) {
-    throw new Error("TEAM_LOCK_DAYS must be exactly 365 per the final ATH tokenomics decision");
-  }
+  const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
+  const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
+  const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
   const [balance, blockNumber] = await Promise.all([
     provider.getBalance(wallet.address),
@@ -114,10 +111,13 @@ async function main() {
   console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("owner:", owner);
   console.log("treasury:", treasury);
-  console.log("teamBeneficiary:", teamBeneficiary);
-  console.log("liquidityWallet:", liquidityWallet);
+  console.log("presaleWallet:", presaleWallet);
   console.log("marketingWallet:", marketingWallet);
-  console.log("teamLockDays:", teamLockDays);
+  console.log("liquidityWallet:", liquidityWallet);
+  console.log("stakingReserveWallet:", stakingReserveWallet);
+  console.log("developmentBeneficiary:", developmentBeneficiary);
+  console.log("tokenomics:", "700M Mining + 300M Staking");
+  console.log("stakingReferencePriceUSD:", "0.10");
   console.log("privateKey: [REDACTED]");
 
   if (!isTestnet) {
