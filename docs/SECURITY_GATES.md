@@ -20,6 +20,7 @@
 - [ ] `npm test` passes.
 - [ ] Solidity compile passes with the pinned dependency range.
 - [ ] Gas report reviewed for `claimAllVested()` worst-case positions.
+- [x] Holder gas policy: AETHER does not subsidize holder transactions; explicit vesting processing is holder-only and holder claims pay BNB gas.
 
 ## Gate C — BSC Testnet
 
