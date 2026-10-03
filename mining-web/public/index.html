@@ -129,12 +129,13 @@
         <button class="btn btn-card" onclick="document.getElementById('referral').scrollIntoView({behavior:'smooth'})">↗ &nbsp; Referral Details</button>
       </article>
 
-      <article id="buy-ath" class="feature-card feature-price">
+      <article class="feature-card feature-price">
         <div class="feature-icon">▥</div>
         <h3>Current Price</h3>
         <strong id="priceStat">$0.370</strong>
         <p>Official pre-listing reference: $0.370. Fixed until the 15,000-holder listing gate.</p>
         <div class="price-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="btn btn-card" onclick="document.getElementById('buy-ath').scrollIntoView({behavior:'smooth',block:'start'})">Buy ATH On-chain</button>
       </article>
 
       <article class="feature-card">
@@ -144,6 +145,72 @@
         <p>Limited-time mining opportunity per Power activation.</p>
         <button class="btn btn-card" onclick="document.getElementById('miner-status').scrollIntoView({behavior:'smooth'})">◷ &nbsp; View Details</button>
       </article>
+    </section>
+
+    <section id="buy-ath" class="shell presale-zone">
+      <div class="presale-head">
+        <div>
+          <span class="presale-kicker">ATH ON-CHAIN PRESALE</span>
+          <h2>Buy ATH Directly On-chain</h2>
+          <p>Connect your EVM wallet, enter the ATH amount, review the contract quote, then pay with the configured stablecoin. Payment goes directly to the Presale treasury and ATH is transferred directly from the contract reserve to your wallet.</p>
+        </div>
+        <span id="presaleContractStatus" class="presale-badge">Contract pending</span>
+      </div>
+
+      <div class="presale-stats">
+        <div><span>Current Presale Price</span><strong id="presaleCurrentPrice">$—</strong><small>Read directly from ATHPresale</small></div>
+        <div><span>ATH Sold</span><strong id="presaleSold">—</strong><small id="presaleProgressText">0% of 30M ATH</small></div>
+        <div><span>ATH Remaining</span><strong id="presaleRemaining">—</strong><small>Protected Presale reserve</small></div>
+        <div><span>Payment Asset</span><strong id="presalePaymentSymbol">—</strong><small id="presaleWalletBalance">Wallet balance: —</small></div>
+      </div>
+
+      <div class="presale-progress" aria-label="Presale progress"><i id="presaleProgressBar"></i></div>
+
+      <div class="presale-layout">
+        <article class="presale-panel presale-buy-panel">
+          <h3>Presale Order</h3>
+          <label for="presaleAthAmount">ATH Amount</label>
+          <input id="presaleAthAmount" class="presale-input" inputmode="decimal" placeholder="Example: 1000" value="1000" />
+          <div class="presale-quick">
+            <button type="button" data-ath="1000">1K ATH</button>
+            <button type="button" data-ath="10000">10K ATH</button>
+            <button type="button" data-ath="50000">50K ATH</button>
+            <button type="button" data-ath="100000">100K ATH</button>
+          </div>
+
+          <div class="presale-order-summary">
+            <div><span>Contract Quote</span><strong id="presaleQuote">—</strong></div>
+            <div><span>Max Payment Protection</span><strong id="presaleMaxPayment">—</strong></div>
+            <div><span>Allowance</span><strong id="presaleAllowance">—</strong></div>
+            <div><span>Network Gas</span><strong>Paid by holder in BNB</strong></div>
+          </div>
+
+          <button id="presaleBuyBtn" class="btn btn-gold presale-action" disabled>Buy ATH On-chain</button>
+          <small id="presaleActionStatus">Connect wallet and wait for the verified Presale contract.</small>
+        </article>
+
+        <article class="presale-panel">
+          <h3>On-chain Settlement</h3>
+          <div class="presale-flow">
+            <div><b>1</b><span>Connect Wallet<small>AETHER Wallet / compatible EVM wallet</small></span></div>
+            <div><b>2</b><span>Approve Stablecoin<small>Only if allowance is insufficient</small></span></div>
+            <div><b>3</b><span>Buy ATH<small>Contract executes quote and payment protection</small></span></div>
+            <div><b>4</b><span>Receive ATH<small>ATH goes directly to the buyer wallet</small></span></div>
+          </div>
+          <p class="presale-note">No manual transfer to an admin is required. The buyer signs every state-changing transaction and pays BSC network gas. Never send funds to an address shown in chat or support messages; use only the verified Presale contract connected to this page.</p>
+        </article>
+
+        <article class="presale-panel">
+          <h3>Contract Rules</h3>
+          <div class="presale-rules">
+            <div><span>Presale Allocation</span><strong>30,000,000 ATH</strong></div>
+            <div><span>Price Step</span><strong>+$0.001 / 100,000 ATH sold</strong></div>
+            <div><span>Buyer Protection</span><strong>Max-payment enforced on-chain</strong></div>
+            <div><span>Settlement</span><strong>Stablecoin → Treasury · ATH → Buyer</strong></div>
+          </div>
+          <small id="presaleContractAddress" class="presale-address">Presale contract: pending</small>
+        </article>
+      </div>
     </section>
 
     <section id="staking" class="shell staking-zone">
@@ -368,6 +435,7 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
   <script src="/i18n-runtime.js?v=2"></script>
   <script src="/app.js"></script>
+  <script src="/presale.js?v=20261003-onchain-v1"></script>
   <script src="/staking.js?v=20261003-unified-v1"></script>
   <script src="/i18n.js?v=2"></script>
   <script src="/i18n-static-complete.js?v=2"></script>
