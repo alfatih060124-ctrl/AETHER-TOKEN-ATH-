@@ -3,12 +3,12 @@
 ## 2026-10-03 ECOSYSTEM TOKENOMICS v2 — MINING LOCK + STAKING v1
 
 - ATH fixed supply remains **1,000,000,000 ATH**; no post-deployment mint.
-- **Mining remains 700,000,000 ATH and MiningAirdrop v3.3 is source-locked.**
-- Git compare from pre-Staking baseline to current Staking implementation confirms `contracts/MiningAirdrop.sol` was not modified.
+- **Mining remains 700,000,000 ATH; reward, Power, Booster, referral, vesting, keeper, and reserve mechanics remain locked.**
+- `contracts/MiningAirdrop.sol` was changed only at `getCurrentPrice()` to align the ATH protocol reference price with the ecosystem-wide $0.10 value.
 - **Staking ecosystem allocation: 300,000,000 ATH**.
 - Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
-- ATH Staking v1 reference valuation: **1 ATH = $0.10** using immutable `ATHStakingPriceOracle`.
-- The locked Mining v3.3 internal display-price metric is not rewritten by this Staking expansion.
+- Unified ATH protocol reference valuation: **1 ATH = $0.10** across Staking and Mining.
+- Staking uses immutable `ATHStakingPriceOracle` at $0.10; Mining `getCurrentPrice()` now returns the equivalent fixed $0.10 micro-USD reference.
 - Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
 - Staking packages: Starter 0.35%/180d, Basic 0.45%/180d, Silver 0.55%/365d, Gold 0.65%/365d, Platinum 0.75%/730d, Diamond 0.85%/730d.
 - Direct referral: 10%; network reward: 10 levels (8%, 5%, 3%, 2%, 1%, then 0.5% for Levels 6–10).
