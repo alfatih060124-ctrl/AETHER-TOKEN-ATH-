@@ -107,7 +107,7 @@ for (const spec of contracts) {
   }
 
   if (spec.name === "ATHStakingPriceOracle") {
-    requiredFunctions(artifact.abi, ["getPrice", "ATH_PRICE_USD8", "PRICE_DECIMALS"]);
+    requiredFunctions(artifact.abi, ["getPrice", "miningPriceSource", "PRICE_DECIMALS"]);
   }
 
   if (spec.name === "ATHDevelopmentVesting") {
