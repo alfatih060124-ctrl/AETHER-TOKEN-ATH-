@@ -44,9 +44,31 @@ const LOCK_ABI=[
   "function beneficiary() view returns (address)",
   "function releaseTime() view returns (uint256)"
 ];
+const PRICE_REGISTRY_ADMIN_ABI=[
+  "function getPrice() view returns (uint256)",
+  "function HOLDER_TARGET() view returns (uint256)",
+  "function recordedHolderCount() view returns (uint256)",
+  "function priceMode() view returns (uint8)",
+  "function officialListingActivated() view returns (bool)"
+];
+const STAKING_ADMIN_ABI=[
+  "function principalLiabilityATH() view returns (uint256)"
+];
+const PRESALE_ADMIN_ABI=[
+  "function owner() view returns (address)",
+  "function paused() view returns (bool)",
+  "function treasury() view returns (address)",
+  "function paymentToken() view returns (address)",
+  "function currentPriceUSD8() view returns (uint256)",
+  "function totalSoldATH() view returns (uint256)",
+  "function totalPaymentCollected() view returns (uint256)",
+  "function remainingATH() view returns (uint256)",
+  "function pause()",
+  "function unpause()"
+];
 
-let cfg,readProvider,browserProvider,signer,account="",miningRead,tokenRead,miningWrite,tokenWrite;
-let state={miningOwner:"",tokenOwner:"",miningPaused:false,tokenPaused:false};
+let cfg,readProvider,browserProvider,signer,account="",miningRead,tokenRead,miningWrite,tokenWrite,presaleRead,presaleWrite;
+let state={miningOwner:"",tokenOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,presalePaused:true};
 let toastTimer;
 
 function toast(message,isError=false){
@@ -59,6 +81,7 @@ function addr(v){return Boolean(v&&ethers.isAddress(v))}
 function mainnetWriteAllowed(){return cfg?.networkMode!=="MAINNET"||cfg?.adminMainnetWritesEnabled===true}
 function miningAuthorized(){return account&&state.miningOwner&&account.toLowerCase()===state.miningOwner.toLowerCase()&&mainnetWriteAllowed()}
 function tokenAuthorized(){return account&&state.tokenOwner&&account.toLowerCase()===state.tokenOwner.toLowerCase()&&mainnetWriteAllowed()}
+function presaleAuthorized(){return account&&state.presaleOwner&&account.toLowerCase()===state.presaleOwner.toLowerCase()&&mainnetWriteAllowed()}
 
 function paintAccess(){
   const card=$("accessCard");
@@ -66,7 +89,7 @@ function paintAccess(){
   if(!account){
     $("accessTitle").textContent="Read-only";
     $("accessText").textContent="Connect the contract owner wallet to enable admin actions.";
-  }else if(miningAuthorized()||tokenAuthorized()){
+  }else if(miningAuthorized()||tokenAuthorized()||presaleAuthorized()){
     card.classList.add("authorized");
     $("accessTitle").textContent="Owner verified";
     $("accessText").textContent=mainnetWriteAllowed()?"Admin transaction controls enabled.":"Mainnet writes remain fail-closed.";
@@ -82,6 +105,8 @@ function paintAccess(){
   $("withdrawExcessBtn").disabled=!miningAuthorized()||!state.miningPaused||!$("excessAck").checked;
   $("pauseTokenBtn").disabled=!tokenAuthorized()||state.tokenPaused;
   $("unpauseTokenBtn").disabled=!tokenAuthorized()||!state.tokenPaused;
+  $("openPresaleBtn").disabled=!presaleAuthorized()||!state.presalePaused;
+  $("pausePresaleBtn").disabled=!presaleAuthorized()||state.presalePaused;
 }
 
 async function ensureChain(){
@@ -110,6 +135,7 @@ async function connect(){
     $("connectBtn").textContent=short(account);
     if(addr(cfg.miningAddress)) miningWrite=new ethers.Contract(cfg.miningAddress,MINING_ABI,signer);
     if(addr(cfg.tokenAddress)) tokenWrite=new ethers.Contract(cfg.tokenAddress,TOKEN_ABI,signer);
+    if(addr(cfg.presaleAddress)) presaleWrite=new ethers.Contract(cfg.presaleAddress,PRESALE_ADMIN_ABI,signer);
     await refresh();
   }catch(err){toast(err?.shortMessage||err?.message||"Wallet connection failed.",true)}
 }
@@ -142,7 +168,7 @@ async function refresh(){
       miningRead.globalBurned(),miningRead.powerBoosterPrice(),miningRead.doublePowerBoosterPrice(),
       tokenRead.owner(),tokenRead.paused(),tokenRead.totalSupply()
     ]);
-    state={miningOwner,tokenOwner,miningPaused,tokenPaused};
+    state={...state,miningOwner,tokenOwner,miningPaused,tokenPaused};
     $("miningState").textContent="Connected";
     $("miningAddress").textContent=short(cfg.miningAddress);
     $("miningPause").textContent=miningPaused?"PAUSED":"ACTIVE";
@@ -176,9 +202,54 @@ async function refresh(){
       $("beneficiary").textContent=cfg.teamBeneficiary||"Pending";
     }
 
+    await refreshUnifiedModules();
     paintAccess();
     await loadActivity();
   }catch(err){console.error(err);toast("Unable to read ATH contracts from the configured network.",true)}
+}
+
+async function refreshUnifiedModules(){
+  if(!readProvider)return;
+  if(addr(cfg?.priceRegistryAddress)){
+    try{
+      const registry=new ethers.Contract(cfg.priceRegistryAddress,PRICE_REGISTRY_ADMIN_ABI,readProvider);
+      const [price,target,count,mode,listed]=await Promise.all([registry.getPrice(),registry.HOLDER_TARGET(),registry.recordedHolderCount(),registry.priceMode(),registry.officialListingActivated()]);
+      $("registryPrice").textContent="$"+(Number(price)/1e8).toFixed(4);
+      $("registryMode").textContent=Number(mode)===0?"PRE-LISTING FIXED":"MARKET";
+      $("holderGate").textContent=Number(count).toLocaleString()+" / "+Number(target).toLocaleString();
+      $("listingState").textContent=listed?"Official listing active":Math.max(0,Number(target)-Number(count)).toLocaleString()+" holders remaining";
+    }catch(err){console.error("registry admin",err)}
+  }
+  if(addr(cfg?.stakingAddress)){
+    try{
+      const staking=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,readProvider);
+      const principal=await staking.principalLiabilityATH();
+      $("stakingState").textContent="Connected";
+      $("stakingAddress").textContent=short(cfg.stakingAddress);
+      $("stakingPrincipal").textContent=ath(principal);
+    }catch(err){console.error("staking admin",err)}
+  }
+  if(addr(cfg?.presaleAddress)){
+    try{
+      presaleRead=new ethers.Contract(cfg.presaleAddress,PRESALE_ADMIN_ABI,readProvider);
+      const [owner,paused,treasury,paymentToken,price,sold,collected,remaining]=await Promise.all([
+        presaleRead.owner(),presaleRead.paused(),presaleRead.treasury(),presaleRead.paymentToken(),
+        presaleRead.currentPriceUSD8(),presaleRead.totalSoldATH(),presaleRead.totalPaymentCollected(),presaleRead.remainingATH()
+      ]);
+      state.presaleOwner=owner; state.presalePaused=paused;
+      $("presaleState").textContent=paused?"PAUSED":"OPEN";
+      $("presaleAddress").textContent=short(cfg.presaleAddress);
+      $("presalePrice").textContent="$"+(Number(price)/1e8).toFixed(3);
+      $("presaleProgress").textContent=Number(ethers.formatEther(sold)).toLocaleString(undefined,{maximumFractionDigits:0})+" / 30,000,000 ATH";
+      $("presaleOwner").textContent=owner;
+      $("presaleTreasury").textContent=treasury;
+      $("presalePaymentToken").textContent=paymentToken;
+      $("presaleSoldAdmin").textContent=ath(sold);
+      $("presaleRemainingAdmin").textContent=ath(remaining);
+      $("presaleCollectedAdmin").textContent=collected.toString()+" payment units";
+    }catch(err){console.error("presale admin",err)}
+  }
+  paintAccess();
 }
 
 async function runTx(label,fn){
@@ -226,6 +297,8 @@ async function boot(){
   $("unpauseMiningBtn").addEventListener("click",()=>runTx("Unpause Mining",()=>miningWrite.unpause()));
   $("pauseTokenBtn").addEventListener("click",()=>runTx("Pause ATH",()=>tokenWrite.pause()));
   $("unpauseTokenBtn").addEventListener("click",()=>runTx("Unpause ATH",()=>tokenWrite.unpause()));
+  $("openPresaleBtn").addEventListener("click",()=>runTx("Open Presale",()=>presaleWrite.unpause()));
+  $("pausePresaleBtn").addEventListener("click",()=>runTx("Pause Presale",()=>presaleWrite.pause()));
   $("setTreasuryBtn").addEventListener("click",()=>{
     const v=$("treasuryInput").value.trim();
     if(!ethers.isAddress(v)||v===ethers.ZeroAddress)return toast("Enter a valid non-zero treasury address.",true);
@@ -255,7 +328,7 @@ async function boot(){
   });
   if(window.ethereum){
     window.ethereum.on?.("accountsChanged",async(accounts)=>{
-      if(!accounts?.length){account="";signer=null;miningWrite=null;tokenWrite=null;$("connectBtn").textContent="Connect Admin Wallet";paintAccess();return}
+      if(!accounts?.length){account="";signer=null;miningWrite=null;tokenWrite=null;presaleWrite=null;$("connectBtn").textContent="Connect Admin Wallet";paintAccess();return}
       await connect();
     });
     window.ethereum.on?.("chainChanged",()=>window.location.reload());

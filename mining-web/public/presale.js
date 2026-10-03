@@ -162,10 +162,10 @@
       if (amount > remaining) throw new Error("Requested ATH exceeds the remaining Presale allocation.");
 
       currentQuote = await readPresale.quotePaymentForATH(amount);
-      currentMaxPayment = currentQuote + (currentQuote / 100n) + 1n;
+      currentMaxPayment = currentQuote;
 
       $("presaleQuote").textContent = fmtPayment(currentQuote) + " " + paymentSymbol;
-      $("presaleMaxPayment").textContent = fmtPayment(currentMaxPayment) + " " + paymentSymbol + " (1% protection)";
+      $("presaleMaxPayment").textContent = fmtPayment(currentMaxPayment) + " " + paymentSymbol + " (exact quote)";
       await refreshWalletState();
     } catch (err) {
       currentQuote = 0n;
@@ -272,7 +272,7 @@
 
       const amount = parseAthInput();
       const freshQuote = await presale.quotePaymentForATH(amount);
-      const maxPayment = freshQuote + (freshQuote / 100n) + 1n;
+      const maxPayment = freshQuote;
       const balance = await payment.balanceOf(account);
 
       if (balance < maxPayment) throw new Error("Insufficient " + paymentSymbol + " balance.");

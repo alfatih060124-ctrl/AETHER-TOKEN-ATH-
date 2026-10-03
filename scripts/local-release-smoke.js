@@ -174,6 +174,10 @@ async function main() {
   );
 
   // ---------------- Presale -> Staking smoke flow ----------------
+  // Presale deploys fail-closed; owner explicitly opens it after deployment checks.
+  assertEq(await presaleContract.paused(), true, "Presale deploys paused");
+  await (await presaleContract.unpause()).wait();
+  assertEq(await presaleContract.paused(), false, "Presale explicitly opened");
   // Staking user buys 100 ATH from Presale at opening price $0.07 = $7.00.
   const presalePaymentUnit = 1_000_000n;
   await (await presalePaymentToken.mint(stakingUser.address, 1_000n * presalePaymentUnit)).wait();
