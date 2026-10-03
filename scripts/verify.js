@@ -36,24 +36,24 @@ async function main() {
 
   const token = requiredAddressAny(["ATH_TOKEN_ADDRESS", "ATH_TOKEN"]);
   const mining = requiredAddressAny(["ATH_MINING_ADDRESS", "MINING_AIRDROP"]);
-  const teamLock = requiredAddressAny(["ATH_TEAM_LOCK_ADDRESS", "TEAM_TOKEN_LOCK"]);
+  const staking = requiredAddress("ATH_STAKING_ADDRESS");
+  const oracle = requiredAddress("ATH_STAKING_ORACLE_ADDRESS");
+  const developmentVesting = requiredAddress("ATH_DEVELOPMENT_VESTING_ADDRESS");
   const deployerAddress = requiredAddress("DEPLOYER_ADDRESS");
 
   const singleWalletMode = isTestnet && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
-  const owner = singleWalletMode ? deployerAddress : requiredAddress("OWNER_ADDRESS");
-  const treasury = singleWalletMode ? deployerAddress : requiredAddress("TREASURY_ADDRESS");
-  const teamBeneficiary = singleWalletMode ? deployerAddress : requiredAddress("TEAM_BENEFICIARY");
-
-  const teamReleaseAt = Number(required("TEAM_RELEASE_AT"));
-  if (!Number.isInteger(teamReleaseAt) || teamReleaseAt <= 0) {
-    throw new Error("TEAM_RELEASE_AT must be a positive Unix timestamp");
-  }
+  const roleAddress = (name) => singleWalletMode ? deployerAddress : requiredAddress(name);
+  const owner = roleAddress("OWNER_ADDRESS");
+  const treasury = roleAddress("TREASURY_ADDRESS");
+  const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
   console.log("Verifying ATH contracts on", hre.network.name, "chain", chainId);
   console.log("Testnet single-wallet mode:", singleWalletMode ? "ENABLED" : "DISABLED");
   console.log("ATH token:", token);
   console.log("Mining:", mining);
-  console.log("Team lock:", teamLock);
+  console.log("Staking:", staking);
+  console.log("Staking oracle:", oracle);
+  console.log("Development vesting:", developmentVesting);
 
   await hre.run("verify:verify", {
     address: token,
@@ -66,11 +66,21 @@ async function main() {
   });
 
   await hre.run("verify:verify", {
-    address: teamLock,
-    constructorArguments: [token, teamBeneficiary, teamReleaseAt],
+    address: oracle,
+    constructorArguments: [],
   });
 
-  console.log("ATH BscScan verification complete.");
+  await hre.run("verify:verify", {
+    address: staking,
+    constructorArguments: [token, oracle, owner],
+  });
+
+  await hre.run("verify:verify", {
+    address: developmentVesting,
+    constructorArguments: [token, developmentBeneficiary],
+  });
+
+  console.log("ATH Mining v3.3 + Staking v1 BscScan verification complete.");
 }
 
 main().catch((err) => {
