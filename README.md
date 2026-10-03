@@ -14,7 +14,7 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 ### Staking 300M breakdown
 
 - Reward Pool: **160,000,000 ATH**.
-- Presale: **30,000,000 ATH** via `ATHPresale`: opens at **$0.070**, rises **$0.001 after each complete 100,000 ATH sold**, and reaches **$0.370 at sold out**.
+- Presale: **30,000,000 ATH** via `ATHPresale`: opens at **$0.070**, rises **$0.001 after each complete 100,000 ATH sold**, and reaches **$0.370 at sold out**. The public Presale storefront quotes and settles purchases directly on-chain: holder approves the configured stablecoin, `buyATH()` sends payment directly to treasury, and ATH is delivered directly to the buyer wallet.
 - Marketing: **50,000,000 ATH**.
 - Development Vesting: **30,000,000 ATH**.
 - Liquidity: **20,000,000 ATH**.
