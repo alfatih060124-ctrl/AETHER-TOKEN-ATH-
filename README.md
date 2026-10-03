@@ -9,7 +9,7 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 - No post-deployment mint function.
 - **Mining: 700,000,000 ATH**.
 - **Staking ecosystem: 300,000,000 ATH**.
-- Unified ATH protocol reference valuation: **1 ATH = $0.10** across Staking and the Mining display metric.
+- Unified ATH protocol price starts at **1 ATH = $0.10** across Mining and Staking, then rises **$0.001 per complete 100,000 ATH mined**.
 
 ### Staking 300M breakdown
 
@@ -20,12 +20,12 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 - Liquidity: **20,000,000 ATH**.
 - Ecosystem Reserve: **10,000,000 ATH**.
 
-## Mining v3.3 — mechanics locked
+## Mining — current protocol rules
 
-Mining reward, Power, Booster, referral, vesting, keeper, and reserve mechanics remain unchanged. Only the ATH protocol reference-price metric is aligned to the ecosystem-wide **$0.10 per ATH** value.
+Mining keeps the existing Power, Booster, referral, vesting, keeper, and reserve mechanics. The current base reward and unified ATH protocol-price schedule are defined below.
 
 - Mining allocation: **700,000,000 ATH**.
-- Base reward: **1 ATH/day**.
+- Base reward: **10 ATH/day**.
 - Reward claim window opens at **00:05 UTC**.
 - Referral tiers: **+10% to +50%**.
 - Power Booster: **2x / 30 days**.
@@ -39,7 +39,7 @@ See `docs/BLUEPRINT_DECISIONS.md`.
 
 Staking is a separate smart-contract module that uses the same ATH token.
 
-- Reference value: **$0.10 per ATH**.
+- ATH price source: starts at **$0.10 per ATH** and follows the unified Mining price schedule (**+$0.001 / 100,000 ATH mined**).
 - Minimum stake: **$10 USDT-equivalent**.
 - Six packages: Starter, Basic, Silver, Gold, Platinum, Diamond.
 - Daily rates: **0.35%–0.85%**.
