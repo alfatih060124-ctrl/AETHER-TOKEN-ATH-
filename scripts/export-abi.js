@@ -4,7 +4,8 @@ const crypto = require("crypto");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "deployments", "abi");
-const ENGINE_VERSION = "3.3.0";
+const MINING_VERSION = "3.3.0";
+const STAKING_VERSION = "1.0.0";
 
 const contracts = [
   {
@@ -18,9 +19,19 @@ const contracts = [
     output: "MiningAirdrop.v3.3.json",
   },
   {
-    name: "TeamTokenLock",
-    artifact: path.join(ROOT, "artifacts", "contracts", "TeamTokenLock.sol", "TeamTokenLock.json"),
-    output: "TeamTokenLock.json",
+    name: "ATHStaking",
+    artifact: path.join(ROOT, "artifacts", "contracts", "ATHStaking.sol", "ATHStaking.json"),
+    output: "ATHStaking.v1.json",
+  },
+  {
+    name: "ATHStakingPriceOracle",
+    artifact: path.join(ROOT, "artifacts", "contracts", "ATHStakingPriceOracle.sol", "ATHStakingPriceOracle.json"),
+    output: "ATHStakingPriceOracle.v1.json",
+  },
+  {
+    name: "ATHDevelopmentVesting",
+    artifact: path.join(ROOT, "artifacts", "contracts", "ATHDevelopmentVesting.sol", "ATHDevelopmentVesting.json"),
+    output: "ATHDevelopmentVesting.v1.json",
   },
 ];
 
@@ -44,8 +55,10 @@ function requiredFunctions(abi, names) {
 fs.mkdirSync(OUT, { recursive: true });
 
 const release = {
-  format: 1,
-  engineVersion: ENGINE_VERSION,
+  format: 2,
+  miningVersion: MINING_VERSION,
+  stakingVersion: STAKING_VERSION,
+  tokenomicsVersion: "2.0",
   contracts: {},
 };
 
@@ -74,9 +87,37 @@ for (const spec of contracts) {
     ]);
   }
 
+  if (spec.name === "ATHStaking") {
+    requiredFunctions(artifact.abi, [
+      "stake",
+      "claimReward",
+      "withdrawPrincipal",
+      "fundRewards",
+      "getATHAmount",
+      "getPendingRewardUSDT",
+      "getPendingRewardATH",
+      "availableExcessATH",
+      "packageCount",
+      "stakeCount",
+      "rewardReserveATH",
+      "principalLiabilityATH",
+      "pause",
+      "unpause",
+    ]);
+  }
+
+  if (spec.name === "ATHStakingPriceOracle") {
+    requiredFunctions(artifact.abi, ["getPrice", "ATH_PRICE_USD8", "PRICE_DECIMALS"]);
+  }
+
+  if (spec.name === "ATHDevelopmentVesting") {
+    requiredFunctions(artifact.abi, ["vestedATH", "claimableATH", "claim"]);
+  }
+
   const publicArtifact = {
     contractName: spec.name,
-    engineVersion: ENGINE_VERSION,
+    miningVersion: MINING_VERSION,
+    stakingVersion: STAKING_VERSION,
     abi: artifact.abi,
   };
 
@@ -97,10 +138,15 @@ if (miningBytes >= 24576) {
   throw new Error("MiningAirdrop exceeds EIP-170 deployed bytecode limit");
 }
 
+const stakingBytes = release.contracts.ATHStaking.deployedBytecodeBytes;
+if (stakingBytes >= 24576) {
+  throw new Error("ATHStaking exceeds EIP-170 deployed bytecode limit");
+}
+
 fs.writeFileSync(
-  path.join(OUT, "release-v3.3.json"),
+  path.join(OUT, "release-mining-v3.3-staking-v1.json"),
   stableJson(release)
 );
 
 console.log(JSON.stringify(release, null, 2));
-console.log("ATH v3.3 ABI/release package generated.");
+console.log("ATH Mining v3.3 + Staking v1 ABI/release package generated.");
