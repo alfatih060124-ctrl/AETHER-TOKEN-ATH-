@@ -5,12 +5,12 @@
 - [x] Fixed supply token: 1,000,000,000 ATH.
 - [x] Mining allocation constant: 700,000,000 ATH.
 - [x] Power: 0.001 BNB.
-- [x] Base daily reward: 1 ATH.
+- [x] Base daily reward: 10 ATH.
 - [x] Missed claim is not accumulated.
 - [x] Referral multiplier: +10% to +50% by supplied tiers.
 - [x] Booster: 0.001 BNB, +100 Hash, reward x2.
 - [x] Vesting: 10% @30d, 5% @60d, 5% @90d, 80% @180d.
-- [x] ATH protocol reference price: fixed at $0.10 across Mining and Staking.
+- [x] ATH protocol price: starts at $0.10 and increases $0.001 per complete 100,000 ATH mined; Staking reads the same source.
 - [x] Treasury is owner-updatable.
 - [x] Mining reserve protection prevents allocating rewards beyond funded reserve.
 
