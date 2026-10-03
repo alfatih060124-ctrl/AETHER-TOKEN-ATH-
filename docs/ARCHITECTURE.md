@@ -27,7 +27,7 @@ Referral is attached only when a new miner buys Power and the referrer already h
 
 ## 6. Vesting Engine
 
-Each daily claim creates one vesting position. This preserves a complete on-chain audit trail for every mining day. Unlock is 10/5/5/80 at 30/60/90/180 days from that daily allocation.
+Each daily claim creates one vesting position. This preserves a complete on-chain audit trail for every mining day. Unlock is 10/5/5/80 at 30/60/90/180 days from that daily allocation. AETHER does not sponsor holder gas: holder-triggered daily claims, explicit vesting processing and vested-token withdrawals are signed by the holder wallet and network gas is paid in BNB by that holder.
 
 ## 7. Price Display Engine
 
