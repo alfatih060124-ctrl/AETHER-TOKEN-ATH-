@@ -58,6 +58,19 @@ async function main() {
   );
   await staking.waitForDeployment();
 
+  const Stable = await hre.ethers.getContractFactory("MockStablecoin");
+  const presalePaymentToken = await Stable.deploy(6);
+  await presalePaymentToken.waitForDeployment();
+
+  const Presale = await hre.ethers.getContractFactory("ATHPresale");
+  const presaleContract = await Presale.deploy(
+    await token.getAddress(),
+    await presalePaymentToken.getAddress(),
+    presale.address,
+    deployer.address
+  );
+  await presaleContract.waitForDeployment();
+
   const DevelopmentVesting = await hre.ethers.getContractFactory("ATHDevelopmentVesting");
   const developmentVesting = await DevelopmentVesting.deploy(
     await token.getAddress(),
@@ -78,7 +91,7 @@ async function main() {
   await (await token.approve(await staking.getAddress(), stakingRewardPool)).wait();
   await (await staking.fundRewards(stakingRewardPool)).wait();
 
-  await (await token.transfer(presale.address, presaleAllocation)).wait();
+  await (await token.transfer(await presaleContract.getAddress(), presaleAllocation)).wait();
   await (await token.transfer(marketing.address, marketingAllocation)).wait();
   await (await token.transfer(await developmentVesting.getAddress(), developmentAllocation)).wait();
   await (await token.transfer(liquidity.address, liquidityAllocation)).wait();
@@ -88,7 +101,10 @@ async function main() {
   assertEq(await token.balanceOf(await mining.getAddress()), miningAllocation, "Mining reserve");
   assertEq(await staking.rewardReserveATH(), stakingRewardPool, "Staking reward reserve");
   assertEq(await token.balanceOf(await developmentVesting.getAddress()), developmentAllocation, "Development vesting reserve");
-  assertEq(await token.balanceOf(presale.address), presaleAllocation, "Staking presale allocation");
+  assertEq(await token.balanceOf(await presaleContract.getAddress()), presaleAllocation, "Presale 30M allocation");
+  assertEq(await presaleContract.currentPriceUSD8(), 7_000_000n, "Presale opening price $0.07");
+  assertEq(await presaleContract.FINAL_PRICE_USD8(), 37_000_000n, "Presale sold-out price $0.37");
+  assertEq(await presaleContract.STEP_SIZE_ATH(), hre.ethers.parseEther("100000"), "Presale price step size");
   assertEq(await token.balanceOf(marketing.address), marketingAllocation, "Staking marketing allocation");
   assertEq(await token.balanceOf(liquidity.address), liquidityAllocation, "Staking liquidity allocation");
   assertEq(await token.balanceOf(stakingReserveWallet.address), reserveAllocation, "Staking reserve allocation");
@@ -157,9 +173,29 @@ async function main() {
     "Mining final settlement conservation"
   );
 
-  // ---------------- Staking v1 smoke flow ----------------
-  // Fund enough ATH for a $10 stake at the fixed $0.37 pre-listing reference price.
-  await (await token.connect(presale).transfer(stakingUser.address, hre.ethers.parseEther("100"))).wait();
+  // ---------------- Presale -> Staking smoke flow ----------------
+  // Staking user buys 100 ATH from Presale at opening price $0.07 = $7.00.
+  const presalePaymentUnit = 1_000_000n;
+  await (await presalePaymentToken.mint(stakingUser.address, 1_000n * presalePaymentUnit)).wait();
+  await (await presalePaymentToken.connect(stakingUser).approve(
+    await presaleContract.getAddress(),
+    hre.ethers.MaxUint256
+  )).wait();
+
+  const presaleBuyATH = hre.ethers.parseEther("100");
+  const presaleQuote = await presaleContract.quotePaymentForATH(presaleBuyATH);
+  assertEq(presaleQuote, 7n * presalePaymentUnit, "Presale 100 ATH opening quote");
+
+  const presaleTreasuryBefore = await presalePaymentToken.balanceOf(presale.address);
+  await (await presaleContract.connect(stakingUser).buyATH(presaleBuyATH, presaleQuote)).wait();
+  assertEq(
+    (await presalePaymentToken.balanceOf(presale.address)) - presaleTreasuryBefore,
+    presaleQuote,
+    "Presale payment forwarded to treasury"
+  );
+  assertEq(await presaleContract.totalSoldATH(), presaleBuyATH, "Presale sold amount");
+  assertEq(await presaleContract.currentPriceUSD8(), 7_000_000n, "Presale remains in first 100k tranche");
+
   await (await token.connect(stakingUser).approve(await staking.getAddress(), hre.ethers.parseEther("100"))).wait();
 
   const refBefore = await token.balanceOf(stakingReferrer.address);
@@ -204,6 +240,7 @@ async function main() {
     tokenomicsVersion: "2.0",
     token: await token.getAddress(),
     priceRegistry: await priceRegistry.getAddress(),
+    presale: await presaleContract.getAddress(),
     mining: await mining.getAddress(),
     staking: await staking.getAddress(),
     stakingOracle: await oracle.getAddress(),
@@ -223,6 +260,15 @@ async function main() {
     },
     preListingReferencePriceUSD: "0.37",
     listingHolderTarget: "15000",
+    presaleFlow: {
+      allocationATH: "30000000",
+      openingPriceUSD: "0.07",
+      priceStepUSD: "0.001",
+      stepSizeATH: "100000",
+      soldOutPriceUSD: "0.37",
+      purchasedATH: "100",
+      paymentUSD: "7.00",
+    },
     miningHolderFlow: {
       referralCount: "1",
       dailyRewardATH: hre.ethers.formatEther(status.reward),
@@ -244,7 +290,7 @@ async function main() {
     },
   };
 
-  console.log("ATH Mining v3.3 + Staking v1 LOCAL RELEASE REHEARSAL PASSED");
+  console.log("ATH Mining v3.3 + Presale + Staking v1 LOCAL RELEASE REHEARSAL PASSED");
   console.log(JSON.stringify(evidence, null, 2));
 }
 

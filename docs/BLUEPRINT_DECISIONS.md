@@ -10,7 +10,7 @@ This register separates original blueprint requirements from later operator-appr
 - **Staking ecosystem allocation is 300,000,000 ATH (30%)**.
 - Staking 300M breakdown:
   - Reward Pool: 160,000,000 ATH.
-  - Presale: 30,000,000 ATH.
+  - Presale: 30,000,000 ATH; opens at $0.070, advances $0.001 after each complete 100,000 ATH sold, and reaches $0.370 when the 30M allocation is exhausted.
   - Marketing: 50,000,000 ATH.
   - Development Vesting: 30,000,000 ATH.
   - Liquidity: 20,000,000 ATH.

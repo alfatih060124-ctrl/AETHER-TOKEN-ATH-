@@ -16,6 +16,12 @@
       "deployedBytecodeSha256": "8db0ec7d1575142d825dc1cf368e6eb500fc2ab6564e0445013e912d8591c082",
       "deployedBytecodeBytes": 1880
     },
+    "ATHPresale": {
+      "abiFile": "deployments/abi/ATHPresale.v1.json",
+      "abiSha256": "8924c17d6e5ffc0ba8fd2178217c38d7aee640996a492a6b692bba91f86c0bdb",
+      "deployedBytecodeSha256": "f417040d41b7ba80213278665e6a3b6e4756d923edc4eebddea51f5eba6b8136",
+      "deployedBytecodeBytes": 3975
+    },
     "MiningAirdrop": {
       "abiFile": "deployments/abi/MiningAirdrop.v3.3.json",
       "abiSha256": "761ae3c0f701d4f9486f5c2fd03cf5c037138fa02566a789889efa3746405a02",

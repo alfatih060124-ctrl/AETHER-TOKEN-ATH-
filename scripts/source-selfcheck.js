@@ -12,6 +12,7 @@ function must(text, pattern, label) {
 const token = read("contracts/ATHToken.sol");
 const mining = read("contracts/MiningAirdrop.sol");
 const priceRegistry = read("contracts/ATHPriceRegistry.sol");
+const presale = read("contracts/ATHPresale.sol");
 const staking = read("contracts/ATHStaking.sol");
 const stakingOracle = read("contracts/ATHStakingPriceOracle.sol");
 const developmentVesting = read("contracts/ATHDevelopmentVesting.sol");
@@ -100,6 +101,14 @@ must(priceRegistry, /HOLDER_TARGET\s*=\s*15_000/, "ATH official listing holder t
 must(priceRegistry, /function getMarketPrice\(\) external view/, "DEX market price can be viewed separately before listing");
 must(priceRegistry, /recordedHolderCount >= HOLDER_TARGET/, "Official listing requires the holder gate");
 must(priceRegistry, /officialListingActivated = true/, "Official listing transition is explicit and on-chain");
+must(presale, /START_PRICE_USD8\s*=\s*7_000_000/, "Presale opens at $0.07");
+must(presale, /PRICE_STEP_USD8\s*=\s*100_000/, "Presale rises $0.001 per price step");
+must(presale, /FINAL_PRICE_USD8\s*=\s*37_000_000/, "Presale sell-out price is $0.37");
+must(presale, /STEP_SIZE_ATH\s*=\s*100_000 ether/, "Presale advances every 100,000 ATH sold");
+must(presale, /SALE_ALLOCATION_ATH\s*=\s*30_000_000 ether/, "Presale allocation is exactly 30,000,000 ATH");
+must(presale, /TOTAL_PRICE_STEPS\s*=\s*300/, "Presale curve has exactly 300 price steps");
+must(presale, /paymentAmount <= maxPaymentAmount/, "Presale includes buyer max-payment protection");
+must(presale, /protected presale reserve/, "Presale protects unsold ATH reserve");
 must(mining, /IATHPriceRegistrySource public immutable priceRegistry/, "Mining reads the unified ATH price registry");
 must(mining, /priceRegistry\.getPrice\(\) \/ 100/, "Mining compatibility price mirrors the unified registry");
 must(stakingOracle, /priceRegistry/, "Staking oracle uses the unified ATH price registry");
@@ -125,12 +134,16 @@ must(deploy, /parseEther\("50000000"\)/, "Deployment contains 50M Staking market
 must(deploy, /parseEther\("20000000"\)/, "Deployment contains 20M Staking liquidity allocation");
 must(deploy, /parseEther\("10000000"\)/, "Deployment contains 10M Staking reserve allocation");
 must(deploy, /stakingBreakdown\s*!==\s*stakingEcosystem/, "Deployment asserts 300M Staking conservation");
-must(preflight, /PRESALE_WALLET/, "Preflight requires Staking presale role");
+must(preflight, /PRESALE_WALLET/, "Preflight requires Presale treasury role");
+must(preflight, /PRESALE_PAYMENT_TOKEN/, "Preflight requires Presale payment token");
+must(deploy, /ATHPresale/, "Deployment includes the ATH Presale engine");
+must(deploy, /token\.transfer\(presaleAddress, stakingPresale\)/, "Deployment funds the Presale contract with 30M ATH");
 must(preflight, /STAKING_RESERVE_WALLET/, "Preflight requires Staking reserve role");
 must(preflight, /DEVELOPMENT_BENEFICIARY/, "Preflight requires Development beneficiary role");
 
 for (const name of [
   "PRESALE_WALLET",
+  "PRESALE_PAYMENT_TOKEN",
   "MARKETING_WALLET",
   "LIQUIDITY_WALLET",
   "STAKING_RESERVE_WALLET",
@@ -150,4 +163,4 @@ for (const gate of [
 }
 console.log("OK: Mainnet release gates remain fail-closed");
 
-console.log("\nAETHER ATH Mining + Staking + unified $0.37 Price Registry self-check PASSED.");
+console.log("\nAETHER ATH Mining + Staking + Presale + unified $0.37 Price Registry self-check PASSED.");

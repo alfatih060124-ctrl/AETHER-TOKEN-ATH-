@@ -7,6 +7,7 @@
 - `contracts/MiningAirdrop.sol` keeps `BASE_REWARD = 10 ATH`; `getCurrentPrice()` now mirrors the unified **ATHPriceRegistry** official price.
 - **Staking ecosystem allocation: 300,000,000 ATH**.
 - Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
+- Presale rule: **30,000,000 ATH**, opening **$0.070**, **+$0.001 per complete 100,000 ATH sold**, 300 steps, displayed sell-out price **$0.370**. The final live 100,000-ATH tranche is priced at $0.369; after that tranche sells, Presale is sold out at $0.370.
 - Unified ATH official pre-listing reference price is **1 ATH = $0.37** across Mining and Staking. DEX market price may be visible separately; official market mode requires the **15,000-holder gate** and explicit activation.
 - `ATHStakingPriceOracle` now reads `ATHPriceRegistry`, while Mining also reads the same registry so both modules share one price source.
 - Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
@@ -157,7 +158,7 @@ The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC 
 - Mining reward reserve: **700,000,000 ATH (70%)** — Mining v3.3 remains locked and unchanged.
 - Staking ecosystem: **300,000,000 ATH (30%)**.
   - Reward Pool: 160,000,000 ATH.
-  - Presale: 30,000,000 ATH.
+  - Presale: 30,000,000 ATH — $0.070 opening, +$0.001/100,000 ATH sold, $0.370 sold-out reference.
   - Marketing: 50,000,000 ATH.
   - Development Vesting: 30,000,000 ATH.
   - Liquidity: 20,000,000 ATH.

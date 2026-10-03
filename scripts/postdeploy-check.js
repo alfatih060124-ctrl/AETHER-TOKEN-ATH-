@@ -57,6 +57,24 @@ const PRICE_REGISTRY_ABI = [
   "function marketPriceOracle() view returns (address)",
 ];
 
+const PRESALE_ABI = [
+  "function athToken() view returns (address)",
+  "function paymentToken() view returns (address)",
+  "function treasury() view returns (address)",
+  "function owner() view returns (address)",
+  "function paused() view returns (bool)",
+  "function START_PRICE_USD8() view returns (uint256)",
+  "function PRICE_STEP_USD8() view returns (uint256)",
+  "function FINAL_PRICE_USD8() view returns (uint256)",
+  "function STEP_SIZE_ATH() view returns (uint256)",
+  "function SALE_ALLOCATION_ATH() view returns (uint256)",
+  "function TOTAL_PRICE_STEPS() view returns (uint256)",
+  "function totalSoldATH() view returns (uint256)",
+  "function totalPaymentCollected() view returns (uint256)",
+  "function currentPriceUSD8() view returns (uint256)",
+  "function remainingATH() view returns (uint256)",
+];
+
 const STAKING_ABI = [
   "function athToken() view returns (address)",
   "function priceOracle() view returns (address)",
@@ -123,6 +141,8 @@ async function main() {
   const rpcUrl = required("BSC_TESTNET_RPC");
   const tokenAddress = requiredAddress("ATH_TOKEN_ADDRESS");
   const priceRegistryAddress = requiredAddress("ATH_PRICE_REGISTRY_ADDRESS");
+  const presaleAddress = requiredAddress("ATH_PRESALE_ADDRESS");
+  const presalePaymentToken = requiredAddress("PRESALE_PAYMENT_TOKEN");
   const miningAddress = requiredAddress("ATH_MINING_ADDRESS");
   const stakingAddress = requiredAddress("ATH_STAKING_ADDRESS");
   const oracleAddress = requiredAddress("ATH_STAKING_ORACLE_ADDRESS");
@@ -152,6 +172,7 @@ async function main() {
   const [
     tokenCodeBytes,
     priceRegistryCodeBytes,
+    presaleCodeBytes,
     miningCodeBytes,
     stakingCodeBytes,
     oracleCodeBytes,
@@ -159,6 +180,7 @@ async function main() {
   ] = await Promise.all([
       assertCode(provider, tokenAddress, "ATH token"),
       assertCode(provider, priceRegistryAddress, "ATHPriceRegistry"),
+      assertCode(provider, presaleAddress, "ATHPresale"),
       assertCode(provider, miningAddress, "MiningAirdrop"),
       assertCode(provider, stakingAddress, "ATHStaking"),
       assertCode(provider, oracleAddress, "ATHStakingPriceOracle"),
@@ -167,6 +189,7 @@ async function main() {
 
   const token = new ethers.Contract(tokenAddress, TOKEN_ABI, provider);
   const priceRegistry = new ethers.Contract(priceRegistryAddress, PRICE_REGISTRY_ABI, provider);
+  const presale = new ethers.Contract(presaleAddress, PRESALE_ABI, provider);
   const mining = new ethers.Contract(miningAddress, MINING_ABI, provider);
   const staking = new ethers.Contract(stakingAddress, STAKING_ABI, provider);
   const oracle = new ethers.Contract(oracleAddress, ORACLE_ABI, provider);
@@ -176,6 +199,22 @@ async function main() {
     totalSupply,
     tokenOwner,
     tokenPaused,
+    presaleToken,
+    presalePayment,
+    presaleTreasury,
+    presaleOwner,
+    presalePaused,
+    presaleStartPrice,
+    presalePriceStep,
+    presaleFinalPrice,
+    presaleStepSize,
+    presaleAllocation,
+    presaleTotalSteps,
+    presaleTotalSold,
+    presaleTotalPayment,
+    presaleCurrentPrice,
+    presaleRemaining,
+    presaleATHBalance,
     miningToken,
     miningPriceRegistry,
     miningOwner,
@@ -242,6 +281,22 @@ async function main() {
     token.totalSupply(),
     token.owner(),
     token.paused(),
+    presale.athToken(),
+    presale.paymentToken(),
+    presale.treasury(),
+    presale.owner(),
+    presale.paused(),
+    presale.START_PRICE_USD8(),
+    presale.PRICE_STEP_USD8(),
+    presale.FINAL_PRICE_USD8(),
+    presale.STEP_SIZE_ATH(),
+    presale.SALE_ALLOCATION_ATH(),
+    presale.TOTAL_PRICE_STEPS(),
+    presale.totalSoldATH(),
+    presale.totalPaymentCollected(),
+    presale.currentPriceUSD8(),
+    presale.remainingATH(),
+    token.balanceOf(presaleAddress),
     mining.athToken(),
     mining.priceRegistry(),
     mining.owner(),
@@ -318,6 +373,24 @@ async function main() {
   assertEq(totalSupply, oneBillion, "ATH total supply");
   if (!eqAddr(tokenOwner, ownerExpected)) throw new Error("ATH token owner mismatch");
   if (tokenPaused) throw new Error("ATH token unexpectedly paused after deployment");
+
+  // Presale invariants.
+  if (!eqAddr(presaleToken, tokenAddress)) throw new Error("Presale ATH token mismatch");
+  if (!eqAddr(presalePayment, presalePaymentToken)) throw new Error("Presale payment token mismatch");
+  if (!eqAddr(presaleTreasury, presaleWallet)) throw new Error("Presale treasury mismatch");
+  if (!eqAddr(presaleOwner, ownerExpected)) throw new Error("Presale owner mismatch");
+  if (presalePaused) throw new Error("Presale unexpectedly paused");
+  assertEq(presaleStartPrice, 7_000_000n, "Presale opening price $0.07");
+  assertEq(presalePriceStep, 100_000n, "Presale price step $0.001");
+  assertEq(presaleFinalPrice, 37_000_000n, "Presale sold-out price $0.37");
+  assertEq(presaleStepSize, ethers.parseEther("100000"), "Presale 100,000 ATH step");
+  assertEq(presaleAllocation, thirtyM, "Presale 30M allocation");
+  assertEq(presaleTotalSteps, 300n, "Presale total price steps");
+  assertEq(presaleTotalSold, 0n, "Presale initial sold amount");
+  assertEq(presaleTotalPayment, 0n, "Presale initial payment collected");
+  assertEq(presaleCurrentPrice, 7_000_000n, "Presale initial current price");
+  assertEq(presaleRemaining, thirtyM, "Presale initial remaining ATH");
+  assertEq(presaleATHBalance, thirtyM, "Presale funded ATH balance");
 
   // Mining v3.3 locked invariants.
   if (!eqAddr(miningToken, tokenAddress)) throw new Error("Mining contract token mismatch");
@@ -401,7 +474,6 @@ async function main() {
     const key = address.toLowerCase();
     expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
   }
-  addExpected(presaleWallet, thirtyM);
   addExpected(marketingWallet, fiftyM);
   addExpected(liquidityWallet, twentyM);
   addExpected(stakingReserveWallet, tenM);
@@ -431,6 +503,7 @@ async function main() {
     contracts: {
       tokenAddress,
       priceRegistryAddress,
+      presaleAddress,
       miningAddress,
       stakingAddress,
       oracleAddress,
@@ -439,6 +512,7 @@ async function main() {
     codeBytes: {
       token: tokenCodeBytes,
       priceRegistry: priceRegistryCodeBytes,
+      presale: presaleCodeBytes,
       mining: miningCodeBytes,
       staking: stakingCodeBytes,
       oracle: oracleCodeBytes,
@@ -457,6 +531,16 @@ async function main() {
     },
     preListingReferencePriceUSD: "0.37",
     listingHolderTarget: 15000,
+    presale: {
+      allocationATH: "30000000",
+      openingPriceUSD: "0.07",
+      priceStepUSD: "0.001",
+      stepSizeATH: "100000",
+      totalSteps: 300,
+      soldOutPriceUSD: "0.37",
+      paymentToken: presalePaymentToken,
+      treasury: presaleWallet,
+    },
     priceMode: "PRE_LISTING_FIXED",
     stakingDestinationBalancesATH: destinationBalances,
     miningReferencePriceUSD: (Number(miningReferencePrice) / 1_000_000).toFixed(3),
