@@ -5,7 +5,7 @@ This document defines what can be completed before any BSC Testnet gas is funded
 ## Completed without BNB/tBNB
 
 - Protocol source lock for reward, referral, Booster, vesting and burn rules.
-- 1 ATH/day UTC reward engine.
+- 10 ATH/day UTC reward engine.
 - Daily expiry semantics.
 - 12-cycle vesting and final settlement.
 - Fixed-supply reserve accounting.
