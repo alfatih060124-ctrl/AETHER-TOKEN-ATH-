@@ -24,7 +24,7 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
     IATHBurnable public immutable athToken;
 
     uint256 public constant POWER_PRICE = 0.001 ether;
-    uint256 public constant BASE_REWARD = 1 ether;
+    uint256 public constant BASE_REWARD = 10 ether;
     uint256 public constant MAX_DAYS = 180;
     uint256 public constant DAY = 1 days;
     uint256 public constant CLAIM_OPEN_OFFSET = 5 minutes;
@@ -1093,9 +1093,11 @@ contract MiningAirdrop is Ownable, Pausable, ReentrancyGuard {
         return _isEligibleRewardDay(users[account], _utcDayId(block.timestamp));
     }
 
-    /** @return priceInMicroUSD Fixed ATH protocol reference: $0.10 = 100,000 micro-USD. */
+    /** @return priceInMicroUSD ATH protocol reference in 6-decimal micro-USD. */
     function getCurrentPrice() external view returns (uint256 priceInMicroUSD) {
-        priceInMicroUSD = 100_000;
+        uint256 minedWhole = totalMined / 1 ether;
+        uint256 steps = minedWhole / 100_000;
+        priceInMicroUSD = 100_000 + (steps * 1_000);
     }
 
     function contractBalance() external view returns (uint256) {
