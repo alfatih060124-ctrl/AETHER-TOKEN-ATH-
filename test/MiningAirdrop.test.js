@@ -56,8 +56,17 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     const token = await Token.deploy(deployer.address);
     await token.waitForDeployment();
 
+    const PriceRegistry = await ethers.getContractFactory("ATHPriceRegistry");
+    const priceRegistry = await PriceRegistry.deploy(owner.address);
+    await priceRegistry.waitForDeployment();
+
     const Mining = await ethers.getContractFactory("MiningAirdrop");
-    const mining = await Mining.deploy(await token.getAddress(), treasury.address, owner.address);
+    const mining = await Mining.deploy(
+      await token.getAddress(),
+      treasury.address,
+      await priceRegistry.getAddress(),
+      owner.address
+    );
     await mining.waitForDeployment();
 
     if (funded) {
@@ -66,7 +75,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
 
     return {
       signers, deployer, owner, treasury, alice, bob, carol, dave, erin, frank, george,
-      token, mining
+      token, mining, priceRegistry
     };
   }
 
@@ -466,8 +475,11 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(await token.balanceOf(await mining.getAddress())).to.equal(liability);
   });
 
-  it("starts ATH at $0.10 and keeps the first step until 100,000 ATH are mined", async function () {
-    const { mining } = await deployFixture();
-    expect(await mining.getCurrentPrice()).to.equal(100_000n);
+  it("keeps ATH at the fixed $0.37 pre-listing reference price", async function () {
+    const { mining, priceRegistry } = await deployFixture();
+    expect(await priceRegistry.getPrice()).to.equal(37_000_000n);
+    expect(await priceRegistry.HOLDER_TARGET()).to.equal(15_000n);
+    expect(await priceRegistry.priceMode()).to.equal(0n);
+    expect(await mining.getCurrentPrice()).to.equal(370_000n);
   });
 });

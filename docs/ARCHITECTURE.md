@@ -31,7 +31,7 @@ Each daily claim creates one vesting position. This preserves a complete on-chai
 
 ## 7. Price Display Engine
 
-The on-chain Mining price starts at $0.10 per ATH and increases by $0.001 for each complete 100,000 ATH mined. ATH Staking reads the same Mining price source through ATHStakingPriceOracle, keeping one protocol price across both modules. It is an internal protocol reference metric, not a market oracle, redemption value, or guaranteed trading price.
+ATHPriceRegistry is the single official price source. Before listing it returns a fixed $0.37 reference price to Mining and Staking, while an optional DEX market oracle can be read separately. Official price mode cannot switch to MARKET until a recorded holder count reaches 15,000 and the owner explicitly activates listing. The $0.37 pre-listing value is a protocol/P2P reference, not a guaranteed redemption value.
 
 ## 8. Aether Wallet Runtime Adapter
 

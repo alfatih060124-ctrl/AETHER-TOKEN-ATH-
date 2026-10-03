@@ -1,6 +1,7 @@
 {
   "contractName": "MiningAirdrop",
-  "engineVersion": "3.3.0",
+  "miningVersion": "3.3.0",
+  "stakingVersion": "1.0.0",
   "abi": [
     {
       "inputs": [
@@ -12,6 +13,11 @@
         {
           "internalType": "address",
           "name": "_treasury",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_priceRegistry",
           "type": "address"
         },
         {
@@ -2369,6 +2375,19 @@
           "internalType": "struct MiningAirdrop.VestingCycle",
           "name": "preview",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "priceRegistry",
+      "outputs": [
+        {
+          "internalType": "contract IATHPriceRegistrySource",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",

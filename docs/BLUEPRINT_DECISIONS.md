@@ -15,8 +15,8 @@ This register separates original blueprint requirements from later operator-appr
   - Development Vesting: 30,000,000 ATH.
   - Liquidity: 20,000,000 ATH.
   - Ecosystem Reserve: 10,000,000 ATH.
-- ATH Staking v1 reference valuation is **1 ATH = $0.10**.
-- The locked Mining v3.3 contract still exposes its historical internal display-price metric. That metric is not changed because Mining is source-locked and must not be rewritten; Staking v1 uses the separate immutable $0.10 oracle.
+- ATH Staking v1 pre-listing reference valuation is **1 ATH = $0.37**.
+- Mining v3.3 reward/booster/vesting mechanics remain source-locked, while its compatibility price getter is now wired to the shared `ATHPriceRegistry`. Staking uses the same registry through its adapter.
 - The Staking reference valuation is a protocol accounting value, not a guarantee of an external market price.
 
 ## Operator-approved Mining v3.3 rules

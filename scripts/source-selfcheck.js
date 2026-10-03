@@ -11,12 +11,17 @@ function must(text, pattern, label) {
 
 const token = read("contracts/ATHToken.sol");
 const mining = read("contracts/MiningAirdrop.sol");
+const priceRegistry = read("contracts/ATHPriceRegistry.sol");
 const staking = read("contracts/ATHStaking.sol");
 const stakingOracle = read("contracts/ATHStakingPriceOracle.sol");
 const developmentVesting = read("contracts/ATHDevelopmentVesting.sol");
 const deploy = read("scripts/deploy.js");
 const preflight = read("scripts/preflight.js");
 const env = read(".env.example");
+const miningWeb = read("mining-web/public/app.js");
+const stakingWeb = read("mining-web/public/staking.js");
+const portalHtml = read("mining-web/public/index.html");
+const webServer = read("mining-web/server.js");
 
 must(token, /TOTAL_SUPPLY\s*=\s*1_000_000_000\s*\*\s*10\s*\*\*\s*18/, "ATH fixed supply is 1,000,000,000");
 must(token, /ERC20\("Aether",\s*"ATH"\)/, "token identity Aether / ATH");
@@ -90,11 +95,22 @@ must(staking, /principalLiabilityATH/, "Staking protects principal liability");
 must(staking, /rewardReserveATH/, "Staking separates reward reserve");
 must(staking, /recoverExcessATH[\s\S]*onlyOwner whenPaused/, "Staking excess recovery is owner-only and pause-gated");
 
-must(mining, /steps\s*=\s*minedWhole\s*\/\s*100_000/, "Mining price step is every 100,000 ATH mined");
-must(mining, /priceInMicroUSD\s*=\s*100_000\s*\+\s*\(steps\s*\*\s*1_000\)/, "Mining price starts at $0.10 and adds $0.001 per step");
-must(stakingOracle, /miningPriceSource/, "Staking oracle uses Mining as the ATH price source");
-must(stakingOracle, /function getPrice\(\) external view/, "Staking oracle reads the live protocol price");
-must(stakingOracle, /getCurrentPrice\(\) \* 100/, "Staking converts Mining micro-USD to USD8");
+must(priceRegistry, /PRE_LISTING_PRICE\s*=\s*37_000_000/, "ATH pre-listing reference price is fixed at $0.37");
+must(priceRegistry, /HOLDER_TARGET\s*=\s*15_000/, "ATH official listing holder target is 15,000");
+must(priceRegistry, /function getMarketPrice\(\) external view/, "DEX market price can be viewed separately before listing");
+must(priceRegistry, /recordedHolderCount >= HOLDER_TARGET/, "Official listing requires the holder gate");
+must(priceRegistry, /officialListingActivated = true/, "Official listing transition is explicit and on-chain");
+must(mining, /IATHPriceRegistrySource public immutable priceRegistry/, "Mining reads the unified ATH price registry");
+must(mining, /priceRegistry\.getPrice\(\) \/ 100/, "Mining compatibility price mirrors the unified registry");
+must(stakingOracle, /priceRegistry/, "Staking oracle uses the unified ATH price registry");
+must(stakingOracle, /return priceRegistry\.getPrice\(\)/, "Staking reads the same official ATH price");
+must(miningWeb, /10 ATH × referral × booster/, "Mining frontend uses the 10 ATH base reward");
+must(portalHtml, /id="staking"/, "Unified portal exposes the Staking section");
+must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
+must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
+must(stakingWeb, /withdrawPrincipal/, "Staking frontend exposes principal withdrawal");
+must(webServer, /preListingPriceUsd: "0.37"/, "Web config exposes the $0.37 pre-listing price");
+must(webServer, /listingHolderTarget: 15000/, "Web config exposes the 15,000-holder listing gate");
 
 must(developmentVesting, /TOTAL_ALLOCATION\s*=\s*30_000_000 ether/, "Development vesting allocation is 30,000,000 ATH");
 must(developmentVesting, /CLIFF_MONTHS\s*=\s*2/, "Development vesting cliff is 2 months");
@@ -134,4 +150,4 @@ for (const gate of [
 }
 console.log("OK: Mainnet release gates remain fail-closed");
 
-console.log("\nAETHER ATH Mining + unified Staking price source self-check PASSED.");
+console.log("\nAETHER ATH Mining + Staking + unified $0.37 Price Registry self-check PASSED.");

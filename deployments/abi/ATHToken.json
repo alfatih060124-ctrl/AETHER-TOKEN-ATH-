@@ -1,6 +1,7 @@
 {
   "contractName": "ATHToken",
-  "engineVersion": "3.3.0",
+  "miningVersion": "3.3.0",
+  "stakingVersion": "1.0.0",
   "abi": [
     {
       "inputs": [

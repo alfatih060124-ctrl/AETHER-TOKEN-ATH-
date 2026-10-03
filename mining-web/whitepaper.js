@@ -117,7 +117,7 @@ function streamWhitepaper(res) {
   ], y);
 
   y = heading(doc, "Protocol Reference Metric", "ATH Reference Price", y + 10);
-  y = body(doc, "The ATH protocol price starts at $0.10 per ATH and increases by $0.001 for each complete 100,000 ATH mined. ATH Staking reads the same Mining price source so both modules remain synchronized. This is an internal protocol reference metric only. It is not an exchange quote, guaranteed sale price, redemption promise, or investment-return forecast.", y);
+  y = body(doc, "The official ATH pre-listing reference price is fixed at $0.37 per ATH through the unified ATH Price Registry. Mining, Staking, P2P and AETHER Wallet use this same reference. A live DEX market price may be displayed separately before listing, but it does not replace the official reference until the 15,000-holder gate is met and official listing is explicitly activated. The reference price is not a guaranteed redemption promise or investment-return forecast.", y);
 
   doc.addPage();
   pageBase(doc, 4, "Rewards and Vesting");

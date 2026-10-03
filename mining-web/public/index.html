@@ -4,9 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#070502" />
-  <title>AETHER ATH Mining</title>
-  <meta name="description" content="AETHER ATH Mining — Power, Booster, Daily Claim, Vesting and Referral on BNB Smart Chain." />
+  <title>AETHER ATH — Mining & Staking</title>
+  <meta name="description" content="AETHER ATH unified Mining and Staking portal — one ATH ecosystem, one pre-listing reference price, transparent on-chain rewards." />
   <link rel="stylesheet" href="/styles.css?v=20261002-mobile-i18n-v4" />
+  <link rel="stylesheet" href="/staking.css?v=20261003-unified-v1" />
 </head>
 <body>
   <div class="page-glow page-glow-a"></div>
@@ -22,6 +23,7 @@
       <nav class="main-nav" aria-label="Primary navigation">
         <a class="active" href="#home">Home</a>
         <a href="#mining">Mining</a>
+        <a href="#staking">Staking</a>
         <a href="#buy-ath">Buy ATH</a>
         <a href="#leaderboard">Leaderboard</a>
         <a href="#referral">Referral</a>
@@ -53,8 +55,8 @@
       <div class="shell hero-grid">
         <div class="hero-copy">
           <div class="hero-eyebrow">THE NEXT ERA OF DECENTRALIZED VALUE</div>
-          <h1>AETHER ATH MINING</h1>
-          <h2>Mine. Earn. Grow Together.</h2>
+          <h1>AETHER ATH</h1>
+          <h2>Mine. Stake. Grow Together.</h2>
           <p>AETHER (ATH) is a community-powered ecosystem designed for sustainable growth, transparent utility, and long-term value. Activate your mining journey and grow with the AETHER network.</p>
           <div class="hero-buttons">
             <button class="btn btn-gold btn-large" onclick="document.getElementById('powerBtn').scrollIntoView({behavior:'smooth',block:'center'})">⚒ &nbsp; Start Mining Now &nbsp; →</button>
@@ -105,7 +107,7 @@
       <article class="feature-card">
         <div class="feature-icon">🎁</div>
         <h3>Daily Claim</h3>
-        <strong><span id="dailyRewardPreview">1.00</span> ATH / day</strong>
+        <strong><span id="dailyRewardPreview">10.00</span> ATH / day</strong>
         <p>Reward opens 00:05 UTC and expires at 23:59:59 UTC if not claimed.</p>
         <button id="dailyBtn" class="btn btn-card" disabled>▣ &nbsp; Claim Now</button>
         <small id="dailyState">Waiting for active Power</small>
@@ -130,8 +132,8 @@
       <article id="buy-ath" class="feature-card feature-price">
         <div class="feature-icon">▥</div>
         <h3>Current Price</h3>
-        <strong id="priceStat">$0.100</strong>
-        <p>Starts at $0.100; +$0.001 every 100,000 ATH mined.</p>
+        <strong id="priceStat">$0.370</strong>
+        <p>Official pre-listing reference: $0.370. Fixed until the 15,000-holder listing gate.</p>
         <div class="price-chart"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </article>
 
@@ -144,6 +146,52 @@
       </article>
     </section>
 
+    <section id="staking" class="shell staking-zone">
+      <div class="staking-head">
+        <div><span class="staking-kicker">ATH UNIFIED PROGRAM</span><h2>ATH Staking</h2><p>300,000,000 ATH ecosystem allocation · same ATH Price Registry as Mining.</p></div>
+        <span id="stakingContractStatus" class="staking-badge">Contract pending</span>
+      </div>
+      <div class="staking-price-grid">
+        <div><span>Official ATH Price</span><strong id="stakingPrice">$0.3700</strong><small id="stakingPriceMode">PRE-LISTING FIXED</small></div>
+        <div><span>Listing Holder Gate</span><strong><b id="stakingHolderCount">0</b> / 15,000</strong><small id="stakingListingStatus">Listing pending</small></div>
+        <div><span>Staking Allocation</span><strong>300M ATH</strong><small>160M reward pool + ecosystem allocations</small></div>
+        <div><span>Your Wallet</span><strong id="stakingWalletStatus">Not Connected</strong><small>Uses the same EVM wallet as Mining</small></div>
+      </div>
+      <div class="staking-layout">
+        <article class="staking-panel">
+          <h3>Stake ATH</h3>
+          <label>Package</label><select id="stakingPackageSelect" class="staking-input"><option>Loading packages…</option></select>
+          <label>Stake Value (USD reference)</label><input id="stakingAmountUsd" class="staking-input" inputmode="decimal" value="10" />
+          <label>Sponsor Wallet (optional)</label><input id="stakingReferrer" class="staking-input" placeholder="0x0000… or blank" />
+          <div class="staking-preview"><span>Required ATH</span><strong id="stakingRequiredAth">—</strong></div>
+          <button id="stakingStakeBtn" class="btn btn-gold staking-action" disabled>Stake ATH</button>
+          <small id="stakingActionStatus">Connect wallet and verified Staking contract.</small>
+        </article>
+        <article class="staking-panel">
+          <h3>My Stake Position</h3>
+          <label>Position</label><select id="stakingPositionSelect" class="staking-input"><option>No positions yet</option></select>
+          <div class="staking-metrics">
+            <div><span>Principal</span><strong id="stakingPrincipal">0 ATH</strong></div>
+            <div><span>Pending Reward</span><strong id="stakingPendingReward">0 ATH</strong></div>
+            <div><span>Unlock</span><strong id="stakingUnlock">—</strong></div>
+            <div><span>Status</span><strong id="stakingPositionState">—</strong></div>
+          </div>
+          <div class="staking-actions"><button id="stakingClaimBtn" class="btn btn-dark" disabled>Claim Reward</button><button id="stakingWithdrawBtn" class="btn btn-dark" disabled>Withdraw Principal</button></div>
+        </article>
+        <article class="staking-panel">
+          <h3>Staking Account</h3>
+          <div class="staking-account">
+            <div><span>Active Staked Value</span><strong id="stakingActiveUsd">$0.00</strong></div>
+            <div><span>Stake Positions</span><strong id="stakingPositionCount">0</strong></div>
+            <div><span>Direct Referral Earned</span><strong id="stakingReferralEarned">0 ATH</strong></div>
+            <div><span>Network Earned</span><strong id="stakingNetworkEarned">0 ATH</strong></div>
+          </div>
+          <p class="staking-note">Pre-listing valuation remains $0.37. A DEX quote may be visible separately, but it does not replace the official reference before the 15,000-holder listing gate and official activation.</p>
+        </article>
+      </div>
+      <div id="stakingPackages" class="staking-packages"></div>
+    </section>
+
     <section class="shell dashboard-row">
       <article id="miner-status" class="dash-panel miner-panel">
         <div class="panel-title">
@@ -154,7 +202,7 @@
         <div class="miner-stats">
           <div><span>Hash Power</span><strong id="hashStat">0</strong></div>
           <div><span>Total Allocated</span><strong id="allocatedStat">0.000 ATH</strong></div>
-          <div><span>Daily Reward</span><strong><span id="dailyRewardMirror">1.0000</span> ATH</strong></div>
+          <div><span>Daily Reward</span><strong><span id="dailyRewardMirror">10.0000</span> ATH</strong></div>
         </div>
         <button class="btn btn-gold status-cta" onclick="document.getElementById('dailyBtn').scrollIntoView({behavior:'smooth',block:'center'})">▶ &nbsp; Start Mining</button>
         <div class="status-foot"><span>Day <b id="dayStat">0</b>/180</span><span id="activeStat">Not active</span><span id="multiplierStat">Reward multiplier 1.00×</span></div>
@@ -320,10 +368,11 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
   <script src="/i18n-runtime.js?v=2"></script>
   <script src="/app.js"></script>
+  <script src="/staking.js?v=20261003-unified-v1"></script>
   <script src="/i18n.js?v=2"></script>
   <script src="/i18n-static-complete.js?v=2"></script>
   <script src="/i18n-bridge.js?v=2"></script>
-  <script src="/i18n-icons.js?v=2"></script>
+  <script src="/i18n-icons.js?v=2"></script>\n  <script src="/staking-i18n.js?v=20261003-unified-v1"></script>
   <script>
     (function(){
       const original = document.getElementById('connectBtn');
@@ -337,7 +386,7 @@
         obs.observe(original,{childList:true,subtree:true,characterData:true});
       }
       if (daily && mirror) {
-        const obs2 = new MutationObserver(() => mirror.textContent = Number(daily.textContent || 1).toFixed(4));
+        const obs2 = new MutationObserver(() => mirror.textContent = Number(daily.textContent || 10).toFixed(4));
         obs2.observe(daily,{childList:true,subtree:true,characterData:true});
       }
     })();

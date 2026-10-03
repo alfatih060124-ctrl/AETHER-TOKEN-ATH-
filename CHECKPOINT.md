@@ -4,11 +4,11 @@
 
 - ATH fixed supply remains **1,000,000,000 ATH**; no post-deployment mint.
 - **Mining remains 700,000,000 ATH.** Power, Booster, referral, vesting, keeper, and reserve mechanics remain locked; base reward is now **10 ATH/day**.
-- `contracts/MiningAirdrop.sol` now uses `BASE_REWARD = 10 ATH` and `getCurrentPrice()` = **$0.10 + $0.001 × floor(totalMined / 100,000 ATH)**.
+- `contracts/MiningAirdrop.sol` keeps `BASE_REWARD = 10 ATH`; `getCurrentPrice()` now mirrors the unified **ATHPriceRegistry** official price.
 - **Staking ecosystem allocation: 300,000,000 ATH**.
 - Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
-- Unified ATH protocol price starts at **1 ATH = $0.10** across Staking and Mining, increasing **$0.001 per complete 100,000 ATH mined**.
-- `ATHStakingPriceOracle` now reads Mining `getCurrentPrice()` so Staking and Mining use the same live protocol price.
+- Unified ATH official pre-listing reference price is **1 ATH = $0.37** across Mining and Staking. DEX market price may be visible separately; official market mode requires the **15,000-holder gate** and explicit activation.
+- `ATHStakingPriceOracle` now reads `ATHPriceRegistry`, while Mining also reads the same registry so both modules share one price source.
 - Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
 - Staking packages: Starter 0.35%/180d, Basic 0.45%/180d, Silver 0.55%/365d, Gold 0.65%/365d, Platinum 0.75%/730d, Diamond 0.85%/730d.
 - Direct referral: 10%; network reward: 10 levels (8%, 5%, 3%, 2%, 1%, then 0.5% for Levels 6–10).
@@ -162,7 +162,7 @@ The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC 
   - Development Vesting: 30,000,000 ATH.
   - Liquidity: 20,000,000 ATH.
   - Ecosystem Reserve: 10,000,000 ATH.
-- Staking reference valuation: **1 ATH = $0.10**.
+- Pre-listing ATH reference valuation: **1 ATH = $0.37**; official listing holder target: **15,000**.
 - Mainnet liquidity remains a separate later launch decision; no Mainnet liquidity is opened by Testnet deployment.
 
 ## LATEST GREEN EVIDENCE
@@ -323,3 +323,16 @@ Completed without any blockchain deployment transaction:
 - Team lock UI fixed to the 365-day policy.
 - Recent on-chain Mining event viewer prepared for the latest 2,500 blocks after contract deployment.
 - Additional automated tests cover treasury authorization, token emergency pause, and excess reserve liability protection.
+## 2026-10-03 — Unified Mining + Staking / $0.37 Pre-Listing Revision
+
+- Source branch: `revise/ath-unified-price-037`, based on main HEAD `e617b2a95d06ea816cee54d48fc649a5e8def7d4`.
+- ATH total supply remains fixed at **1,000,000,000 ATH**.
+- Mining allocation remains **700,000,000 ATH**; Mining v3.3 reward/booster/vesting logic remains unchanged.
+- Mining base reward remains **10 ATH/day**; stale frontend 1 ATH defaults/formulas were corrected.
+- Staking ecosystem allocation remains **300,000,000 ATH**.
+- Added `ATHPriceRegistry`: official pre-listing price **1 ATH = $0.37**, `PRE_LISTING_FIXED`.
+- Official listing holder gate: **15,000 holders**. Live DEX price may be exposed separately before listing without replacing the official $0.37 reference.
+- Mining and Staking now consume the same ATH Price Registry.
+- Added unified Mining + Staking portal, responsive Staking UI, stake/claim/withdraw workflow, and 10-language Staking translation layer.
+- Mainnet remains fail-closed; no LIVE/mainnet deployment was enabled.
+- QC evidence: source self-check PASS, web i18n QC PASS, **40 contract tests PASS**, ABI export PASS, local release rehearsal PASS, web /health + /config runtime smoke PASS.

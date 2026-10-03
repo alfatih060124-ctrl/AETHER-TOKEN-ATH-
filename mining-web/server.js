@@ -64,8 +64,9 @@ const MIME = {
 
 function configPayload() {
   return {
-    appName: "AETHER ATH Mining",
+    appName: "AETHER ATH",
     miningProtocolVersion: "3.3",
+    stakingProtocolVersion: "1.0",
     whitepaperVersion: "1.1",
     networkMode: (process.env.NETWORK_MODE || "TESTNET").toUpperCase(),
     chainId: Number(process.env.PUBLIC_CHAIN_ID || 97),
@@ -73,6 +74,9 @@ function configPayload() {
     rpcUrl: process.env.PUBLIC_RPC_URL || "https://bsc-testnet-rpc.publicnode.com",
     explorerUrl: process.env.PUBLIC_EXPLORER_URL || "https://testnet.bscscan.com",
     miningAddress: (process.env.ATH_MINING_ADDRESS || "").trim(),
+    stakingAddress: (process.env.ATH_STAKING_ADDRESS || "").trim(),
+    stakingOracleAddress: (process.env.ATH_STAKING_ORACLE_ADDRESS || "").trim(),
+    priceRegistryAddress: (process.env.ATH_PRICE_REGISTRY_ADDRESS || "").trim(),
     tokenAddress: (process.env.ATH_TOKEN_ADDRESS || "").trim(),
     teamLockAddress: (process.env.ATH_TEAM_LOCK_ADDRESS || "").trim(),
     liquidityWallet: (process.env.PUBLIC_LIQUIDITY_WALLET || "").trim(),
@@ -81,6 +85,8 @@ function configPayload() {
     powerPriceBnb: "0.001",
     boosterPriceBnb: "0.001",
     maxMiningDays: 180,
+    preListingPriceUsd: "0.37",
+    listingHolderTarget: 15000,
     mainnetEnabled: process.env.ALLOW_MAINNET_DEPLOY === "true",
     adminMainnetWritesEnabled: process.env.ADMIN_MAINNET_WRITES_ENABLED === "true",
   };
@@ -165,11 +171,13 @@ const server = http.createServer((req, res) => {
       200,
       JSON.stringify({
         ok: true,
-        service: "aether-ath-mining-web",
+        service: "aether-ath-unified-web",
         miningProtocolVersion: cfg.miningProtocolVersion,
         whitepaperVersion: cfg.whitepaperVersion,
         networkMode: cfg.networkMode,
         contractConfigured: Boolean(cfg.miningAddress),
+        stakingConfigured: Boolean(cfg.stakingAddress),
+        priceRegistryConfigured: Boolean(cfg.priceRegistryAddress),
         mainnetEnabled: cfg.mainnetEnabled,
         aiAssistant: {
           available: true,

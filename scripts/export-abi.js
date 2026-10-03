@@ -14,6 +14,11 @@ const contracts = [
     output: "ATHToken.json",
   },
   {
+    name: "ATHPriceRegistry",
+    artifact: path.join(ROOT, "artifacts", "contracts", "ATHPriceRegistry.sol", "ATHPriceRegistry.json"),
+    output: "ATHPriceRegistry.v1.json",
+  },
+  {
     name: "MiningAirdrop",
     artifact: path.join(ROOT, "artifacts", "contracts", "MiningAirdrop.sol", "MiningAirdrop.json"),
     output: "MiningAirdrop.v3.3.json",
@@ -65,6 +70,22 @@ const release = {
 for (const spec of contracts) {
   const artifact = JSON.parse(fs.readFileSync(spec.artifact, "utf8"));
 
+  if (spec.name === "ATHPriceRegistry") {
+    requiredFunctions(artifact.abi, [
+      "getPrice",
+      "getReferencePrice",
+      "getMarketPrice",
+      "listingReady",
+      "setMarketPriceOracle",
+      "recordHolderCount",
+      "activateOfficialListing",
+      "HOLDER_TARGET",
+      "PRE_LISTING_PRICE",
+      "priceMode",
+      "officialListingActivated",
+    ]);
+  }
+
   if (spec.name === "MiningAirdrop") {
     requiredFunctions(artifact.abi, [
       "buyPower",
@@ -107,7 +128,7 @@ for (const spec of contracts) {
   }
 
   if (spec.name === "ATHStakingPriceOracle") {
-    requiredFunctions(artifact.abi, ["getPrice", "miningPriceSource", "PRICE_DECIMALS"]);
+    requiredFunctions(artifact.abi, ["getPrice", "getMarketPrice", "priceRegistry", "PRICE_DECIMALS"]);
   }
 
   if (spec.name === "ATHDevelopmentVesting") {

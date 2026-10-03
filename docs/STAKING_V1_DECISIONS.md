@@ -23,9 +23,9 @@ ATH Staking v1 is a new module beside ATH Mining.
 
 ## Staking valuation
 
-- Unified protocol price starts at **1 ATH = $0.10**.
-- Mining raises the protocol price by **$0.001 for each complete 100,000 ATH mined**.
-- Oracle representation uses 8 decimals; the $0.10 starting price is 10,000,000.
+- Unified official pre-listing price is **1 ATH = $0.37**.
+- Mining no longer changes the official price from mined volume; it reads the shared **ATHPriceRegistry**.
+- Registry/oracle representation uses 8 decimals; the $0.37 pre-listing price is 37,000,000.
 - ATHStakingPriceOracle has an immutable Mining price-source address and no owner price setter.
 - Staking accounting reads the same live protocol price as Mining; this is not a guarantee of public-market price.
 
@@ -74,7 +74,7 @@ Staking principal and reward reserve are separate accounting liabilities.
 - Partial-day elapsed time is preserved for the next claim rather than discarded.
 - Reward accrual stops at the position lock-end timestamp.
 - Principal withdrawal after maturity does not erase already-accrued unclaimed reward.
-- ATH conversion uses the immutable $0.10 Staking reference price.
+- ATH conversion uses the shared $0.37 pre-listing registry price until official listing.
 
 ## Development vesting — 30M ATH
 
@@ -88,7 +88,7 @@ Staking principal and reward reserve are separate accounting liabilities.
 
 - `ATHToken.sol`: existing fixed 1B ATH token; unchanged.
 - `MiningAirdrop.sol`: Mining v3.3; source-locked and unchanged.
-- `ATHStakingPriceOracle.sol`: immutable Mining price-source binding; starts at $0.10 and follows the unified stepped ATH price.
+- `ATHStakingPriceOracle.sol`: compatibility adapter bound to `ATHPriceRegistry`; it follows the registry's fixed pre-listing price and later official market mode.
 - `ATHStaking.sol`: packages, principal, reward reserve, direct referral and 10-level network reward.
 - `ATHDevelopmentVesting.sol`: 30M development vesting.
 
