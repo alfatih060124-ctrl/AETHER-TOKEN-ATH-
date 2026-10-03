@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+interface IATHMiningPriceSource {
+    function getCurrentPrice() external view returns (uint256 priceInMicroUSD);
+}
+
 /// @title ATH Staking Price Oracle
-/// @notice Fixed protocol reference price for ATH Staking v1.
-/// @dev 8 decimals: $0.10 = 10_000_000. This is a protocol valuation,
-///      not a market-price guarantee.
+/// @notice Uses the same ATH protocol price source as ATH Mining.
+/// @dev Mining exposes 6-decimal micro-USD. Staking consumes 8-decimal USD,
+///      so getPrice() multiplies the Mining value by 100.
+///      Base: $0.10. Step: +$0.001 per complete 100,000 ATH mined.
 contract ATHStakingPriceOracle {
     uint256 public constant PRICE_DECIMALS = 8;
-    uint256 public constant ATH_PRICE_USD8 = 10_000_000;
+    IATHMiningPriceSource public immutable miningPriceSource;
 
-    function getPrice() external pure returns (uint256) {
-        return ATH_PRICE_USD8;
+    constructor(address miningPriceSource_) {
+        require(miningPriceSource_ != address(0), "zero mining price source");
+        miningPriceSource = IATHMiningPriceSource(miningPriceSource_);
+    }
+
+    function getPrice() external view returns (uint256) {
+        return miningPriceSource.getCurrentPrice() * 100;
     }
 }
