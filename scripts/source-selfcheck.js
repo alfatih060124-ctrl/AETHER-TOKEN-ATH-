@@ -20,6 +20,7 @@ const deploy = read("scripts/deploy.js");
 const preflight = read("scripts/preflight.js");
 const env = read(".env.example");
 const miningWeb = read("mining-web/public/app.js");
+const presaleWeb = read("mining-web/public/presale.js");
 const stakingWeb = read("mining-web/public/staking.js");
 const portalHtml = read("mining-web/public/index.html");
 const webServer = read("mining-web/server.js");
@@ -115,12 +116,19 @@ must(mining, /priceRegistry\.getPrice\(\) \/ 100/, "Mining compatibility price m
 must(stakingOracle, /priceRegistry/, "Staking oracle uses the unified ATH price registry");
 must(stakingOracle, /return priceRegistry\.getPrice\(\)/, "Staking reads the same official ATH price");
 must(miningWeb, /10 ATH × referral × booster/, "Mining frontend uses the 10 ATH base reward");
+must(portalHtml, /id="buy-ath"/, "Unified portal exposes the on-chain Presale storefront");
 must(portalHtml, /id="staking"/, "Unified portal exposes the Staking section");
+must(presaleWeb, /quotePaymentForATH/, "Presale storefront reads contract-native quotes");
+must(presaleWeb, /payment\.approve\(cfg\.presaleAddress, maxPayment\)/, "Presale storefront performs holder-signed payment approval");
+must(presaleWeb, /presale\.buyATH\(amount, maxPayment\)/, "Presale storefront executes direct on-chain ATH purchase");
+must(presaleWeb, /Network gas is paid by the holder/, "Presale storefront discloses holder-paid gas");
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
 must(stakingWeb, /withdrawPrincipal/, "Staking frontend exposes principal withdrawal");
 must(webServer, /preListingPriceUsd: "0.37"/, "Web config exposes the $0.37 pre-listing price");
 must(webServer, /listingHolderTarget: 15000/, "Web config exposes the 15,000-holder listing gate");
+must(webServer, /presaleAddress: \(process\.env\.ATH_PRESALE_ADDRESS/, "Web config exposes the deployed Presale address");
+must(webServer, /presalePaymentToken: \(process\.env\.PRESALE_PAYMENT_TOKEN/, "Web config exposes the Presale payment-token address");
 
 must(developmentVesting, /TOTAL_ALLOCATION\s*=\s*30_000_000 ether/, "Development vesting allocation is 30,000,000 ATH");
 must(developmentVesting, /CLIFF_MONTHS\s*=\s*2/, "Development vesting cliff is 2 months");
