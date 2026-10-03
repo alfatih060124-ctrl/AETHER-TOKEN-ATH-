@@ -370,6 +370,16 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(final.burn60 + final.distribution40).to.equal(final.principal);
   });
 
+  it("requires the holder wallet to pay gas for explicit vesting processing", async function () {
+    const { alice, bob, mining } = await deployFixture();
+    await buyPowerBeforeOpen(mining, alice);
+    await mining.connect(alice).claimDaily();
+
+    await expect(
+      mining.connect(bob).processVestingPosition(alice.address, 0)
+    ).to.be.revertedWith("Holder only");
+  });
+
   it("burns 10% exactly when the 80% tranche enters Cycle 1", async function () {
     const { alice, token, mining } = await deployFixture();
     await buyPowerBeforeOpen(mining, alice);
@@ -379,7 +389,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     const [, startTime] = [null, (await mining.getVestingPositionSummary(alice.address, 0))[0].startTime];
     await time.increaseTo(Number(startTime) + 180 * DAY);
 
-    await expect(mining.processVestingPosition(alice.address, 0))
+    await expect(mining.connect(alice).processVestingPosition(alice.address, 0))
       .to.emit(mining, "VestingCycleEntered")
       .and.to.emit(mining, "ATHBurned");
 
@@ -396,7 +406,7 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     const [position] = await mining.getVestingPositionSummary(alice.address, 0);
     await time.increaseTo(Number(position.startTime) + (13 * 180 * DAY));
 
-    await mining.processVestingPosition(alice.address, 0);
+    await mining.connect(alice).processVestingPosition(alice.address, 0);
     const expected = modelFinal(ethers.parseEther("10"));
 
     expect(await mining.globalBurned()).to.equal(expected.burned);
