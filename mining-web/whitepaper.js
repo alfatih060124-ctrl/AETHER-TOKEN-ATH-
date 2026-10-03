@@ -110,7 +110,7 @@ function streamWhitepaper(res) {
     "Each eligible reward opens at 00:05:00 UTC and closes at 23:59:59 UTC.",
     "An unclaimed daily reward expires at the next UTC day boundary and is never backfilled.",
     "Referral state and active Booster state are snapshotted for that reward at 00:05 UTC.",
-    "A permissionless keeper can materialize RewardCalculated and RewardExpired evidence in capped batches without holding owner/admin rights.",
+    "Permissionless batch functions can materialize RewardCalculated and RewardExpired evidence, but AETHER does not fund them as a Mainnet holder-gas subsidy.",
     "An on-chain paginated miner registry lets the keeper discover Power holders without relying on an external holder database.",
     "The 180-day Power window limits eligibility; it is not an unlimited emissions schedule.",
     "The mining reserve must be funded before claims can allocate rewards."
@@ -154,8 +154,8 @@ function streamWhitepaper(res) {
     "Liquidity-lock gate: must be confirmed before Mainnet activation.",
     "Mining reserve protection: allocated but unclaimed vesting liabilities are protected from excess-reserve withdrawal.",
     "Administrative controls include emergency pause, treasury update, and pause-gated excess reserve recovery.",
-    "Reward automation uses permissionless batch functions capped at 50 accounts and an on-chain miner registry paginated at 200 accounts.",
-    "The keeper wallet is designed as a gas-only automation key with no owner, treasury, vesting, Booster-price, or token-control authority.",
+    "Permissionless reward-transparency batch functions remain capped at 50 accounts and use an on-chain miner registry paginated at 200 accounts."
+    "AETHER does not sponsor production holder gas. Holder state-changing actions are signed by the holder wallet and paid in BNB by the holder; any keeper wallet is Testnet/audit tooling only."
     "Browser transactions use the connected wallet for signing; private deployment keys are not embedded in the public web interface."
   ], y + 10);
 
