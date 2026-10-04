@@ -60,6 +60,10 @@ async function main() {
   }
 
   const stakingAddress = required("ATH_STAKING_ADDRESS");
+  const expectedKeeperWallet = required("KEEPER_WALLET_ADDRESS");
+  if (!ethers.isAddress(expectedKeeperWallet) || expectedKeeperWallet === ethers.ZeroAddress) {
+    throw new Error("KEEPER_WALLET_ADDRESS must be a non-zero EVM address");
+  }
   if (!ethers.isAddress(stakingAddress) || stakingAddress === ethers.ZeroAddress) {
     throw new Error("ATH_STAKING_ADDRESS must be a non-zero EVM address");
   }
@@ -123,6 +127,7 @@ async function main() {
     networkMarketingReserveATH: ethers.formatEther(networkReserve),
     batchSize,
     pageSize,
+    expectedKeeperWallet: ethers.getAddress(expectedKeeperWallet),
     transactions: 0,
     processedAccounts: 0,
   };
@@ -147,6 +152,11 @@ async function main() {
 
   const privateKey = required("PRIVATE_KEY");
   const wallet = new ethers.Wallet(privateKey, provider);
+  if (wallet.address.toLowerCase() !== expectedKeeperWallet.toLowerCase()) {
+    throw new Error(
+      `Keeper private key mismatch: derived ${wallet.address}, expected ${ethers.getAddress(expectedKeeperWallet)}`
+    );
+  }
   const minBalance = ethers.parseEther(process.env.RANK_KEEPER_MIN_BNB || "0.005");
   const balance = await provider.getBalance(wallet.address);
   if (balance < minBalance) {
