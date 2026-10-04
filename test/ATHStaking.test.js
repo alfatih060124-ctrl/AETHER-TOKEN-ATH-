@@ -3,40 +3,59 @@ const { ethers } = require("hardhat");
 
 const DAY = 24 * 60 * 60;
 const MONTH = 30 * DAY;
-const PRINCIPAL_10_USDT_AT_037 = 27027027027027027027n;
-const DIRECT_REFERRAL_AT_037 = 2702702702702702702n;
-const DAILY_REWARD_0035_AT_037 = 94594594594594594n;
-const NETWORK_L1_AT_037 = 7567567567567567n;
-const REWARD_63_USDT_AT_037 = 17027027027027027027n;
+const PRICE_007 = 7_000_000n;
+const PRICE_0071 = 7_100_000n;
+
+function athForUsd(usd18, price8) {
+  return (usd18 * 100_000_000n) / price8;
+}
 
 async function increase(seconds) {
   await ethers.provider.send("evm_increaseTime", [seconds]);
   await ethers.provider.send("evm_mine", []);
 }
 
+async function setNextTimestamp(timestamp) {
+  await ethers.provider.send("evm_setNextBlockTimestamp", [Number(timestamp)]);
+  await ethers.provider.send("evm_mine", []);
+}
+
 describe("AETHER ATH Staking v1", function () {
-  let owner, user, referrer, second, treasury;
-  let token, priceRegistry, mining, oracle, staking;
+  let signers;
+  let owner, user, referrer, second, treasury, presaleBuyer, leg1, leg2, leg3, leg4, leg5, keeper;
+  let token, stable, presale, priceRegistry, oracle, staking;
 
   beforeEach(async function () {
-    [owner, user, referrer, second, treasury] = await ethers.getSigners();
+    signers = await ethers.getSigners();
+    [
+      owner, user, referrer, second, treasury, presaleBuyer,
+      leg1, leg2, leg3, leg4, leg5, keeper
+    ] = signers;
 
     const Token = await ethers.getContractFactory("ATHToken");
     token = await Token.deploy(owner.address);
     await token.waitForDeployment();
 
-    const PriceRegistry = await ethers.getContractFactory("ATHPriceRegistry");
-    priceRegistry = await PriceRegistry.deploy(owner.address);
-    await priceRegistry.waitForDeployment();
+    const Stable = await ethers.getContractFactory("MockStablecoin");
+    stable = await Stable.deploy(6);
+    await stable.waitForDeployment();
 
-    const Mining = await ethers.getContractFactory("MiningAirdrop");
-    mining = await Mining.deploy(
+    const Presale = await ethers.getContractFactory("ATHPresale");
+    presale = await Presale.deploy(
       await token.getAddress(),
+      await stable.getAddress(),
       treasury.address,
-      await priceRegistry.getAddress(),
       owner.address
     );
-    await mining.waitForDeployment();
+    await presale.waitForDeployment();
+    await token.transfer(await presale.getAddress(), ethers.parseEther("30000000"));
+
+    await stable.mint(presaleBuyer.address, 100_000_000n * 1_000_000n);
+    await stable.connect(presaleBuyer).approve(await presale.getAddress(), ethers.MaxUint256);
+
+    const Registry = await ethers.getContractFactory("ATHPriceRegistry");
+    priceRegistry = await Registry.deploy(await presale.getAddress(), owner.address);
+    await priceRegistry.waitForDeployment();
 
     const Oracle = await ethers.getContractFactory("ATHStakingPriceOracle");
     oracle = await Oracle.deploy(await priceRegistry.getAddress());
@@ -50,26 +69,42 @@ describe("AETHER ATH Staking v1", function () {
     );
     await staking.waitForDeployment();
 
-    for (const signer of [user, referrer, second]) {
-      await token.transfer(signer.address, ethers.parseEther("1000000"));
+    for (const signer of [user, referrer, second, leg1, leg2, leg3, leg4, leg5]) {
+      await token.transfer(signer.address, ethers.parseEther("6000000"));
       await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
     }
 
     await token.approve(await staking.getAddress(), ethers.MaxUint256);
-    await staking.fundRewards(ethers.parseEther("1000000"));
+    await staking.fundRewards(ethers.parseEther("160000000"));
   });
 
-  it("keeps ATH fixed at 1B while Staking uses the unified $0.37 pre-listing price registry", async function () {
+  it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
-    expect(await priceRegistry.getPrice()).to.equal(37_000_000n);
-    expect(await priceRegistry.HOLDER_TARGET()).to.equal(15_000n);
-    expect(await oracle.getPrice()).to.equal(37_000_000n);
-    expect(await oracle.priceRegistry()).to.equal(await priceRegistry.getAddress());
+    expect(await presale.currentPriceUSD8()).to.equal(PRICE_007);
+    expect(await priceRegistry.getPrice()).to.equal(PRICE_007);
+    expect(await oracle.getPrice()).to.equal(PRICE_007);
     expect(await staking.getATHAmount(ethers.parseEther("10"))).to.equal(
-      PRINCIPAL_10_USDT_AT_037
+      athForUsd(ethers.parseEther("10"), PRICE_007)
     );
     expect(await staking.STAKING_ECOSYSTEM_ALLOCATION()).to.equal(
       ethers.parseEther("300000000")
+    );
+  });
+
+  it("immediately follows the Presale price after 100,000 ATH are sold", async function () {
+    const before = await staking.getATHAmount(ethers.parseEther("10"));
+    expect(before).to.equal(athForUsd(ethers.parseEther("10"), PRICE_007));
+
+    await presale.connect(owner).unpause();
+    const amount = ethers.parseEther("100000");
+    const quote = await presale.quotePaymentForATH(amount);
+    await presale.connect(presaleBuyer).buyATH(amount, quote);
+
+    expect(await presale.currentPriceUSD8()).to.equal(PRICE_0071);
+    expect(await priceRegistry.getPrice()).to.equal(PRICE_0071);
+    expect(await oracle.getPrice()).to.equal(PRICE_0071);
+    expect(await staking.getATHAmount(ethers.parseEther("10"))).to.equal(
+      athForUsd(ethers.parseEther("10"), PRICE_0071)
     );
   });
 
@@ -100,28 +135,27 @@ describe("AETHER ATH Staking v1", function () {
 
   it("keeps principal liability separate from the reward reserve", async function () {
     const reserveBefore = await staking.rewardReserveATH();
+    const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
     await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
 
-    expect(await staking.principalLiabilityATH()).to.equal(PRINCIPAL_10_USDT_AT_037);
+    expect(await staking.principalLiabilityATH()).to.equal(principal);
     expect(await staking.rewardReserveATH()).to.equal(reserveBefore);
     expect(await token.balanceOf(await staking.getAddress())).to.equal(
-      reserveBefore + PRINCIPAL_10_USDT_AT_037
+      reserveBefore + principal
     );
   });
 
   it("pays the 10% direct referral reward from reward reserve, not principal", async function () {
     const reserveBefore = await staking.rewardReserveATH();
+    const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
+    const expectedReferral = (principal * 1_000n) / 10_000n;
     const refBefore = await token.balanceOf(referrer.address);
 
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
 
-    expect(await token.balanceOf(referrer.address) - refBefore).to.equal(
-      DIRECT_REFERRAL_AT_037
-    );
-    expect(await staking.principalLiabilityATH()).to.equal(PRINCIPAL_10_USDT_AT_037);
-    expect(await staking.rewardReserveATH()).to.equal(
-      reserveBefore - DIRECT_REFERRAL_AT_037
-    );
+    expect(await token.balanceOf(referrer.address) - refBefore).to.equal(expectedReferral);
+    expect(await staking.principalLiabilityATH()).to.equal(principal);
+    expect(await staking.rewardReserveATH()).to.equal(reserveBefore - expectedReferral);
   });
 
   it("accrues rewards only by completed days and preserves partial-day time", async function () {
@@ -135,7 +169,7 @@ describe("AETHER ATH Staking v1", function () {
     const before = await token.balanceOf(user.address);
     await staking.connect(user).claimReward(0);
     expect(await token.balanceOf(user.address) - before).to.equal(
-      DAILY_REWARD_0035_AT_037
+      athForUsd(ethers.parseEther("0.035"), PRICE_007)
     );
 
     await increase(DAY / 2);
@@ -148,13 +182,14 @@ describe("AETHER ATH Staking v1", function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
     await increase(DAY);
 
+    const rewardATH = athForUsd(ethers.parseEther("0.035"), PRICE_007);
+    const expectedNetwork = (rewardATH * 800n) / 10_000n;
     const refBefore = await token.balanceOf(referrer.address);
     await staking.connect(user).claimReward(0);
-    const networkGain = (await token.balanceOf(referrer.address)) - refBefore;
 
-    expect(networkGain).to.equal(NETWORK_L1_AT_037);
+    expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(expectedNetwork);
     expect((await staking.userInfo(referrer.address)).totalNetworkEarnedATH).to.equal(
-      NETWORK_L1_AT_037
+      expectedNetwork
     );
   });
 
@@ -180,6 +215,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("returns the exact ATH principal after lock without erasing accrued reward", async function () {
+    const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
     await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
 
     await expect(staking.connect(user).withdrawPrincipal(0)).to.be.revertedWith("still locked");
@@ -187,9 +223,7 @@ describe("AETHER ATH Staking v1", function () {
     await increase(180 * DAY);
     const before = await token.balanceOf(user.address);
     await staking.connect(user).withdrawPrincipal(0);
-    expect((await token.balanceOf(user.address)) - before).to.equal(
-      PRINCIPAL_10_USDT_AT_037
-    );
+    expect((await token.balanceOf(user.address)) - before).to.equal(principal);
     expect(await staking.principalLiabilityATH()).to.equal(0n);
 
     expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(
@@ -198,7 +232,7 @@ describe("AETHER ATH Staking v1", function () {
     const rewardBefore = await token.balanceOf(user.address);
     await staking.connect(user).claimReward(0);
     expect((await token.balanceOf(user.address)) - rewardBefore).to.equal(
-      REWARD_63_USDT_AT_037
+      athForUsd(ethers.parseEther("6.3"), PRICE_007)
     );
   });
 
@@ -238,6 +272,137 @@ describe("AETHER ATH Staking v1", function () {
 
     await staking.recoverExcessATH(treasury.address, ethers.parseEther("5"));
     expect(await staking.availableExcessATH()).to.equal(0n);
+  });
+
+  it("locks the eight final rank thresholds and weekly salaries", async function () {
+    const thresholds = ["1000","5000","15000","50000","100000","250000","500000","1000000"];
+    const salaries = ["25","75","200","500","1000","2000","5000","10000"];
+    for (let i = 0; i < 8; i++) {
+      expect(await staking.rankSmallLegThresholdUSDT(i)).to.equal(ethers.parseEther(thresholds[i]));
+      expect(await staking.rankWeeklySalaryUSDT(i)).to.equal(ethers.parseEther(salaries[i]));
+    }
+    expect(await staking.MIN_DIRECT_SPONSORS_FOR_RANK()).to.equal(5n);
+  });
+
+  it("calculates the user's five-leg example dynamically: 900 big leg and 3,539 small leg", async function () {
+    const legs = [leg1, leg2, leg3, leg4, leg5];
+    const values = ["900","899","890","880","870"];
+
+    for (let i = 0; i < legs.length; i++) {
+      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+    }
+
+    const snapshot = await staking.getSmallLegTurnoverUSDT(user.address);
+    expect(snapshot.totalTurnover).to.equal(ethers.parseEther("4439"));
+    expect(snapshot.largestTurnover).to.equal(ethers.parseEther("900"));
+    expect(snapshot.smallLegTurnover).to.equal(ethers.parseEther("3539"));
+    expect(snapshot.bigLeg).to.equal(leg1.address);
+    expect(await staking.directSponsorCount(user.address)).to.equal(5n);
+    expect(await staking.getEligibleRank(user.address)).to.equal(1n);
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
+  });
+
+  it("requires at least five direct sponsors even if four legs already meet small-leg turnover", async function () {
+    for (const leg of [leg1, leg2, leg3, leg4]) {
+      await staking.connect(leg).stake(2, ethers.parseEther("500"), user.address);
+    }
+    expect((await staking.getSmallLegTurnoverUSDT(user.address)).smallLegTurnover)
+      .to.equal(ethers.parseEther("1500"));
+    expect(await staking.getEligibleRank(user.address)).to.equal(0n);
+
+    await staking.connect(leg5).stake(2, ethers.parseEther("500"), user.address);
+    expect(await staking.directSponsorCount(user.address)).to.equal(5n);
+    expect(await staking.getEligibleRank(user.address)).to.equal(1n);
+  });
+
+  it("changes the big leg dynamically when another direct leg overtakes it", async function () {
+    const legs = [leg1, leg2, leg3, leg4, leg5];
+    const values = ["900","899","890","880","870"];
+    for (let i = 0; i < legs.length; i++) {
+      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+    }
+
+    expect((await staking.getSmallLegTurnoverUSDT(user.address)).bigLeg).to.equal(leg1.address);
+
+    await staking.connect(leg2).stake(1, ethers.parseEther("100"), user.address);
+    const snapshot = await staking.getSmallLegTurnoverUSDT(user.address);
+    expect(snapshot.bigLeg).to.equal(leg2.address);
+    expect(snapshot.largestTurnover).to.equal(ethers.parseEther("999"));
+    expect(snapshot.smallLegTurnover).to.equal(ethers.parseEther("3540"));
+  });
+
+  it("qualifies Rank 8 at $1,000,000 small-leg turnover with five direct sponsors", async function () {
+    const legs = [leg1, leg2, leg3, leg4, leg5];
+    const values = ["300000","250000","250000","250000","250000"];
+    for (let i = 0; i < legs.length; i++) {
+      await staking.connect(legs[i]).stake(5, ethers.parseEther(values[i]), user.address);
+    }
+
+    const snapshot = await staking.getSmallLegTurnoverUSDT(user.address);
+    expect(snapshot.largestTurnover).to.equal(ethers.parseEther("300000"));
+    expect(snapshot.smallLegTurnover).to.equal(ethers.parseEther("1000000"));
+    expect(await staking.getEligibleRank(user.address)).to.equal(8n);
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(8n);
+  });
+
+  it("pays Rank salary at the scheduled 00:30 UTC slot seven days after qualification", async function () {
+    const legs = [leg1, leg2, leg3, leg4, leg5];
+    const values = ["900","899","890","880","870"];
+    for (let i = 0; i < legs.length; i++) {
+      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+    }
+
+    const info = await staking.rankInfo(user.address);
+    expect(info.highestRank).to.equal(1n);
+    expect(info.nextPayoutAt).to.be.greaterThanOrEqual(info.firstRankAchievedAt + BigInt(7 * DAY));
+    expect(info.nextPayoutAt % BigInt(DAY)).to.equal(1800n);
+
+    await expect(staking.connect(user).claimRankSalary()).to.be.revertedWith("rank salary not due");
+
+    await setNextTimestamp(info.nextPayoutAt);
+    const before = await token.balanceOf(user.address);
+    const reserveBefore = await staking.rewardReserveATH();
+    const expectedSalaryATH = athForUsd(ethers.parseEther("25"), PRICE_007);
+
+    await staking.connect(keeper).processRankSalary(user.address);
+
+    expect((await token.balanceOf(user.address)) - before).to.equal(expectedSalaryATH);
+    expect(reserveBefore - (await staking.rewardReserveATH())).to.equal(expectedSalaryATH);
+
+    const afterInfo = await staking.rankInfo(user.address);
+    expect(afterInfo.totalSalaryPaidUSDT).to.equal(ethers.parseEther("25"));
+    expect(afterInfo.totalSalaryPaidATH).to.equal(expectedSalaryATH);
+    expect(afterInfo.nextPayoutAt).to.equal(info.nextPayoutAt + BigInt(7 * DAY));
+  });
+
+  it("keeps the Rank salary fixed in USD while ATH amount follows the newer Presale price", async function () {
+    const legs = [leg1, leg2, leg3, leg4, leg5];
+    const values = ["900","899","890","880","870"];
+    for (let i = 0; i < legs.length; i++) {
+      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+    }
+
+    let info = await staking.rankInfo(user.address);
+    await setNextTimestamp(info.nextPayoutAt);
+    await staking.connect(keeper).processRankSalary(user.address);
+
+    await presale.connect(owner).unpause();
+    const tranche = ethers.parseEther("100000");
+    const quote = await presale.quotePaymentForATH(tranche);
+    await presale.connect(presaleBuyer).buyATH(tranche, quote);
+    expect(await priceRegistry.getPrice()).to.equal(PRICE_0071);
+
+    info = await staking.rankInfo(user.address);
+    await setNextTimestamp(info.nextPayoutAt);
+
+    const before = await token.balanceOf(user.address);
+    const expectedAtNewPrice = athForUsd(ethers.parseEther("25"), PRICE_0071);
+    await staking.connect(keeper).processRankSalary(user.address);
+
+    expect((await token.balanceOf(user.address)) - before).to.equal(expectedAtNewPrice);
+    expect((await staking.rankInfo(user.address)).totalSalaryPaidUSDT).to.equal(
+      ethers.parseEther("50")
+    );
   });
 });
 
