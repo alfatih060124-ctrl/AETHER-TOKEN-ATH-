@@ -198,7 +198,7 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
-  it("allows a permissionless 00:50 keeper to settle holder reward and Network Bonus in real time", async function () {
+  it("allows a permissionless 00:50 keeper to settle holder reward and Lifestyle Bonus / Matching Staking in real time", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
     await advanceToRewardSlot(staking, user.address, 0);
 
@@ -207,7 +207,9 @@ describe("AETHER ATH Staking v1", function () {
     const userBefore = await token.balanceOf(user.address);
     const refBefore = await token.balanceOf(referrer.address);
 
-    await staking.connect(keeper).processDailyReward(user.address, 0);
+    await expect(staking.connect(keeper).processDailyReward(user.address, 0))
+      .to.emit(staking, "LifestyleMatchingStakingPaid")
+      .withArgs(referrer.address, user.address, 1n, networkATH);
 
     expect((await token.balanceOf(user.address)) - userBefore).to.equal(rewardATH);
     expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(networkATH);
@@ -238,7 +240,7 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.getPendingRewardUSDT(second.address, 0)).to.equal(0n);
   });
 
-  it("distributes level-1 network reward at 8% of the user's daily reward", async function () {
+  it("distributes Lifestyle Bonus / Matching Staking level 1 at 8% of the user's daily reward", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
     await advanceToRewardSlot(staking, user.address, 0);
 
@@ -253,7 +255,18 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
-  it("distributes the complete 10-level network schedule 8/5/3/2/1/0.5x5", async function () {
+  it("exposes Lifestyle Bonus / Matching Staking aliases without changing the locked rates", async function () {
+    const expected = [800n, 500n, 300n, 200n, 100n, 50n, 50n, 50n, 50n, 50n];
+    for (let level = 1; level <= 10; level++) {
+      expect(await staking.lifestyleMatchingRateBps(level)).to.equal(expected[level - 1]);
+      expect(await staking.networkRates(level - 1)).to.equal(expected[level - 1]);
+    }
+    expect(await staking.totalLifestyleMatchingPaidATH()).to.equal(
+      await staking.totalNetworkPaidATH()
+    );
+  });
+
+  it("distributes the complete 10-level Lifestyle Bonus / Matching Staking schedule 8/5/3/2/1/0.5x5", async function () {
     const chain = signers.slice(1, 12);
     for (const member of chain) {
       await token.transfer(member.address, ethers.parseEther("1000000"));
