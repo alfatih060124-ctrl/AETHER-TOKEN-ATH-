@@ -22,6 +22,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant REFERRAL_BPS = 1_000; // 10%
     uint256 public constant STAKING_ECOSYSTEM_ALLOCATION = 300_000_000 ether;
     uint256 public constant MAX_REWARD_POOL = 160_000_000 ether;
+    uint256 public constant MAX_NETWORK_MARKETING_POOL = 50_000_000 ether;
     uint256 public constant MIN_STAKE_USDT = 10 ether;
     uint256 public constant MAX_DAILY_RATE_BPS = 100; // hard safety cap: 1.00% / day
     uint256 public constant MAX_PACKAGE_LOCK_DAYS = 3_650;
@@ -93,7 +94,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalActiveStakedUSDT;
     uint256 public principalLiabilityATH;
     uint256 public rewardReserveATH;
+    uint256 public networkReserveATH;
     uint256 public totalRewardFundedATH;
+    uint256 public totalNetworkFundedATH;
     uint256 public totalRewardPaidATH;
     uint256 public totalReferralPaidATH;
     uint256 public totalNetworkPaidATH;
@@ -109,6 +112,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256[8] public rankWeeklySalaryUSDT;
 
     event RewardReserveFunded(address indexed funder, uint256 amount, uint256 reserveAfter);
+    event NetworkReserveFunded(address indexed funder, uint256 amount, uint256 reserveAfter);
     event ReferrerBound(address indexed user, address indexed referrer);
     event DirectSponsorAdded(address indexed sponsor, address indexed directUser, uint256 sponsorCount);
     event LegTurnoverUpdated(
@@ -309,7 +313,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
 
     function availableExcessATH() public view returns (uint256) {
         uint256 balance = athToken.balanceOf(address(this));
-        uint256 protectedBalance = principalLiabilityATH + rewardReserveATH;
+        uint256 protectedBalance = principalLiabilityATH + rewardReserveATH + networkReserveATH;
         return balance > protectedBalance ? balance - protectedBalance : 0;
     }
 
@@ -320,6 +324,17 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         totalRewardFundedATH += amount;
         rewardReserveATH += amount;
         emit RewardReserveFunded(msg.sender, amount, rewardReserveATH);
+    }
+
+    /// @notice Funds all Staking-network payouts from the fixed 50M ATH Marketing allocation.
+    /// @dev Direct referral, L1-L10 network rewards and lifetime Rank Salary use only this reserve.
+    function fundNetworkReserve(uint256 amount) external onlyOwner nonReentrant {
+        require(amount > 0, "zero amount");
+        require(totalNetworkFundedATH + amount <= MAX_NETWORK_MARKETING_POOL, "network pool cap");
+        athToken.safeTransferFrom(msg.sender, address(this), amount);
+        totalNetworkFundedATH += amount;
+        networkReserveATH += amount;
+        emit NetworkReserveFunded(msg.sender, amount, networkReserveATH);
     }
 
     function stake(uint256 packageId, uint256 amountUSDT, address referrer)
@@ -369,8 +384,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         address boundReferrer = user.referrer;
         if (boundReferrer != address(0)) {
             uint256 referralReward = (principalATH * REFERRAL_BPS) / BPS;
-            require(rewardReserveATH >= referralReward, "insufficient referral reserve");
-            rewardReserveATH -= referralReward;
+            require(networkReserveATH >= referralReward, "insufficient network reserve");
+            networkReserveATH -= referralReward;
             totalRewardPaidATH += referralReward;
             totalReferralPaidATH += referralReward;
             userInfo[boundReferrer].totalReferralEarnedATH += referralReward;
@@ -392,8 +407,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         (address[10] memory uplines, uint256[10] memory payouts, uint256 networkTotal) =
             _previewNetwork(msg.sender, rewardATH);
 
-        uint256 totalNeeded = rewardATH + networkTotal;
-        require(rewardReserveATH >= totalNeeded, "insufficient reward reserve");
+        require(rewardReserveATH >= rewardATH, "insufficient reward reserve");
+        require(networkReserveATH >= networkTotal, "insufficient network reserve");
 
         uint256 end = position.startTime + (position.lockDays * 1 days);
         uint256 effectiveNow = block.timestamp < end ? block.timestamp : end;
@@ -401,8 +416,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         position.lastClaimTime += fullDays * 1 days;
         position.totalClaimedUSDT += pendingUSDT;
 
-        rewardReserveATH -= totalNeeded;
-        totalRewardPaidATH += totalNeeded;
+        rewardReserveATH -= rewardATH;
+        networkReserveATH -= networkTotal;
+        totalRewardPaidATH += rewardATH + networkTotal;
 
         athToken.safeTransfer(msg.sender, rewardATH);
 
@@ -431,8 +447,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Permissionless batch processing for the 00:30 UTC weekly salary schedule.
-    /// @dev Accounts that are not due are skipped. Processing stops safely if the reward reserve
-    ///      cannot cover the next due salary.
+    /// @dev Accounts that are not due are skipped. Processing stops safely if the Marketing/network reserve
+    ///      cannot cover the next due salary. Unpaid lifetime salary remains due because nextPayoutAt is not advanced.
     function processRankSalaryBatch(address[] calldata accounts)
         external
         nonReentrant
@@ -449,7 +465,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             if (periodsDue == 0 || salaryUSDT == 0) continue;
 
             uint256 salaryATH = getATHAmount(salaryUSDT);
-            if (rewardReserveATH < salaryATH) break;
+            if (networkReserveATH < salaryATH) break;
 
             _settleRankSalary(account, periodsDue, salaryUSDT, salaryATH);
             processed += 1;
@@ -635,7 +651,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         if (periodsDue == 0 || salaryUSDT == 0) return;
 
         uint256 salaryATH = getATHAmount(salaryUSDT);
-        require(rewardReserveATH >= salaryATH, "insufficient rank reserve");
+        require(networkReserveATH >= salaryATH, "insufficient network reserve");
         _settleRankSalary(account, periodsDue, salaryUSDT, salaryATH);
     }
 
@@ -652,7 +668,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         info.totalSalaryPaidUSDT += salaryUSDT;
         info.totalSalaryPaidATH += salaryATH;
 
-        rewardReserveATH -= salaryATH;
+        networkReserveATH -= salaryATH;
         totalRewardPaidATH += salaryATH;
         totalRankSalaryPaidATH += salaryATH;
         totalRankSalaryPaidUSDT += salaryUSDT;
