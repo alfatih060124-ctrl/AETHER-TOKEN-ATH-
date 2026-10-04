@@ -190,6 +190,7 @@ for (const spec of contracts) {
       "totalRankSponsorPaidATH",
       "rankSponsorEarnedATH",
       "previewRankSponsorBonus",
+      "previewReferralPassUp",
       "MIN_DIRECT_SPONSORS_FOR_RANK",
       "RANK_PAYOUT_UTC_OFFSET",
       "pause",
