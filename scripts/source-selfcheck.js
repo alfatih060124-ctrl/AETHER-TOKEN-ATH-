@@ -251,6 +251,20 @@ must(deploy, /staking\.totalNetworkFundedATH\(\)/, "Deployment verifies the netw
 must(deploy, /parseEther\("20000000"\)/, "Deployment contains 20M Staking liquidity allocation");
 must(deploy, /parseEther\("10000000"\)/, "Deployment contains 10M Staking reserve allocation");
 must(deploy, /stakingBreakdown\s*!==\s*stakingEcosystem/, "Deployment asserts 300M Staking conservation");
+must(preflight, /MINING_OWNER_ADDRESS/, "Preflight requires dedicated Mining owner");
+must(preflight, /STAKING_OWNER_ADDRESS/, "Preflight requires dedicated Staking owner");
+must(preflight, /PRESALE_OWNER_ADDRESS/, "Preflight requires dedicated Presale\/Token owner");
+must(preflight, /KEEPER_WALLET_ADDRESS/, "Preflight requires dedicated Keeper wallet");
+must(deploy, /MiningAirdrop\.deploy\(tokenAddress, treasury, priceRegistryAddress, miningOwner\)/, "Deployment assigns Mining to Mining Admin");
+must(deploy, /ATHStaking[\s\S]*Staking\.deploy\(tokenAddress, oracleAddress, stakingOwner\)/, "Deployment assigns Staking to Staking Admin");
+must(deploy, /presaleWallet,\s*presaleOwner/, "Deployment assigns Presale to Presale Admin");
+must(deploy, /token\.transferOwnership\(tokenOwner\)/, "ATH Token ownership is transferred to Token\/Presale Admin");
+must(deploy, /PriceRegistry\.deploy\(presaleAddress, priceRegistryOwner\)/, "Price Registry belongs to Token\/Presale Admin");
+must(deploy, /const presaleAddress = await presale\.getAddress\(\)[\s\S]*PriceRegistry\.deploy\(presaleAddress/, "Presale deploys before Price Registry");
+must(rankKeeper, /KEEPER_WALLET_ADDRESS/, "Rank Salary keeper validates the dedicated Keeper wallet");
+must(rankKeeper, /Keeper private key mismatch/, "Rank Salary keeper rejects a mismatched private key");
+must(stakingRewardKeeper, /KEEPER_WALLET_ADDRESS/, "Staking reward keeper validates the dedicated Keeper wallet");
+must(stakingRewardKeeper, /Keeper private key mismatch/, "Staking reward keeper rejects a mismatched private key");
 must(preflight, /PRESALE_WALLET/, "Preflight requires Presale treasury role");
 must(preflight, /PRESALE_PAYMENT_TOKEN/, "Preflight requires Presale payment token");
 must(deploy, /ATHPresale/, "Deployment includes the ATH Presale engine");
@@ -259,6 +273,10 @@ must(preflight, /STAKING_RESERVE_WALLET/, "Preflight requires Staking reserve ro
 must(preflight, /DEVELOPMENT_BENEFICIARY/, "Preflight requires Development beneficiary role");
 
 for (const name of [
+  "MINING_OWNER_ADDRESS",
+  "STAKING_OWNER_ADDRESS",
+  "PRESALE_OWNER_ADDRESS",
+  "KEEPER_WALLET_ADDRESS",
   "PRESALE_WALLET",
   "PRESALE_PAYMENT_TOKEN",
   "LIQUIDITY_WALLET",
