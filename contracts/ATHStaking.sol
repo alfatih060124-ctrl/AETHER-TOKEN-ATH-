@@ -135,7 +135,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     // total direct-leg turnover minus the single largest direct leg.
     uint256[8] public rankSmallLegThresholdUSDT;
     uint256[8] public rankWeeklySalaryUSDT;
-    // Rank Sponsor Bonus: differential pass-up, max cumulative 35%.
+    // Direct Referral target by Rank. These totals INCLUDE the common 10% referral.
+    // Unranked sponsor = 10%; R1..R8 = 13/16/19/22/25/28/31/35%.
     uint256[8] public rankSponsorBonusBps = [1300, 1600, 1900, 2200, 2500, 2800, 3100, 3500];
     mapping(address => uint256) public rankSponsorEarnedATH;
 
@@ -514,18 +515,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 stakeId = userStakes[msg.sender].length - 1;
         address boundReferrer = user.referrer;
         if (boundReferrer != address(0)) {
-            uint256 referralReward = (principalATH * REFERRAL_BPS) / BPS;
-            require(networkReserveATH >= referralReward, "insufficient network reserve");
-            networkReserveATH -= referralReward;
-            totalRewardPaidATH += referralReward;
-            totalReferralPaidATH += referralReward;
-            userInfo[boundReferrer].totalReferralEarnedATH += referralReward;
-            athToken.safeTransfer(boundReferrer, referralReward);
-            emit ReferralPaid(boundReferrer, msg.sender, referralReward);
-
-            // Rank Sponsor Bonus uses the sponsor ranks that existed before this stake
-            // updates turnover/rank qualification. This enforces "already has Rank".
-            _payRankSponsorBonus(msg.sender, principalATH);
+            // One unified referral path:
+            // unranked direct sponsor = 10% total;
+            // ranked direct sponsor = 13/16/19/22/25/28/31/35% total.
+            // Rank percentages already include the common 10% Direct Referral.
+            _payReferralAndRankPassUp(msg.sender, principalATH);
         }
 
         _propagateLegTurnover(msg.sender, amountUSDT);
@@ -724,6 +718,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         returns (uint256 totalBonusATH, uint8 highestPaidRank, address sameRankBreakAt)
     {
         address current = userInfo[sourceUser].referrer;
+        uint256 paidBps = REFERRAL_BPS;
+
         for (uint256 depth = 0; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
             uint8 rank = rankInfo[current].highestRank;
             if (rank > 0) {
@@ -732,45 +728,124 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
                     break;
                 }
                 if (rank > highestPaidRank) {
-                    uint256 previousBps = highestPaidRank == 0 ? 0 : rankSponsorBonusBps[highestPaidRank - 1];
                     uint256 currentBps = rankSponsorBonusBps[rank - 1];
-                    totalBonusATH += (principalATH * (currentBps - previousBps)) / BPS;
-                    highestPaidRank = rank;
-                    if (rank == RANK_COUNT) break;
+                    if (currentBps > paidBps) {
+                        totalBonusATH += (principalATH * (currentBps - paidBps)) / BPS;
+                        paidBps = currentBps;
+                        highestPaidRank = rank;
+                        if (rank == RANK_COUNT) break;
+                    }
                 }
             }
             current = userInfo[current].referrer;
         }
     }
 
-    function _payRankSponsorBonus(address sourceUser, uint256 principalATH) internal {
-        address current = userInfo[sourceUser].referrer;
-        uint8 highestPaidRank = 0;
+    function previewReferralPassUp(address sourceUser, uint256 principalATH)
+        external
+        view
+        returns (
+            uint256 totalReferralPathATH,
+            uint256 directSponsorATH,
+            uint256 rankUpliftATH,
+            uint8 highestPaidRank,
+            address sameRankBreakAt
+        )
+    {
+        address directSponsor = userInfo[sourceUser].referrer;
+        if (directSponsor == address(0)) return (0, 0, 0, 0, address(0));
 
-        for (uint256 depth = 0; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
+        uint8 directRank = rankInfo[directSponsor].highestRank;
+        uint256 directBps = directRank == 0 ? REFERRAL_BPS : rankSponsorBonusBps[directRank - 1];
+        directSponsorATH = (principalATH * directBps) / BPS;
+        totalReferralPathATH = directSponsorATH;
+        if (directBps > REFERRAL_BPS) {
+            rankUpliftATH = (principalATH * (directBps - REFERRAL_BPS)) / BPS;
+        }
+
+        uint256 paidBps = directBps;
+        highestPaidRank = directRank;
+        address current = userInfo[directSponsor].referrer;
+
+        for (uint256 depth = 1; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
             uint8 rank = rankInfo[current].highestRank;
             if (rank > 0) {
-                if (rank == highestPaidRank) {
+                if (highestPaidRank > 0 && rank == highestPaidRank) {
+                    sameRankBreakAt = current;
+                    break;
+                }
+                if (rank > highestPaidRank) {
+                    uint256 currentBps = rankSponsorBonusBps[rank - 1];
+                    if (currentBps > paidBps) {
+                        uint256 amount = (principalATH * (currentBps - paidBps)) / BPS;
+                        rankUpliftATH += amount;
+                        totalReferralPathATH += amount;
+                        paidBps = currentBps;
+                        highestPaidRank = rank;
+                        if (rank == RANK_COUNT) break;
+                    }
+                }
+            }
+            current = userInfo[current].referrer;
+        }
+    }
+
+    function _payReferralAndRankPassUp(address sourceUser, uint256 principalATH) internal {
+        address directSponsor = userInfo[sourceUser].referrer;
+        if (directSponsor == address(0)) return;
+
+        uint8 directRank = rankInfo[directSponsor].highestRank;
+        uint256 directBps = directRank == 0 ? REFERRAL_BPS : rankSponsorBonusBps[directRank - 1];
+        uint256 directAmount = (principalATH * directBps) / BPS;
+
+        require(networkReserveATH >= directAmount, "insufficient network reserve");
+        networkReserveATH -= directAmount;
+        totalRewardPaidATH += directAmount;
+        totalReferralPaidATH += directAmount;
+        userInfo[directSponsor].totalReferralEarnedATH += directAmount;
+        athToken.safeTransfer(directSponsor, directAmount);
+        emit ReferralPaid(directSponsor, sourceUser, directAmount);
+
+        uint256 paidBps = directBps;
+        uint8 highestPaidRank = directRank;
+
+        if (directRank > 0 && directBps > REFERRAL_BPS) {
+            uint256 upliftBps = directBps - REFERRAL_BPS;
+            uint256 upliftAmount = (principalATH * upliftBps) / BPS;
+            totalRankSponsorPaidATH += upliftAmount;
+            rankSponsorEarnedATH[directSponsor] += upliftAmount;
+            emit RankSponsorBonusPaid(directSponsor, sourceUser, directRank, upliftBps, upliftAmount);
+        }
+
+        if (directRank == RANK_COUNT) return;
+
+        address current = userInfo[directSponsor].referrer;
+        for (uint256 depth = 1; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
+            uint8 rank = rankInfo[current].highestRank;
+            if (rank > 0) {
+                if (highestPaidRank > 0 && rank == highestPaidRank) {
                     emit RankSponsorSameRankBreak(current, sourceUser, rank);
                     break;
                 }
 
                 if (rank > highestPaidRank) {
-                    uint256 previousBps = highestPaidRank == 0 ? 0 : rankSponsorBonusBps[highestPaidRank - 1];
                     uint256 currentBps = rankSponsorBonusBps[rank - 1];
-                    uint256 differentialBps = currentBps - previousBps;
-                    uint256 amount = (principalATH * differentialBps) / BPS;
+                    if (currentBps > paidBps) {
+                        uint256 differentialBps = currentBps - paidBps;
+                        uint256 amount = (principalATH * differentialBps) / BPS;
 
-                    require(networkReserveATH >= amount, "insufficient network reserve");
-                    networkReserveATH -= amount;
-                    totalRewardPaidATH += amount;
-                    totalRankSponsorPaidATH += amount;
-                    rankSponsorEarnedATH[current] += amount;
-                    athToken.safeTransfer(current, amount);
+                        require(networkReserveATH >= amount, "insufficient network reserve");
+                        networkReserveATH -= amount;
+                        totalRewardPaidATH += amount;
+                        totalRankSponsorPaidATH += amount;
+                        rankSponsorEarnedATH[current] += amount;
+                        athToken.safeTransfer(current, amount);
 
-                    emit RankSponsorBonusPaid(current, sourceUser, rank, differentialBps, amount);
-                    highestPaidRank = rank;
-                    if (rank == RANK_COUNT) break;
+                        emit RankSponsorBonusPaid(current, sourceUser, rank, differentialBps, amount);
+                        paidBps = currentBps;
+                        highestPaidRank = rank;
+                        if (rank == RANK_COUNT) break;
+                    }
                 }
             }
             current = userInfo[current].referrer;
