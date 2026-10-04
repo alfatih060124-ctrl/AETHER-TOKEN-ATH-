@@ -256,3 +256,246 @@ html[dir="rtl"] .vesting-summary{direction:rtl}
   .hero-copy{text-align:left!important}
   .hero-copy p{margin-left:0!important;margin-right:0!important}
 }
+
+
+/* Public holder workspace separation: Mining vs Staking */
+.holder-workspace{
+  margin-top:18px;
+  margin-bottom:16px;
+  padding:20px;
+  border:1px solid rgba(237,192,79,.28);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 8% 0%,rgba(233,174,41,.10),transparent 32%),
+    linear-gradient(180deg,rgba(19,16,10,.98),rgba(7,6,4,.98));
+  box-shadow:var(--shadow);
+}
+.holder-workspace-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+.holder-workspace-kicker{
+  display:block;
+  font-size:8px;
+  letter-spacing:.22em;
+  color:#c7a64b;
+}
+.holder-workspace-head h2{
+  margin:5px 0 7px;
+  font-family:Georgia,"Times New Roman",serif;
+  color:#f2d475;
+  font-size:27px;
+  font-weight:500;
+}
+.holder-workspace-head p{
+  margin:0;
+  max-width:760px;
+  color:#9b9285;
+  font-size:10px;
+  line-height:1.65;
+}
+.holder-wallet-pill{
+  flex:0 0 auto;
+  padding:8px 11px;
+  border:1px solid rgba(237,192,79,.25);
+  border-radius:999px;
+  background:#0a0805;
+  color:#a69a83;
+  font-size:8px;
+  white-space:nowrap;
+}
+.holder-wallet-pill.connected{
+  color:#72ef93;
+  border-color:rgba(65,215,104,.38);
+  background:rgba(25,128,52,.12);
+}
+.holder-workspace-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:18px;
+}
+.holder-workspace-card{
+  position:relative;
+  display:flex;
+  min-height:142px;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:8px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:#0b0906;
+  color:#e9dfca;
+  text-align:left;
+  cursor:pointer;
+  overflow:hidden;
+  transition:border-color .2s ease,transform .2s ease,background .2s ease,box-shadow .2s ease;
+}
+.holder-workspace-card:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  opacity:.55;
+  background:#c99a31;
+}
+.holder-workspace-card.staking:before{background:#e4c36f}
+.holder-workspace-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(237,192,79,.34);
+}
+.holder-workspace-card.active{
+  border-color:rgba(239,194,74,.62);
+  background:linear-gradient(180deg,rgba(93,65,13,.19),rgba(11,9,6,.98));
+  box-shadow:0 0 0 1px rgba(239,194,74,.08),0 16px 40px rgba(0,0,0,.22);
+}
+.holder-workspace-card.active:before{opacity:1}
+.holder-area-tag{
+  font-size:8px;
+  letter-spacing:.18em;
+  color:#b9963c;
+}
+.holder-workspace-card strong{
+  font-family:Georgia,"Times New Roman",serif;
+  color:#f4d77c;
+  font-size:21px;
+}
+.holder-workspace-card small{
+  color:#918779;
+  font-size:9px;
+  line-height:1.55;
+}
+.holder-workspace-card b{
+  margin-top:auto;
+  color:#dabb61;
+  font-size:9px;
+  font-weight:700;
+}
+.holder-workspace-rule{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:5px 12px;
+  align-items:center;
+  margin-top:12px;
+  padding:11px 13px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:10px;
+  background:#090806;
+}
+.holder-workspace-rule span{
+  grid-row:1/3;
+  padding:5px 7px;
+  border-radius:7px;
+  background:rgba(225,165,34,.12);
+  color:#d7b04f;
+  font-size:8px;
+  font-weight:800;
+}
+.holder-workspace-rule strong{
+  color:#d9d0bd;
+  font-size:10px;
+}
+.holder-workspace-rule small{
+  color:#746d62;
+  font-size:8px;
+}
+.holder-area-banner{
+  margin-top:16px;
+  margin-bottom:10px;
+  padding:17px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  border:1px solid rgba(237,192,79,.28);
+  border-radius:14px;
+  background:linear-gradient(90deg,rgba(91,62,10,.16),rgba(8,7,5,.96));
+  position:relative;
+  overflow:hidden;
+}
+.holder-area-banner:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:#d5a536;
+}
+.holder-area-banner.staking:before{background:#efd17f}
+.holder-area-banner span{
+  display:block;
+  color:#c9a84c;
+  font-size:8px;
+  letter-spacing:.2em;
+}
+.holder-area-banner h2{
+  margin:4px 0 5px;
+  color:#f1d274;
+  font:500 23px/1.1 Georgia,"Times New Roman",serif;
+}
+.holder-area-banner p{
+  margin:0;
+  max-width:760px;
+  color:#8d8477;
+  font-size:9px;
+  line-height:1.55;
+}
+.holder-area-banner>strong{
+  flex:0 0 auto;
+  padding:8px 10px;
+  border:1px solid rgba(237,192,79,.2);
+  border-radius:999px;
+  color:#d8bf78;
+  background:#090704;
+  font-size:8px;
+  white-space:nowrap;
+}
+.holder-operation-zone{
+  position:relative;
+}
+.holder-operation-zone[hidden],
+.holder-area-banner[hidden]{
+  display:none!important;
+}
+body[data-holder-view="mining"] .main-nav a[href="#mining"],
+body[data-holder-view="staking"] .main-nav a[href="#staking"]{
+  color:#f1cf68;
+}
+.main-nav a.holder-area-active:after{
+  width:100%;
+}
+#staking .staking-head{
+  padding-top:2px;
+}
+#referral .panel-title h3:after{
+  content:" · MINING";
+  margin-left:6px;
+  color:#b8953b;
+  font-size:8px;
+  letter-spacing:.12em;
+  vertical-align:middle;
+}
+#staking .staking-rank-panel h3:after{
+  content:" · STAKING";
+  margin-left:6px;
+  color:#c8a54d;
+  font-size:8px;
+  letter-spacing:.12em;
+  vertical-align:middle;
+}
+@media(max-width:760px){
+  .holder-workspace{padding:15px}
+  .holder-workspace-head,.holder-area-banner{flex-direction:column;align-items:flex-start}
+  .holder-wallet-pill,.holder-area-banner>strong{align-self:flex-start}
+  .holder-workspace-grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .holder-workspace-head h2{font-size:22px}
+  .holder-workspace-card{min-height:128px;padding:15px}
+  .holder-workspace-card strong{font-size:18px}
+  .holder-area-banner{padding:14px}
+  .holder-area-banner h2{font-size:20px}
+}
