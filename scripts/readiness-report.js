@@ -5,6 +5,7 @@ const deployRequired = singleWalletMode
   : [
       "PRIVATE_KEY",
       "MINING_OWNER_ADDRESS",
+      "MINING_TREASURY_ADDRESS",
       "STAKING_OWNER_ADDRESS",
       "PRESALE_OWNER_ADDRESS",
       "KEEPER_WALLET_ADDRESS",
