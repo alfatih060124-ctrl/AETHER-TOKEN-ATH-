@@ -122,6 +122,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalRewardPaidATH;
     uint256 public totalReferralPaidATH;
     uint256 public totalNetworkPaidATH;
+    uint256 public totalRankSponsorPaidATH;
     uint256 public totalRankSalaryPaidATH;
     uint256 public totalRankSalaryPaidUSDT;
     uint256 public totalWeeklyRankSalaryUSDT;
@@ -134,6 +135,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     // total direct-leg turnover minus the single largest direct leg.
     uint256[8] public rankSmallLegThresholdUSDT;
     uint256[8] public rankWeeklySalaryUSDT;
+    // Rank Sponsor Bonus: differential pass-up, max cumulative 35%.
+    uint256[8] public rankSponsorBonusBps = [1300, 1600, 1900, 2200, 2500, 2800, 3100, 3500];
+    mapping(address => uint256) public rankSponsorEarnedATH;
 
     event RewardReserveFunded(address indexed funder, uint256 amount, uint256 reserveAfter);
     event NetworkReserveFunded(address indexed funder, uint256 amount, uint256 reserveAfter);
@@ -155,6 +159,18 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 directSponsors,
         uint256 qualifiedAt,
         uint256 firstScheduledPayoutAt
+    );
+    event RankSponsorBonusPaid(
+        address indexed beneficiary,
+        address indexed sourceUser,
+        uint8 indexed rank,
+        uint256 differentialBps,
+        uint256 amountATH
+    );
+    event RankSponsorSameRankBreak(
+        address indexed account,
+        address indexed sourceUser,
+        uint8 indexed rank
     );
     event RankSalaryPaid(
         address indexed account,
@@ -495,8 +511,6 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             principalWithdrawn: false
         }));
 
-        _propagateLegTurnover(msg.sender, amountUSDT);
-
         uint256 stakeId = userStakes[msg.sender].length - 1;
         address boundReferrer = user.referrer;
         if (boundReferrer != address(0)) {
@@ -508,7 +522,13 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             userInfo[boundReferrer].totalReferralEarnedATH += referralReward;
             athToken.safeTransfer(boundReferrer, referralReward);
             emit ReferralPaid(boundReferrer, msg.sender, referralReward);
+
+            // Rank Sponsor Bonus uses the sponsor ranks that existed before this stake
+            // updates turnover/rank qualification. This enforces "already has Rank".
+            _payRankSponsorBonus(msg.sender, principalATH);
         }
+
+        _propagateLegTurnover(msg.sender, amountUSDT);
 
         emit Staked(msg.sender, stakeId, packageId, amountUSDT, principalATH, pkg.dailyRateBps, pkg.lockDays);
     }
@@ -696,6 +716,65 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         require(maxUSDT >= minUSDT, "invalid range");
         require(dailyRateBps > 0 && dailyRateBps <= MAX_DAILY_RATE_BPS, "invalid daily rate");
         require(lockDays > 0 && lockDays <= MAX_PACKAGE_LOCK_DAYS, "invalid lock");
+    }
+
+    function previewRankSponsorBonus(address sourceUser, uint256 principalATH)
+        external
+        view
+        returns (uint256 totalBonusATH, uint8 highestPaidRank, address sameRankBreakAt)
+    {
+        address current = userInfo[sourceUser].referrer;
+        for (uint256 depth = 0; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
+            uint8 rank = rankInfo[current].highestRank;
+            if (rank > 0) {
+                if (rank == highestPaidRank) {
+                    sameRankBreakAt = current;
+                    break;
+                }
+                if (rank > highestPaidRank) {
+                    uint256 previousBps = highestPaidRank == 0 ? 0 : rankSponsorBonusBps[highestPaidRank - 1];
+                    uint256 currentBps = rankSponsorBonusBps[rank - 1];
+                    totalBonusATH += (principalATH * (currentBps - previousBps)) / BPS;
+                    highestPaidRank = rank;
+                    if (rank == RANK_COUNT) break;
+                }
+            }
+            current = userInfo[current].referrer;
+        }
+    }
+
+    function _payRankSponsorBonus(address sourceUser, uint256 principalATH) internal {
+        address current = userInfo[sourceUser].referrer;
+        uint8 highestPaidRank = 0;
+
+        for (uint256 depth = 0; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
+            uint8 rank = rankInfo[current].highestRank;
+            if (rank > 0) {
+                if (rank == highestPaidRank) {
+                    emit RankSponsorSameRankBreak(current, sourceUser, rank);
+                    break;
+                }
+
+                if (rank > highestPaidRank) {
+                    uint256 previousBps = highestPaidRank == 0 ? 0 : rankSponsorBonusBps[highestPaidRank - 1];
+                    uint256 currentBps = rankSponsorBonusBps[rank - 1];
+                    uint256 differentialBps = currentBps - previousBps;
+                    uint256 amount = (principalATH * differentialBps) / BPS;
+
+                    require(networkReserveATH >= amount, "insufficient network reserve");
+                    networkReserveATH -= amount;
+                    totalRewardPaidATH += amount;
+                    totalRankSponsorPaidATH += amount;
+                    rankSponsorEarnedATH[current] += amount;
+                    athToken.safeTransfer(current, amount);
+
+                    emit RankSponsorBonusPaid(current, sourceUser, rank, differentialBps, amount);
+                    highestPaidRank = rank;
+                    if (rank == RANK_COUNT) break;
+                }
+            }
+            current = userInfo[current].referrer;
+        }
     }
 
     function _previewNetwork(address sourceUser, uint256 rewardATH)
