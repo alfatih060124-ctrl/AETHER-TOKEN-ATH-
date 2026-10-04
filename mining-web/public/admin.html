@@ -51,7 +51,7 @@
       <article><small>Staking Principal</small><strong id="stakingPrincipal">0 ATH</strong><span>Protected user principal liability</span></article>
       <article><small>Staking Reward Reserve</small><strong id="stakingRewardReserve">0 ATH</strong><span>160M allocation · daily Staking reward only</span></article>
       <article><small>Marketing / Network Reserve</small><strong id="stakingNetworkReserve">0 ATH</strong><span>50M allocation · referral / L1-L10 / lifetime Rank salary</span></article>
-      <article><small>Rank Sponsor Bonus Paid</small><strong id="rankSponsorPaid">0 ATH</strong><span>Differential pass-up · same-rank break</span></article>
+      <article><small>Rank Referral Uplift Paid</small><strong id="rankSponsorPaid">0 ATH</strong><span>Increment above the common 10% · pass-up</span></article>
       <article><small>Rank Salary Paid</small><strong id="rankSalaryPaid">$0.00</strong><span id="rankSalaryPaidAth">0 ATH</span></article>
       <article><small>Presale Status</small><strong id="presaleState">Pending</strong><span id="presaleAddress">—</span></article>
       <article><small>Presale Price</small><strong id="presalePrice">$0.070</strong><span id="presaleProgress">0 / 30,000,000 ATH</span></article>
@@ -66,7 +66,7 @@
         <div><strong>700M</strong><span>Mining Reward</span><small>70% · Mining smart-contract reserve</small></div>
         <div><strong>160M</strong><span>Staking Reward Pool</span><small>16% · protected reward reserve</small></div>
         <div><strong>30M</strong><span>ATH Presale</span><small>3% · $0.070 stepped pricing</small></div>
-        <div><strong>50M</strong><span>Marketing / Network Bonus</span><small>5% · referral + Rank Sponsor + L1-L10 + lifetime Rank salary</small></div>
+        <div><strong>50M</strong><span>Marketing / Network Bonus</span><small>5% · Direct Referral 10%-35% by Rank + L1-L10 + lifetime Rank salary</small></div>
         <div><strong>30M</strong><span>Development Vesting</span><small>3% · vesting contract</small></div>
         <div><strong>20M</strong><span>Liquidity</span><small>2% · later listing phase</small></div>
         <div><strong>10M</strong><span>Ecosystem Reserve</span><small>1% · reserve allocation</small></div>
@@ -140,18 +140,18 @@
           </div>
         </div>
         <div>
-          <div class="row"><span>Direct Referral Paid</span><strong id="stakingReferralPaid">0 ATH</strong></div>
-          <div class="row"><span>Rank Sponsor Bonus Paid</span><strong id="stakingRankSponsorPaid">0 ATH</strong></div>
+          <div class="row"><span>Direct Referral Paid (Total)</span><strong id="stakingReferralPaid">0 ATH</strong></div>
+          <div class="row"><span>Rank Referral Uplift Paid</span><strong id="stakingRankSponsorPaid">0 ATH</strong></div>
           <div class="row"><span>L1-L10 Network Reward Paid</span><strong id="stakingNetworkPaid">0 ATH</strong></div>
           <div class="row"><span>Rank Salary Paid</span><strong id="stakingRankPaidDetail">$0.00 / 0 ATH</strong></div>
         </div>
       </div>
-      <p class="muted">Rank thresholds / weekly salary / Rank Sponsor Bonus: R1 $1k / $25 / 13%; R2 $5k / $75 / 16%; R3 $15k / $200 / 19%; R4 $50k / $500 / 22%; R5 $100k / $1k / 25%; R6 $250k / $2k / 28%; R7 $500k / $5k / 31%; R8 $1M / $10k / 35%. Rank Sponsor Bonus is differential pass-up on a personally sponsored stake and stops when the same paid Rank is encountered. The original 10% Direct Referral remains separate. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Rank Salary remains weekly at 00:30 UTC after the 7-day qualification delay and lifetime after qualification. All networking bonuses use only the protected 50M Marketing / Network Reserve.</p>
+      <p class="muted">Direct Referral is ONE unified payout: unranked sponsor receives 10% total; ranked sponsor receives R1 13%, R2 16%, R3 19%, R4 22%, R5 25%, R6 28%, R7 31%, or R8 35% total. These Rank percentages already include the common 10% Direct Referral. Only the incremental Rank portion passes up to a higher Rank, and pass-up stops at Same Rank Break. Rank thresholds / weekly salary remain: R1 $1k/$25, R2 $5k/$75, R3 $15k/$200, R4 $50k/$500, R5 $100k/$1k, R6 $250k/$2k, R7 $500k/$5k, R8 $1M/$10k. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Rank Salary remains weekly at 00:30 UTC and lifetime after qualification. All networking bonuses use only the protected 50M Marketing / Network Reserve.</p>
     </section>
 
     <section class="panel">
       <div class="section-head">
-        <div><span class="eyebrow">RANK SPONSOR BONUS</span><h2>Differential pass-up & Same Rank Break</h2></div>
+        <div><span class="eyebrow">DIRECT REFERRAL BY RANK</span><h2>10% base included · differential pass-up</h2></div>
         <span class="policy">CONTRACT-LOCKED</span>
       </div>
       <div class="analytics-grid">
@@ -164,8 +164,8 @@
         <div><small>Rank 7</small><strong>31%</strong><span>$500,000 · $5,000/week</span></div>
         <div><small>Rank 8</small><strong>35%</strong><span>$1,000,000 · $10,000/week</span></div>
       </div>
-      <div class="row"><span>On-chain Rate Ladder</span><strong id="rankSponsorRates">13% · 16% · 19% · 22% · 25% · 28% · 31% · 35%</strong></div>
-      <p class="muted">Example: Rank 1 receives 13%. If the next eligible upline is Rank 2, that upline receives only the 3% differential. The pass-up continues only to a higher Rank. If the same already-paid Rank appears, the Rank Sponsor Bonus path breaks immediately. The cumulative Rank Sponsor Bonus can never exceed the Rank 8 ceiling of 35% for one sponsored stake.</p>
+      <div class="row"><span>Total Direct Referral Rate by Rank</span><strong id="rankSponsorRates">13% · 16% · 19% · 22% · 25% · 28% · 31% · 35%</strong></div>
+      <p class="muted">The common Direct Referral is 10%. Rank 1 does not receive 10% + 13%; Rank 1 receives 13% TOTAL, so only +3% is the Rank uplift. Example: Rank 1 direct sponsor receives 13% total; the next eligible Rank 2 receives only +3%, making the cumulative referral path 16%. Pass-up continues only to a higher Rank and stops immediately on Same Rank. The entire referral path is capped at the Rank 8 total of 35%.</p>
     </section>
 
     <section class="panel">
@@ -289,6 +289,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-  <script src="/admin.js?v=20261004-rank-sponsor-v1"></script>
+  <script src="/admin.js?v=20261004-direct-referral-unified-v2"></script>
 </body>
 </html>
