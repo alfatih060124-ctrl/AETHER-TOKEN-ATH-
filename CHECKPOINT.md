@@ -1,6 +1,24 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 SAME-RANK SKIP CLARIFICATION — CURRENT SOURCE OF TRUTH
+
+This section supersedes every older note that said Same Rank stops the entire pass-up path.
+
+- Unified Direct Referral remains one path: unranked direct sponsor = **10% total**; ranked direct sponsor = **R1 13%, R2 16%, R3 19%, R4 22%, R5 25%, R6 28%, R7 31%, R8 35% total**, already including the common 10%.
+- Differential pass-up applies only to the unpaid difference above the cumulative rate already paid.
+- **Same Rank rule = SKIP, not global stop.**
+- If the path has already paid Rank 1 and encounters another Rank 1, the second Rank 1 receives **0% from that leg**, but traversal continues upward.
+- If a Rank 2 exists above that skipped Rank 1, Rank 2 still receives the **+3% differential** needed to move cumulative referral from 13% to 16%.
+- Example: B unranked sponsors C -> B receives 10%; A above B is Rank 1 -> A receives +3%; another Rank 1 above A -> receives 0% and is skipped; Rank 2 above it -> receives +3%; higher Ranks continue by differential until the 35% total ceiling.
+- Lower/equal Ranks never reduce the already-paid cumulative rate and receive no duplicate uplift.
+- Rank 8 remains the hard maximum: the full Direct Referral/pass-up path cannot exceed **35% total**.
+- On-chain evidence uses `RankSponsorSameRankSkipped`; the old `RankSponsorSameRankSkipped` terminology is superseded.
+- Regression coverage now explicitly requires: **R1 -> R1 (skip) -> R2 (still paid)**.
+- Mining remains LOCKED and unaffected.
+
+
+
 ## 2026-10-04 DIRECT REFERRAL UNIFIED QC LOCK — CURRENT SOURCE OF TRUTH
 
 This section supersedes every older note that treated the 10% Direct Referral and the Rank percentage as two separate payouts.
@@ -23,7 +41,7 @@ This section supersedes every older note that treated the 10% Direct Referral an
   - R1 direct sponsor 13% -> R2 upline +3% -> cumulative 16%;
   - R2 -> R3 +3%; R3 -> R4 +3%; R4 -> R5 +3%; R5 -> R6 +3%; R6 -> R7 +3%;
   - R7 -> R8 uses the final differential needed to reach the explicitly locked **35% total ceiling**.
-- **Same Rank Break** remains active: if the pass-up path encounters the same already-paid Rank, the Rank uplift path stops immediately.
+- **Same Rank Skip** remains active: if the pass-up path encounters the same already-paid Rank, that equal Rank is skipped and the pass-up path continues upward.
 - A Rank must exist before the sponsored stake. A Rank created by that same transaction is not retroactively eligible for that stake.
 - `totalReferralPaidATH` records the full amount paid to the direct sponsor (10%-35% depending on Rank).
 - `totalRankSponsorPaidATH` and `rankSponsorEarnedATH(account)` record only the incremental Rank uplift portion above the common 10% base.
@@ -33,7 +51,7 @@ This section supersedes every older note that treated the 10% Direct Referral an
   - unranked Direct Referral = 10%;
   - Rank 1 Direct Referral = 13% total, not 23%;
   - higher Rank pass-up is differential only;
-  - Same Rank Break stops the path;
+  - Same Rank Skip does not stop the path; higher Rank remains eligible;
   - Rank 8 direct sponsor is capped at **35% total including the common 10%**.
 - Validator deployment `a929f909-b97b-41d0-9ba0-036531877164`: **SUCCESS**.
 - Latest validator evidence: **28 Solidity files compiled, 69/69 tests PASS, ABI export PASS, local release rehearsal PASS**.
@@ -60,11 +78,11 @@ This section supersedes older Rank/network notes where Rank Sponsor Bonus was no
 - The **entire Direct Referral path**, including the common 10% base and every Rank differential, can never exceed the **Rank 8 total ceiling of 35%**.
 - Only a Rank that existed **before the sponsored stake** is eligible for that transaction. A Rank achieved because of that same stake is not retroactively entitled to Rank Sponsor Bonus on that stake.
 - Unranked or lower-Rank uplines are skipped; pass-up continues until a higher Rank is found.
-- **Same Rank Break:** when the pass-up path encounters the same Rank as the highest Rank already paid in that path, Rank Sponsor pass-up stops immediately and no higher upline receives further Rank Sponsor Bonus for that stake.
+- **Same Rank Skip:** when the pass-up path encounters the same Rank as the highest Rank already paid in that path, Rank Sponsor pass-up receives no duplicate payout at that equal Rank, while traversal continues upward to a higher Rank.
 - Unified Direct Referral / Rank uplift is paid from the protected **50M ATH Marketing / Network Reserve**, together with L1-L10 Network Bonus and lifetime Rank Salary. It never consumes principal or the 160M Daily Reward Reserve.
 - On-chain evidence:
   - `RankSponsorBonusPaid`
-  - `RankSponsorSameRankBreak`
+  - `RankSponsorSameRankSkipped`
   - `rankSponsorEarnedATH(account)`
   - `totalRankSponsorPaidATH`
   - `previewRankSponsorBonus(sourceUser, principalATH)`
