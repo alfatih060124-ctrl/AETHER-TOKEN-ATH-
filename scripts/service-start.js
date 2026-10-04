@@ -19,6 +19,9 @@ if (process.env.RUN_ATH_TESTNET_DEPLOY === "true") {
 } else if (process.env.RUN_ATH_POSTDEPLOY_CHECK === "true") {
   console.log("RUN_ATH_POSTDEPLOY_CHECK=true: executing Testnet post-deployment invariant checks.");
   runSync("npm", ["run", "postdeploy:testnet"]);
+} else if (process.env.RUN_ATH_RANK_SALARY_KEEPER === "true") {
+  console.log("RUN_ATH_RANK_SALARY_KEEPER=true: executing one fail-closed Rank salary keeper cycle.");
+  runSync("npm", ["run", "keeper:rank"]);
 }
 
 const child = spawn(process.execPath, ["scripts/ci-server.js"], {
