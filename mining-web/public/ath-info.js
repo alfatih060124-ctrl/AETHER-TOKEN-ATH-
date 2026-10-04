@@ -41,12 +41,18 @@
 
   const wrap = document.createElement("div");
   wrap.innerHTML = `
+    <section class="shell holder-docs-divider">
+      <span>GENERAL AETHER DOCUMENTATION</span>
+      <strong>Holder operation area ends here.</strong>
+      <small>Whitepaper, Roadmap and Developer information below are documentation only. Use the Mining or Staking workspace above for wallet operations.</small>
+    </section>
+
     <section id="whitepaper" class="shell content-section">
       <div class="whitepaper-panel">
         <div class="whitepaper-copy">
           <span class="section-kicker">ATH TOKEN DOCUMENTATION</span>
           <h2>Whitepaper v1.1</h2>
-          <p>The public ATH whitepaper documents Mining Protocol v3.3: fixed supply, 00:05 UTC daily rewards, Power and Double Power Boosters, recurring 12-cycle vesting with burn, security controls, Testnet gates, and the path toward a gated production launch.</p>
+          <p>The public ATH whitepaper documents the unified ATH ecosystem: 70% Mining / 30% Staking, Mining Protocol v3.3, Staking packages and 00:50 UTC rewards, Direct Referral and Rank differential, Lifestyle Bonus / Matching Staking, Rank Salary, Presale pricing, vesting, security controls and gated deployment.</p>
           <div class="whitepaper-actions">
             <a class="btn btn-gold" href="/ATH-Whitepaper-v1.1.pdf">↓ &nbsp; Download Whitepaper PDF</a>
             <a class="btn btn-dark" href="#roadmap">View Roadmap</a>
@@ -55,10 +61,14 @@
         </div>
         <div class="whitepaper-metrics">
           <div class="doc-metric"><span>Total Supply</span><strong>1B ATH</strong><small>Fixed supply · no post-deploy mint</small></div>
-          <div class="doc-metric"><span>Mining Reserve</span><strong>70%</strong><small>700,000,000 ATH</small></div>
-          <div class="doc-metric"><span>Liquidity Reserve</span><strong>20%</strong><small>200,000,000 ATH</small></div>
-          <div class="doc-metric"><span>Team / Dev</span><strong>5%</strong><small>365-day lock</small></div>
-          <div class="doc-metric"><span>Marketing</span><strong>5%</strong><small>50,000,000 ATH</small></div>
+          <div class="doc-metric"><span>Mining Allocation</span><strong>70%</strong><small>700,000,000 ATH</small></div>
+          <div class="doc-metric"><span>Staking Ecosystem</span><strong>30%</strong><small>300,000,000 ATH</small></div>
+          <div class="doc-metric"><span>Staking Reward</span><strong>160M ATH</strong><small>Daily Staking reward pool</small></div>
+          <div class="doc-metric"><span>Marketing / Network</span><strong>50M ATH</strong><small>Referral · Rank uplift · Lifestyle / Matching · Rank Salary</small></div>
+          <div class="doc-metric"><span>Presale</span><strong>30M ATH</strong><small>Presale allocation</small></div>
+          <div class="doc-metric"><span>Team / Developer</span><strong>30M ATH</strong><small>Development vesting allocation</small></div>
+          <div class="doc-metric"><span>Liquidity</span><strong>20M ATH</strong><small>Liquidity allocation</small></div>
+          <div class="doc-metric"><span>Ecosystem Reserve</span><strong>10M ATH</strong><small>Protected ecosystem reserve</small></div>
         </div>
       </div>
     </section>
@@ -71,7 +81,7 @@
       </div>
       <div class="roadmap-grid">
         <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>01</b><h3>Protocol Foundation</h3><p>Fixed 1B ATH supply, UTC daily rewards, referral logic, Power/Double Power Boosters, 12-cycle vesting, burn, and reserve protection.</p></article>
-        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>02</b><h3>Validation & Interfaces</h3><p>25 automated tests, source checks, deterministic ABI fingerprints, permissionless keeper hardening, on-chain miner registry, admin controls, responsive mining interface, and release-gate documentation.</p></article>
+        <article class="roadmap-card"><span class="roadmap-status complete">COMPLETE</span><b>02</b><h3>Validation & Interfaces</h3><p>69 automated tests, source checks, ABI/release rehearsal, Mining and Staking holder workspaces, wallet-gated admin controls, keeper hardening, on-chain member registries and responsive interfaces.</p></article>
         <article class="roadmap-card"><span class="roadmap-status next">NEXT GATE</span><b>03</b><h3>BSC Testnet Deployment</h3><p>Fund Testnet gas, deploy once, auto-run v3.3 post-deploy invariants, capture verified addresses, then test the full Power → Claim → Boosters → Vesting flow.</p></article>
         <article class="roadmap-card"><span class="roadmap-status planned">PLANNED</span><b>04</b><h3>Wallet Integration</h3><p>Freeze verified Testnet ABI/address data and connect ATH mining flows with AETHER Wallet for public testing.</p></article>
         <article class="roadmap-card"><span class="roadmap-status gated">REQUIRED</span><b>05</b><h3>Production Security</h3><p>Independent security review, production multisig, operational controls, and final release-gate evidence.</p></article>
