@@ -181,7 +181,7 @@ async function main() {
   const tokenOwnerExpected = presaleOwnerExpected;
   const priceRegistryOwnerExpected = presaleOwnerExpected;
   const keeperWalletExpected = roleAddress("KEEPER_WALLET_ADDRESS");
-  const treasuryExpected = miningOwnerExpected;
+  const treasuryExpected = roleAddress("MINING_TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
