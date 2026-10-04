@@ -122,8 +122,11 @@ async function main() {
   console.log("stakingReserveWallet:", stakingReserveWallet);
   console.log("developmentBeneficiary:", developmentBeneficiary);
   console.log("tokenomics:", "700M Mining + 300M Staking");
-  console.log("preListingReferencePriceUSD:", "0.37");
-console.log("officialListingHolderTarget:", "15000");
+  console.log("preListingPriceSource:", "ATH_PRESALE");
+  console.log("presaleOpeningPriceUSD:", "0.07");
+  console.log("presalePriceStep:", "$0.001 / 100000 ATH sold");
+  console.log("presaleSoldOutReferenceUSD:", "0.37");
+  console.log("officialListingHolderTarget:", "15000");
   console.log("privateKey: [REDACTED]");
 
   if (!isTestnet) {
