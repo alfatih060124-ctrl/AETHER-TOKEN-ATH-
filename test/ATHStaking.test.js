@@ -546,12 +546,14 @@ describe("AETHER ATH Staking v1", function () {
     const principal = athForUsd(ethers.parseEther("100"), PRICE_007);
     const directR1Total = (principal * 1300n) / 10_000n;
     const r2Differential = (principal * 300n) / 10_000n;
-    const expectedPathTotal = (principal * 1600n) / 10_000n;
+    const directR1Uplift = (principal * 300n) / 10_000n;
+    const expectedPathTotal = directR1Total + r2Differential;
+    const expectedRankUplift = directR1Uplift + r2Differential;
 
     const preview = await staking.previewReferralPassUp(treasury.address, principal);
     expect(preview.directSponsorATH).to.equal(directR1Total);
     expect(preview.totalReferralPathATH).to.equal(expectedPathTotal);
-    expect(preview.rankUpliftATH).to.equal((principal * 600n) / 10_000n);
+    expect(preview.rankUpliftATH).to.equal(expectedRankUplift);
     expect(preview.highestPaidRank).to.equal(2n);
     expect(preview.firstSameRankSkippedAt).to.equal(second.address);
 
@@ -572,9 +574,7 @@ describe("AETHER ATH Staking v1", function () {
     expect((await token.balanceOf(second.address)) - secondBefore).to.equal(0n);
     expect((await token.balanceOf(referrer.address)) - topBefore).to.equal(r2Differential);
     expect((await staking.totalReferralPaidATH()) - referralBefore).to.equal(directR1Total);
-    expect((await staking.totalRankSponsorPaidATH()) - rankBefore).to.equal(
-      (principal * 600n) / 10_000n
-    );
+    expect((await staking.totalRankSponsorPaidATH()) - rankBefore).to.equal(expectedRankUplift);
     expect(reserveBefore - (await staking.networkReserveATH())).to.equal(expectedPathTotal);
   });
 
