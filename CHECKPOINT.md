@@ -1,6 +1,47 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 DIRECT REFERRAL UNIFIED QC LOCK — CURRENT SOURCE OF TRUTH
+
+This section supersedes every older note that treated the 10% Direct Referral and the Rank percentage as two separate payouts.
+
+- **There is only ONE Direct Referral path.**
+- Unranked direct sponsor: **10% total**.
+- Ranked direct sponsor total rates:
+  - Rank 1: **13% total** = 10% common Direct Referral + 3% Rank uplift.
+  - Rank 2: **16% total**.
+  - Rank 3: **19% total**.
+  - Rank 4: **22% total**.
+  - Rank 5: **25% total**.
+  - Rank 6: **28% total**.
+  - Rank 7: **31% total**.
+  - Rank 8: **35% total**.
+- Therefore Rank 1 is **NOT 10% + 13% = 23%**. The correct total is **13%**.
+- The Rank percentages already include the common 10% Direct Referral.
+- Only the incremental portion above the amount already paid can pass up:
+  - unranked direct sponsor 10% -> R1 upline +3% -> cumulative 13%;
+  - R1 direct sponsor 13% -> R2 upline +3% -> cumulative 16%;
+  - R2 -> R3 +3%; R3 -> R4 +3%; R4 -> R5 +3%; R5 -> R6 +3%; R6 -> R7 +3%;
+  - R7 -> R8 uses the final differential needed to reach the explicitly locked **35% total ceiling**.
+- **Same Rank Break** remains active: if the pass-up path encounters the same already-paid Rank, the Rank uplift path stops immediately.
+- A Rank must exist before the sponsored stake. A Rank created by that same transaction is not retroactively eligible for that stake.
+- `totalReferralPaidATH` records the full amount paid to the direct sponsor (10%-35% depending on Rank).
+- `totalRankSponsorPaidATH` and `rankSponsorEarnedATH(account)` record only the incremental Rank uplift portion above the common 10% base.
+- All Direct Referral / Rank uplift payments use only the protected **50M ATH Marketing / Network Reserve**.
+- The 160M Daily Staking Reward Reserve and holder principal liability remain isolated.
+- Regression coverage explicitly proves:
+  - unranked Direct Referral = 10%;
+  - Rank 1 Direct Referral = 13% total, not 23%;
+  - higher Rank pass-up is differential only;
+  - Same Rank Break stops the path;
+  - Rank 8 direct sponsor is capped at **35% total including the common 10%**.
+- Validator deployment `a929f909-b97b-41d0-9ba0-036531877164`: **SUCCESS**.
+- Latest validator evidence: **28 Solidity files compiled, 69/69 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Runtime remains **TESTNET / fail-closed**, Mainnet CLOSED.
+- Mining remains LOCKED and unchanged.
+
+
+
 ## 2026-10-04 RANK SPONSOR BONUS PASS-UP LOCK — CURRENT SOURCE OF TRUTH
 
 This section supersedes older Rank/network notes where Rank Sponsor Bonus was not yet present.
