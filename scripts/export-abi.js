@@ -160,6 +160,8 @@ for (const spec of contracts) {
       "rewardReserveATH",
       "networkReserveATH",
       "totalNetworkFundedATH",
+      "lifestyleMatchingRateBps",
+      "totalLifestyleMatchingPaidATH",
       "MAX_NETWORK_MARKETING_POOL",
       "principalLiabilityATH",
       "getSmallLegTurnoverUSDT",
