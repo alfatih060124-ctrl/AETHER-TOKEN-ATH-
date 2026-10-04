@@ -300,6 +300,9 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.directSponsorCount(user.address)).to.equal(5n);
     expect(await staking.getEligibleRank(user.address)).to.equal(1n);
     expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
+    expect(await staking.totalRankMembers()).to.equal(1n);
+    expect(await staking.isRankMember(user.address)).to.equal(true);
+    expect(await staking.getRankMembers(0, 200)).to.deep.equal([user.address]);
   });
 
   it("requires at least five direct sponsors even if four legs already meet small-leg turnover", async function () {
