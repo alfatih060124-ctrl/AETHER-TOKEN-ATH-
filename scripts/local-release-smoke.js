@@ -31,6 +31,19 @@ async function main() {
   const token = await Token.deploy(deployer.address);
   await token.waitForDeployment();
 
+  const Stable = await hre.ethers.getContractFactory("MockStablecoin");
+  const presalePaymentToken = await Stable.deploy(6);
+  await presalePaymentToken.waitForDeployment();
+
+  const Presale = await hre.ethers.getContractFactory("ATHPresale");
+  const presaleContract = await Presale.deploy(
+    await token.getAddress(),
+    await presalePaymentToken.getAddress(),
+    presale.address,
+    deployer.address
+  );
+  await presaleContract.waitForDeployment();
+
   const PriceRegistry = await hre.ethers.getContractFactory("ATHPriceRegistry");
   const priceRegistry = await PriceRegistry.deploy(
     await presaleContract.getAddress(),
@@ -60,19 +73,6 @@ async function main() {
     deployer.address
   );
   await staking.waitForDeployment();
-
-  const Stable = await hre.ethers.getContractFactory("MockStablecoin");
-  const presalePaymentToken = await Stable.deploy(6);
-  await presalePaymentToken.waitForDeployment();
-
-  const Presale = await hre.ethers.getContractFactory("ATHPresale");
-  const presaleContract = await Presale.deploy(
-    await token.getAddress(),
-    await presalePaymentToken.getAddress(),
-    presale.address,
-    deployer.address
-  );
-  await presaleContract.waitForDeployment();
 
   const DevelopmentVesting = await hre.ethers.getContractFactory("ATHDevelopmentVesting");
   const developmentVesting = await DevelopmentVesting.deploy(
