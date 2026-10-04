@@ -117,10 +117,12 @@ must(staking, /directRank == 0 \? REFERRAL_BPS : rankSponsorBonusBps\[directRank
 must(staking, /totalReferralPaidATH \+= directAmount/, "Direct Referral accounting records the full 10%-35% direct sponsor payment");
 must(staking, /directBps > REFERRAL_BPS/, "Rank uplift is measured only above the common 10% base");
 must(staking, /currentBps - paidBps/, "Pass-up pays only the differential to the next higher Rank");
-must(staking, /if \(highestPaidRank > 0 && rank == highestPaidRank\)/, "Rank pass-up breaks on the same already-paid Rank");
+must(staking, /if \(highestPaidRank > 0 && rank == highestPaidRank\)/, "Same Rank is detected in the referral pass-up path");
+must(staking, /RankSponsorSameRankSkipped/, "Same Rank emits skip evidence instead of stopping the path");
+must(staking, /current = userInfo\[current\]\.referrer;\s*continue;/, "Same Rank is skipped and traversal continues upward");
 must(staking, /totalRankSponsorPaidATH/, "Incremental Rank uplift total is auditable");
 must(staking, /rankSponsorEarnedATH/, "Incremental Rank uplift per-member earnings are auditable");
-must(staking, /RankSponsorSameRankBreak/, "Same-Rank break emits on-chain evidence");
+must(staking, /RankSponsorSameRankSkipped/, "Same-Rank skip emits on-chain evidence");
 must(staking, /function previewReferralPassUp\(/, "Unified referral path has an auditable preview getter");
 must(staking, /RANK_PAYOUT_UTC_OFFSET\s*=\s*30 minutes/, "Rank salary schedule is 00:30 UTC");
 must(staking, /DAILY_REWARD_UTC_OFFSET\s*=\s*50 minutes/, "Staking daily reward schedule is 00:50 UTC");
