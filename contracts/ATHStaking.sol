@@ -14,6 +14,7 @@ interface IATHStakingPriceOracle {
 /// @title AETHER ATH Staking v1
 /// @notice Separate staking engine for the 300M ATH staking ecosystem allocation.
 /// @dev MiningAirdrop is intentionally not referenced or modified by this contract.
+///      Staking principal and all reward liabilities are accounted separately.
 contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -25,6 +26,13 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant MAX_DAILY_RATE_BPS = 100; // hard safety cap: 1.00% / day
     uint256 public constant MAX_PACKAGE_LOCK_DAYS = 3_650;
     uint256 public constant MAX_REFERRAL_DEPTH_CHECK = 64;
+    uint256 public constant MIN_DIRECT_SPONSORS_FOR_RANK = 5;
+    uint256 public constant RANK_COUNT = 8;
+    uint256 public constant RANK_SALARY_PERIOD = 7 days;
+    uint256 public constant RANK_FIRST_DELAY = 7 days;
+    uint256 public constant RANK_PAYOUT_UTC_OFFSET = 30 minutes; // 00:30 UTC
+    uint256 public constant MAX_RANK_BATCH = 50;
+    uint256 public constant MAX_RANK_CATCHUP_WEEKS = 12;
 
     IERC20 public immutable athToken;
     IATHStakingPriceOracle public immutable priceOracle;
@@ -56,9 +64,28 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 totalNetworkEarnedATH;
     }
 
+    struct RankInfo {
+        uint8 highestRank;
+        uint64 firstRankAchievedAt;
+        uint64 nextPayoutAt;
+        uint256 totalSalaryPaidUSDT;
+        uint256 totalSalaryPaidATH;
+    }
+
     Package[] public packages;
     mapping(address => UserInfo) public userInfo;
     mapping(address => StakeInfo[]) public userStakes;
+
+    // Dynamic direct-leg accounting used by the small-leg rank rule.
+    mapping(address => uint256) public directSponsorCount;
+    mapping(address => uint256) public totalLegTurnoverUSDT;
+    mapping(address => uint256) public largestLegTurnoverUSDT;
+    mapping(address => address) public largestLegAddress;
+    mapping(address => mapping(address => uint256)) public legTurnoverUSDT;
+
+    // Rank 1..8 qualification timestamp. A higher rank never erases lower-rank history.
+    mapping(address => mapping(uint8 => uint64)) public rankQualifiedAt;
+    mapping(address => RankInfo) public rankInfo;
 
     uint256 public totalActiveStakedUSDT;
     uint256 public principalLiabilityATH;
@@ -67,12 +94,46 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalRewardPaidATH;
     uint256 public totalReferralPaidATH;
     uint256 public totalNetworkPaidATH;
+    uint256 public totalRankSalaryPaidATH;
+    uint256 public totalRankSalaryPaidUSDT;
 
     // L1 8%, L2 5%, L3 3%, L4 2%, L5 1%, L6-L10 0.5%.
     uint256[10] public networkRates = [800, 500, 300, 200, 100, 50, 50, 50, 50, 50];
 
+    // Rank thresholds are based on cumulative SMALL-LEG USDT turnover:
+    // total direct-leg turnover minus the single largest direct leg.
+    uint256[8] public rankSmallLegThresholdUSDT;
+    uint256[8] public rankWeeklySalaryUSDT;
+
     event RewardReserveFunded(address indexed funder, uint256 amount, uint256 reserveAfter);
     event ReferrerBound(address indexed user, address indexed referrer);
+    event DirectSponsorAdded(address indexed sponsor, address indexed directUser, uint256 sponsorCount);
+    event LegTurnoverUpdated(
+        address indexed sponsor,
+        address indexed legRoot,
+        uint256 legTurnoverUSDT,
+        uint256 totalLegTurnoverUSDT,
+        address largestLeg,
+        uint256 largestLegTurnoverUSDT,
+        uint256 smallLegTurnoverUSDT
+    );
+    event RankAchieved(
+        address indexed account,
+        uint8 indexed rank,
+        uint256 smallLegTurnoverUSDT,
+        uint256 directSponsors,
+        uint256 qualifiedAt,
+        uint256 firstScheduledPayoutAt
+    );
+    event RankSalaryPaid(
+        address indexed account,
+        uint8 indexed payableRank,
+        uint256 periodsPaid,
+        uint256 salaryUSDT,
+        uint256 salaryATH,
+        uint256 priceUSD8,
+        uint256 nextPayoutAt
+    );
     event Staked(
         address indexed user,
         uint256 indexed stakeId,
@@ -112,6 +173,24 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         _addPackage(2_000 ether, 9_999 ether, 65, 365);
         _addPackage(10_000 ether, 49_999 ether, 75, 730);
         _addPackage(50_000 ether, type(uint256).max, 85, 730);
+
+        rankSmallLegThresholdUSDT[0] = 1_000 ether;
+        rankSmallLegThresholdUSDT[1] = 5_000 ether;
+        rankSmallLegThresholdUSDT[2] = 15_000 ether;
+        rankSmallLegThresholdUSDT[3] = 50_000 ether;
+        rankSmallLegThresholdUSDT[4] = 100_000 ether;
+        rankSmallLegThresholdUSDT[5] = 250_000 ether;
+        rankSmallLegThresholdUSDT[6] = 500_000 ether;
+        rankSmallLegThresholdUSDT[7] = 1_000_000 ether;
+
+        rankWeeklySalaryUSDT[0] = 25 ether;
+        rankWeeklySalaryUSDT[1] = 75 ether;
+        rankWeeklySalaryUSDT[2] = 200 ether;
+        rankWeeklySalaryUSDT[3] = 500 ether;
+        rankWeeklySalaryUSDT[4] = 1_000 ether;
+        rankWeeklySalaryUSDT[5] = 2_000 ether;
+        rankWeeklySalaryUSDT[6] = 5_000 ether;
+        rankWeeklySalaryUSDT[7] = 10_000 ether;
     }
 
     function packageCount() external view returns (uint256) {
@@ -149,6 +228,67 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         return getATHAmount(getPendingRewardUSDT(user, stakeId));
     }
 
+    function getSmallLegTurnoverUSDT(address account)
+        public
+        view
+        returns (
+            uint256 totalTurnover,
+            uint256 largestTurnover,
+            uint256 smallLegTurnover,
+            address bigLeg
+        )
+    {
+        totalTurnover = totalLegTurnoverUSDT[account];
+        largestTurnover = largestLegTurnoverUSDT[account];
+        smallLegTurnover = totalTurnover > largestTurnover ? totalTurnover - largestTurnover : 0;
+        bigLeg = largestLegAddress[account];
+    }
+
+    function getEligibleRank(address account) public view returns (uint8 rank) {
+        if (directSponsorCount[account] < MIN_DIRECT_SPONSORS_FOR_RANK) return 0;
+        (, , uint256 smallLegTurnover, ) = getSmallLegTurnoverUSDT(account);
+
+        for (uint8 r = uint8(RANK_COUNT); r > 0; r--) {
+            if (smallLegTurnover >= rankSmallLegThresholdUSDT[r - 1]) {
+                return r;
+            }
+        }
+    }
+
+    function getPayableRankAt(address account, uint256 timestamp) public view returns (uint8 rank) {
+        uint8 highest = rankInfo[account].highestRank;
+        for (uint8 r = highest; r > 0; r--) {
+            uint64 qualifiedAt = rankQualifiedAt[account][r];
+            if (qualifiedAt != 0 && timestamp >= uint256(qualifiedAt) + RANK_FIRST_DELAY) {
+                return r;
+            }
+        }
+    }
+
+    function rankSalaryPreview(address account)
+        external
+        view
+        returns (
+            uint8 highestRank,
+            uint8 payableRankNow,
+            uint256 periodsDue,
+            uint256 salaryUSDT,
+            uint256 salaryATH,
+            uint256 nextPayoutAt,
+            uint256 smallLegTurnover,
+            uint256 sponsors
+        )
+    {
+        RankInfo storage info = rankInfo[account];
+        highestRank = info.highestRank;
+        payableRankNow = getPayableRankAt(account, block.timestamp);
+        (periodsDue, salaryUSDT) = _rankSalaryDue(account, MAX_RANK_CATCHUP_WEEKS);
+        salaryATH = salaryUSDT == 0 ? 0 : getATHAmount(salaryUSDT);
+        nextPayoutAt = info.nextPayoutAt;
+        (, , smallLegTurnover, ) = getSmallLegTurnoverUSDT(account);
+        sponsors = directSponsorCount[account];
+    }
+
     function availableExcessATH() public view returns (uint256) {
         uint256 balance = athToken.balanceOf(address(this));
         uint256 protectedBalance = principalLiabilityATH + rewardReserveATH;
@@ -180,7 +320,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             require(referrer != msg.sender, "self referral");
             require(!_createsReferralCycle(msg.sender, referrer), "referral cycle");
             user.referrer = referrer;
+            directSponsorCount[referrer] += 1;
             emit ReferrerBound(msg.sender, referrer);
+            emit DirectSponsorAdded(referrer, msg.sender, directSponsorCount[referrer]);
         }
 
         uint256 principalATH = getATHAmount(amountUSDT);
@@ -202,6 +344,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             totalClaimedUSDT: 0,
             principalWithdrawn: false
         }));
+
+        _propagateLegTurnover(msg.sender, amountUSDT);
 
         uint256 stakeId = userStakes[msg.sender].length - 1;
         address boundReferrer = user.referrer;
@@ -255,6 +399,43 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         }
 
         emit RewardClaimed(msg.sender, stakeId, pendingUSDT, rewardATH, networkTotal);
+    }
+
+    /// @notice Holder can claim salary after a scheduled weekly slot if no keeper has processed it.
+    function claimRankSalary() external nonReentrant whenNotPaused {
+        _payRankSalary(msg.sender, true);
+    }
+
+    /// @notice Permissionless keeper-compatible single account salary processing.
+    function processRankSalary(address account) external nonReentrant whenNotPaused {
+        require(account != address(0), "zero account");
+        _payRankSalary(account, true);
+    }
+
+    /// @notice Permissionless batch processing for the 00:30 UTC weekly salary schedule.
+    /// @dev Accounts that are not due are skipped. Processing stops safely if the reward reserve
+    ///      cannot cover the next due salary.
+    function processRankSalaryBatch(address[] calldata accounts)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 processed)
+    {
+        require(accounts.length > 0 && accounts.length <= MAX_RANK_BATCH, "invalid batch");
+
+        for (uint256 i = 0; i < accounts.length; i++) {
+            address account = accounts[i];
+            if (account == address(0)) continue;
+
+            (uint256 periodsDue, uint256 salaryUSDT) = _rankSalaryDue(account, MAX_RANK_CATCHUP_WEEKS);
+            if (periodsDue == 0 || salaryUSDT == 0) continue;
+
+            uint256 salaryATH = getATHAmount(salaryUSDT);
+            if (rewardReserveATH < salaryATH) break;
+
+            _settleRankSalary(account, periodsDue, salaryUSDT, salaryATH);
+            processed += 1;
+        }
     }
 
     function withdrawPrincipal(uint256 stakeId) external nonReentrant whenNotPaused {
@@ -337,6 +518,140 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             total += amount;
             current = userInfo[current].referrer;
         }
+    }
+
+    function _propagateLegTurnover(address sourceUser, uint256 amountUSDT) internal {
+        address legRoot = sourceUser;
+        address current = userInfo[sourceUser].referrer;
+
+        for (uint256 depth = 0; depth < MAX_REFERRAL_DEPTH_CHECK && current != address(0); depth++) {
+            uint256 updatedLeg = legTurnoverUSDT[current][legRoot] + amountUSDT;
+            legTurnoverUSDT[current][legRoot] = updatedLeg;
+            totalLegTurnoverUSDT[current] += amountUSDT;
+
+            if (
+                largestLegAddress[current] == legRoot ||
+                updatedLeg > largestLegTurnoverUSDT[current]
+            ) {
+                largestLegAddress[current] = legRoot;
+                largestLegTurnoverUSDT[current] = updatedLeg;
+            }
+
+            (, , uint256 smallLegTurnover, address bigLeg) = getSmallLegTurnoverUSDT(current);
+            emit LegTurnoverUpdated(
+                current,
+                legRoot,
+                updatedLeg,
+                totalLegTurnoverUSDT[current],
+                bigLeg,
+                largestLegTurnoverUSDT[current],
+                smallLegTurnover
+            );
+
+            _refreshRank(current);
+
+            legRoot = current;
+            current = userInfo[current].referrer;
+        }
+    }
+
+    function _refreshRank(address account) internal {
+        uint8 eligible = getEligibleRank(account);
+        RankInfo storage info = rankInfo[account];
+        if (eligible <= info.highestRank) return;
+
+        uint8 previous = info.highestRank;
+        uint64 nowTs = uint64(block.timestamp);
+        for (uint8 r = previous + 1; r <= eligible; r++) {
+            if (rankQualifiedAt[account][r] == 0) {
+                rankQualifiedAt[account][r] = nowTs;
+            }
+        }
+
+        info.highestRank = eligible;
+        if (info.firstRankAchievedAt == 0) {
+            info.firstRankAchievedAt = nowTs;
+            info.nextPayoutAt = uint64(_first0030AtOrAfter(block.timestamp + RANK_FIRST_DELAY));
+        }
+
+        (, , uint256 smallLegTurnover, ) = getSmallLegTurnoverUSDT(account);
+        emit RankAchieved(
+            account,
+            eligible,
+            smallLegTurnover,
+            directSponsorCount[account],
+            block.timestamp,
+            info.nextPayoutAt
+        );
+    }
+
+    function _rankSalaryDue(address account, uint256 maxPeriods)
+        internal
+        view
+        returns (uint256 periodsDue, uint256 salaryUSDT)
+    {
+        RankInfo storage info = rankInfo[account];
+        uint256 slot = info.nextPayoutAt;
+        if (slot == 0 || block.timestamp < slot) return (0, 0);
+
+        while (slot <= block.timestamp && periodsDue < maxPeriods) {
+            uint8 payableRank = getPayableRankAt(account, slot);
+            if (payableRank > 0) {
+                salaryUSDT += rankWeeklySalaryUSDT[payableRank - 1];
+            }
+            periodsDue += 1;
+            slot += RANK_SALARY_PERIOD;
+        }
+    }
+
+    function _payRankSalary(address account, bool strict) internal {
+        (uint256 periodsDue, uint256 salaryUSDT) = _rankSalaryDue(account, MAX_RANK_CATCHUP_WEEKS);
+        if (strict) {
+            require(periodsDue > 0 && salaryUSDT > 0, "rank salary not due");
+        }
+        if (periodsDue == 0 || salaryUSDT == 0) return;
+
+        uint256 salaryATH = getATHAmount(salaryUSDT);
+        require(rewardReserveATH >= salaryATH, "insufficient rank reserve");
+        _settleRankSalary(account, periodsDue, salaryUSDT, salaryATH);
+    }
+
+    function _settleRankSalary(
+        address account,
+        uint256 periodsDue,
+        uint256 salaryUSDT,
+        uint256 salaryATH
+    ) internal {
+        RankInfo storage info = rankInfo[account];
+        uint256 priceUSD8 = priceOracle.getPrice();
+
+        info.nextPayoutAt = uint64(uint256(info.nextPayoutAt) + (periodsDue * RANK_SALARY_PERIOD));
+        info.totalSalaryPaidUSDT += salaryUSDT;
+        info.totalSalaryPaidATH += salaryATH;
+
+        rewardReserveATH -= salaryATH;
+        totalRewardPaidATH += salaryATH;
+        totalRankSalaryPaidATH += salaryATH;
+        totalRankSalaryPaidUSDT += salaryUSDT;
+
+        athToken.safeTransfer(account, salaryATH);
+
+        emit RankSalaryPaid(
+            account,
+            getPayableRankAt(account, block.timestamp),
+            periodsDue,
+            salaryUSDT,
+            salaryATH,
+            priceUSD8,
+            info.nextPayoutAt
+        );
+    }
+
+    function _first0030AtOrAfter(uint256 timestamp) internal pure returns (uint256) {
+        uint256 dayStart = (timestamp / 1 days) * 1 days;
+        uint256 slot = dayStart + RANK_PAYOUT_UTC_OFFSET;
+        if (slot < timestamp) slot += 1 days;
+        return slot;
     }
 
     function _createsReferralCycle(address user, address candidate) internal view returns (bool) {
