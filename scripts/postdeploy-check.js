@@ -105,6 +105,8 @@ const STAKING_ABI = [
   "function totalWeeklyRankSalaryUSDT() view returns (uint256)",
   "function rankSmallLegThresholdUSDT(uint256) view returns (uint256)",
   "function rankWeeklySalaryUSDT(uint256) view returns (uint256)",
+  "function rankSponsorBonusBps(uint256) view returns (uint256)",
+  "function totalRankSponsorPaidATH() view returns (uint256)",
   "function totalRankSalaryPaidATH() view returns (uint256)",
   "function totalRankSalaryPaidUSDT() view returns (uint256)",
   "function MAX_RANK_HISTORY_PAGE() view returns (uint256)",
@@ -304,6 +306,15 @@ async function main() {
     rank8Threshold,
     rank1Salary,
     rank8Salary,
+    rankSponsor1Bps,
+    rankSponsor2Bps,
+    rankSponsor3Bps,
+    rankSponsor4Bps,
+    rankSponsor5Bps,
+    rankSponsor6Bps,
+    rankSponsor7Bps,
+    rankSponsor8Bps,
+    totalRankSponsorPaidATH,
     totalRankSalaryPaidATH,
     totalRankSalaryPaidUSDT,
     maxRankHistoryPage,
@@ -408,6 +419,15 @@ async function main() {
     staking.rankSmallLegThresholdUSDT(7),
     staking.rankWeeklySalaryUSDT(0),
     staking.rankWeeklySalaryUSDT(7),
+    staking.rankSponsorBonusBps(0),
+    staking.rankSponsorBonusBps(1),
+    staking.rankSponsorBonusBps(2),
+    staking.rankSponsorBonusBps(3),
+    staking.rankSponsorBonusBps(4),
+    staking.rankSponsorBonusBps(5),
+    staking.rankSponsorBonusBps(6),
+    staking.rankSponsorBonusBps(7),
+    staking.totalRankSponsorPaidATH(),
     staking.totalRankSalaryPaidATH(),
     staking.totalRankSalaryPaidUSDT(),
     staking.MAX_RANK_HISTORY_PAGE(),
@@ -536,6 +556,15 @@ async function main() {
   assertEq(rank8Threshold, ethers.parseEther("1000000"), "Rank 8 small-leg threshold");
   assertEq(rank1Salary, ethers.parseEther("25"), "Rank 1 weekly salary");
   assertEq(rank8Salary, ethers.parseEther("10000"), "Rank 8 weekly salary");
+  assertEq(rankSponsor1Bps, 1300n, "Rank 1 Sponsor Bonus 13%");
+  assertEq(rankSponsor2Bps, 1600n, "Rank 2 Sponsor Bonus 16%");
+  assertEq(rankSponsor3Bps, 1900n, "Rank 3 Sponsor Bonus 19%");
+  assertEq(rankSponsor4Bps, 2200n, "Rank 4 Sponsor Bonus 22%");
+  assertEq(rankSponsor5Bps, 2500n, "Rank 5 Sponsor Bonus 25%");
+  assertEq(rankSponsor6Bps, 2800n, "Rank 6 Sponsor Bonus 28%");
+  assertEq(rankSponsor7Bps, 3100n, "Rank 7 Sponsor Bonus 31%");
+  assertEq(rankSponsor8Bps, 3500n, "Rank 8 Sponsor Bonus 35%");
+  assertEq(totalRankSponsorPaidATH, 0n, "Rank Sponsor Bonus initial state");
   assertEq(totalRankSalaryPaidATH, 0n, "Rank salary ATH initial state");
   assertEq(totalRankSalaryPaidUSDT, 0n, "Rank salary USDT initial state");
   assertEq(maxRankHistoryPage, 200n, "Rank Salary history page cap");
