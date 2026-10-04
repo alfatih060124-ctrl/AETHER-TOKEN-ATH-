@@ -5,28 +5,10 @@ function setStatus(text,error=false){
   statusEl.textContent=text;
   statusEl.classList.toggle("error",Boolean(error));
 }
-async function ensureChain(){
-  if(!window.ethereum)throw new Error("Open this page inside AETHER Wallet or another EVM-compatible wallet.");
-  const wanted="0x"+Number(cfg.chainId).toString(16);
-  const current=await window.ethereum.request({method:"eth_chainId"});
-  if(current.toLowerCase()===wanted.toLowerCase())return;
-  try{
-    await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:wanted}]});
-  }catch(err){
-    if(err?.code!==4902)throw err;
-    await window.ethereum.request({method:"wallet_addEthereumChain",params:[{
-      chainId:wanted,
-      chainName:cfg.chainName,
-      nativeCurrency:{name:"BNB",symbol:Number(cfg.chainId)===97?"tBNB":"BNB",decimals:18},
-      rpcUrls:[cfg.rpcUrl],
-      blockExplorerUrls:[cfg.explorerUrl]
-    }]});
-  }
-}
 async function authenticate(role){
   try{
     setStatus("Connecting wallet…");
-    await ensureChain();
+    if(!window.ethereum)throw new Error("Open this page inside AETHER Wallet or another EVM-compatible wallet.");
     const provider=new ethers.BrowserProvider(window.ethereum);
     await provider.send("eth_requestAccounts",[]);
     const signer=await provider.getSigner();
@@ -40,7 +22,7 @@ async function authenticate(role){
     const challenge=await challengeRes.json();
     if(!challengeRes.ok)throw new Error(challenge.error||"Wallet is not authorized for this role.");
 
-    setStatus("Please sign the AETHER admin authentication message in your wallet.");
+    setStatus("Wallet verified for this role. Please sign the one-time AETHER authentication message.");
     const signature=await signer.signMessage(challenge.message);
 
     setStatus("Verifying wallet signature…");
