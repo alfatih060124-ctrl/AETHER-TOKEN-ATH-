@@ -52,7 +52,16 @@ const PRICE_REGISTRY_ADMIN_ABI=[
   "function officialListingActivated() view returns (bool)"
 ];
 const STAKING_ADMIN_ABI=[
-  "function principalLiabilityATH() view returns (uint256)"
+  "function owner() view returns (address)",
+  "function paused() view returns (bool)",
+  "function principalLiabilityATH() view returns (uint256)",
+  "function rewardReserveATH() view returns (uint256)",
+  "function totalReferralPaidATH() view returns (uint256)",
+  "function totalNetworkPaidATH() view returns (uint256)",
+  "function totalRankSalaryPaidATH() view returns (uint256)",
+  "function totalRankSalaryPaidUSDT() view returns (uint256)",
+  "function pause()",
+  "function unpause()"
 ];
 const PRESALE_ADMIN_ABI=[
   "function owner() view returns (address)",
@@ -67,8 +76,8 @@ const PRESALE_ADMIN_ABI=[
   "function unpause()"
 ];
 
-let cfg,readProvider,browserProvider,signer,account="",miningRead,tokenRead,miningWrite,tokenWrite,presaleRead,presaleWrite;
-let state={miningOwner:"",tokenOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,presalePaused:true};
+let cfg,readProvider,browserProvider,signer,account="",miningRead,tokenRead,miningWrite,tokenWrite,stakingRead,stakingWrite,presaleRead,presaleWrite;
+let state={miningOwner:"",tokenOwner:"",stakingOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,stakingPaused:false,presalePaused:true};
 let toastTimer;
 
 function toast(message,isError=false){
@@ -81,6 +90,7 @@ function addr(v){return Boolean(v&&ethers.isAddress(v))}
 function mainnetWriteAllowed(){return cfg?.networkMode!=="MAINNET"||cfg?.adminMainnetWritesEnabled===true}
 function miningAuthorized(){return account&&state.miningOwner&&account.toLowerCase()===state.miningOwner.toLowerCase()&&mainnetWriteAllowed()}
 function tokenAuthorized(){return account&&state.tokenOwner&&account.toLowerCase()===state.tokenOwner.toLowerCase()&&mainnetWriteAllowed()}
+function stakingAuthorized(){return account&&state.stakingOwner&&account.toLowerCase()===state.stakingOwner.toLowerCase()&&mainnetWriteAllowed()}
 function presaleAuthorized(){return account&&state.presaleOwner&&account.toLowerCase()===state.presaleOwner.toLowerCase()&&mainnetWriteAllowed()}
 
 function paintAccess(){
@@ -89,7 +99,7 @@ function paintAccess(){
   if(!account){
     $("accessTitle").textContent="Read-only";
     $("accessText").textContent="Connect the contract owner wallet to enable admin actions.";
-  }else if(miningAuthorized()||tokenAuthorized()||presaleAuthorized()){
+  }else if(miningAuthorized()||tokenAuthorized()||stakingAuthorized()||presaleAuthorized()){
     card.classList.add("authorized");
     $("accessTitle").textContent="Owner verified";
     $("accessText").textContent=mainnetWriteAllowed()?"Admin transaction controls enabled.":"Mainnet writes remain fail-closed.";
@@ -135,6 +145,7 @@ async function connect(){
     $("connectBtn").textContent=short(account);
     if(addr(cfg.miningAddress)) miningWrite=new ethers.Contract(cfg.miningAddress,MINING_ABI,signer);
     if(addr(cfg.tokenAddress)) tokenWrite=new ethers.Contract(cfg.tokenAddress,TOKEN_ABI,signer);
+    if(addr(cfg.stakingAddress)) stakingWrite=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,signer);
     if(addr(cfg.presaleAddress)) presaleWrite=new ethers.Contract(cfg.presaleAddress,PRESALE_ADMIN_ABI,signer);
     await refresh();
   }catch(err){toast(err?.shortMessage||err?.message||"Wallet connection failed.",true)}
@@ -215,18 +226,31 @@ async function refreshUnifiedModules(){
       const registry=new ethers.Contract(cfg.priceRegistryAddress,PRICE_REGISTRY_ADMIN_ABI,readProvider);
       const [price,target,count,mode,listed]=await Promise.all([registry.getPrice(),registry.HOLDER_TARGET(),registry.recordedHolderCount(),registry.priceMode(),registry.officialListingActivated()]);
       $("registryPrice").textContent="$"+(Number(price)/1e8).toFixed(4);
-      $("registryMode").textContent=Number(mode)===0?"PRE-LISTING FIXED":"MARKET";
+      $("registryMode").textContent=Number(mode)===0?"PRESALE-LINKED":"MARKET";
       $("holderGate").textContent=Number(count).toLocaleString()+" / "+Number(target).toLocaleString();
       $("listingState").textContent=listed?"Official listing active":Math.max(0,Number(target)-Number(count)).toLocaleString()+" holders remaining";
     }catch(err){console.error("registry admin",err)}
   }
   if(addr(cfg?.stakingAddress)){
     try{
-      const staking=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,readProvider);
-      const principal=await staking.principalLiabilityATH();
+      stakingRead=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,readProvider);
+      const [owner,paused,principal,rewardReserve,referralPaid,networkPaid,rankPaidAth,rankPaidUsd]=await Promise.all([
+        stakingRead.owner(),stakingRead.paused(),stakingRead.principalLiabilityATH(),stakingRead.rewardReserveATH(),
+        stakingRead.totalReferralPaidATH(),stakingRead.totalNetworkPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT()
+      ]);
+      state.stakingOwner=owner; state.stakingPaused=paused;
       $("stakingState").textContent="Connected";
       $("stakingAddress").textContent=short(cfg.stakingAddress);
       $("stakingPrincipal").textContent=ath(principal);
+      $("stakingRewardReserve").textContent=ath(rewardReserve);
+      $("rankSalaryPaid").textContent="$"+Number(ethers.formatEther(rankPaidUsd)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      $("rankSalaryPaidAth").textContent=ath(rankPaidAth);
+      $("stakingOwner").textContent=owner;
+      $("stakingPause").textContent=paused?"PAUSED":"ACTIVE";
+      $("stakingReserveDetail").textContent=ath(rewardReserve);
+      $("stakingReferralPaid").textContent=ath(referralPaid);
+      $("stakingNetworkPaid").textContent=ath(networkPaid);
+      $("stakingRankPaidDetail").textContent="$"+Number(ethers.formatEther(rankPaidUsd)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" / "+ath(rankPaidAth);
     }catch(err){console.error("staking admin",err)}
   }
   if(addr(cfg?.presaleAddress)){
@@ -297,6 +321,8 @@ async function boot(){
   $("unpauseMiningBtn").addEventListener("click",()=>runTx("Unpause Mining",()=>miningWrite.unpause()));
   $("pauseTokenBtn").addEventListener("click",()=>runTx("Pause ATH",()=>tokenWrite.pause()));
   $("unpauseTokenBtn").addEventListener("click",()=>runTx("Unpause ATH",()=>tokenWrite.unpause()));
+  $("pauseStakingBtn").addEventListener("click",()=>runTx("Pause Staking",()=>stakingWrite.pause()));
+  $("unpauseStakingBtn").addEventListener("click",()=>runTx("Unpause Staking",()=>stakingWrite.unpause()));
   $("openPresaleBtn").addEventListener("click",()=>runTx("Open Presale",()=>presaleWrite.unpause()));
   $("pausePresaleBtn").addEventListener("click",()=>runTx("Pause Presale",()=>presaleWrite.pause()));
   $("setTreasuryBtn").addEventListener("click",()=>{
@@ -328,7 +354,7 @@ async function boot(){
   });
   if(window.ethereum){
     window.ethereum.on?.("accountsChanged",async(accounts)=>{
-      if(!accounts?.length){account="";signer=null;miningWrite=null;tokenWrite=null;presaleWrite=null;$("connectBtn").textContent="Connect Admin Wallet";paintAccess();return}
+      if(!accounts?.length){account="";signer=null;miningWrite=null;tokenWrite=null;stakingWrite=null;presaleWrite=null;$("connectBtn").textContent="Connect Admin Wallet";paintAccess();return}
       await connect();
     });
     window.ethereum.on?.("chainChanged",()=>window.location.reload());
