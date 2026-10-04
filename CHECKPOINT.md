@@ -23,6 +23,21 @@ This section is the current source of truth and supersedes older $0.10 / fixed-$
 - Latest core validation before web/docs sync: **28 Solidity files compiled, 56/56 tests PASS, ABI export PASS, local release rehearsal PASS**.
 - Mainnet remains **CLOSED**; no blockchain deployment transaction was executed by this revision.
 
+### 2026-10-04 LIVE IMPLEMENTATION EVIDENCE
+
+- Public ATH Mining/Staking portal Railway deployment `13984d58-91ec-46a0-98b5-f011c206e654`: **SUCCESS**.
+- Public web build gate: **PASS**; multilingual QC: **259 keys across 9 translated languages + English**.
+- Runtime: **TESTNET**, `contractConfigured=false`, `mainnetEnabled=false` until Testnet contracts are deployed.
+- `mining.aether.boats`: DNS **PROPAGATED**, ownership **VERIFIED**, TLS **VALID**.
+- `pm.aether.boats`: DNS **PROPAGATED**, ownership **VERIFIED**, TLS **VALID**.
+- Core validator deployment `ca7f214e-e826-4798-a5fd-1dfd47ddfa43`: **SUCCESS**.
+- Core validator evidence: **28 Solidity files compiled, 56/56 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Dedicated Railway cron service `ath-rank-salary-keeper` is provisioned and **cronReady**.
+- Rank salary cron: **`30 0 * * *` = daily 00:30 UTC**. The contract only pays accounts whose weekly due slot has matured.
+- Rank keeper build `fd53843f-f2b5-4af5-927e-e7363dfe1c65`: **SUCCESS**.
+- Rank keeper remains **fail-closed by code default** (`RANK_KEEPER_ENABLED=false` when unset) and therefore performs no RPC calls or transactions until explicitly enabled after verified Testnet deployment/security checks.
+- No Mainnet or Testnet contract deployment transaction was executed by this infrastructure step.
+
 ## 2026-10-03 ON-CHAIN PRESALE STOREFRONT — DONE IN SOURCE
 
 - Added a public **ATH On-chain Presale storefront** under `#buy-ath`.
@@ -44,7 +59,7 @@ This section is the current source of truth and supersedes older $0.10 / fixed-$
 - **Staking ecosystem allocation: 300,000,000 ATH**.
 - Staking breakdown: 160M Reward Pool / 30M Presale / 50M Marketing / 30M Development Vesting / 20M Liquidity / 10M Ecosystem Reserve.
 - Presale rule: **30,000,000 ATH**, opening **$0.070**, **+$0.001 per complete 100,000 ATH sold**, 300 steps, displayed sell-out price **$0.370**. The final live 100,000-ATH tranche is priced at $0.369; after that tranche sells, Presale is sold out at $0.370.
-- Unified ATH official pre-listing reference price is **1 ATH = $0.37** across Mining and Staking. DEX market price may be visible separately; official market mode requires the **15,000-holder gate** and explicit activation.
+- **Historical note superseded by the 2026-10-04 final lock above:** Mining and Staking now use the **Presale-linked price** ($0.070 opening, +$0.001 per complete 100,000 ATH sold, up to the $0.370 sold-out reference). DEX market price may be visible separately; official market mode still requires the **15,000-holder gate** and explicit activation.
 - `ATHStakingPriceOracle` now reads `ATHPriceRegistry`, while Mining also reads the same registry so both modules share one price source.
 - Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
 - Staking packages: Starter 0.35%/180d, Basic 0.45%/180d, Silver 0.55%/365d, Gold 0.65%/365d, Platinum 0.75%/730d, Diamond 0.85%/730d.
@@ -199,7 +214,7 @@ The remaining Step 25 blocker is external: **>=0.02 tBNB** in the dedicated BSC 
   - Development Vesting: 30,000,000 ATH.
   - Liquidity: 20,000,000 ATH.
   - Ecosystem Reserve: 10,000,000 ATH.
-- Pre-listing ATH reference valuation: **1 ATH = $0.37**; official listing holder target: **15,000**.
+- Pre-listing ATH reference valuation: **Presale-linked** — $0.070 opening, +$0.001 per complete 100,000 ATH sold, $0.370 sold-out reference; official listing holder target: **15,000**.
 - Mainnet liquidity remains a separate later launch decision; no Mainnet liquidity is opened by Testnet deployment.
 
 ## LATEST GREEN EVIDENCE
@@ -360,14 +375,14 @@ Completed without any blockchain deployment transaction:
 - Team lock UI fixed to the 365-day policy.
 - Recent on-chain Mining event viewer prepared for the latest 2,500 blocks after contract deployment.
 - Additional automated tests cover treasury authorization, token emergency pause, and excess reserve liability protection.
-## 2026-10-03 — Unified Mining + Staking / $0.37 Pre-Listing Revision
+## 2026-10-03 — Historical Unified Mining + Staking / $0.37 Revision (SUPERSEDED)
 
 - Source branch: `revise/ath-unified-price-037`, based on main HEAD `e617b2a95d06ea816cee54d48fc649a5e8def7d4`.
 - ATH total supply remains fixed at **1,000,000,000 ATH**.
 - Mining allocation remains **700,000,000 ATH**; Mining v3.3 reward/booster/vesting logic remains unchanged.
 - Mining base reward remains **10 ATH/day**; stale frontend 1 ATH defaults/formulas were corrected.
 - Staking ecosystem allocation remains **300,000,000 ATH**.
-- Added `ATHPriceRegistry`: official pre-listing price **1 ATH = $0.37**, `PRE_LISTING_FIXED`.
+- Historical implementation at that time used a fixed $0.37 registry; **this was superseded on 2026-10-04 by Presale-linked pricing**.
 - Official listing holder gate: **15,000 holders**. Live DEX price may be exposed separately before listing without replacing the official $0.37 reference.
 - Mining and Staking now consume the same ATH Price Registry.
 - Added unified Mining + Staking portal, responsive Staking UI, stake/claim/withdraw workflow, and 10-language Staking translation layer.
