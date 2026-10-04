@@ -37,7 +37,7 @@ This register defines everything that can and must be completed before any BSC T
   - Rank 1–8 total referral rates = 13%, 16%, 19%, 22%, 25%, 28%, 31%, 35%.
 - Rank uplift is differential and the full referral path can never exceed 35%.
 - **Same Rank = skip, not stop**. Equal Rank receives no duplicate uplift, while traversal continues upward until a higher Rank is found.
-- L1–L10 Staking Network Bonus is paid in real time during the downline reward settlement transaction.
+- L1–L10 Lifestyle Bonus / Matching Staking is paid in real time during the downline reward settlement transaction.
 - Rank Salary thresholds and lifetime weekly salary are implemented.
 - Rank Salary schedule = weekly **00:30 UTC** after the qualification delay.
 - Persistent Rank member registry, direct-leg pagination, Rank payout queue and complete on-chain Rank Salary history are implemented.
@@ -64,7 +64,7 @@ This register defines everything that can and must be completed before any BSC T
 - Holder chooses Mining Area or Staking Area after wallet connection.
 - Inactive engine area is hidden from the active holder workspace.
 - Mining area explicitly shows Mining reward/referral/vesting rules.
-- Staking area explicitly shows 00:50 reward, Direct Referral/Rank, Network Bonus and Rank Salary rules.
+- Staking area explicitly shows 00:50 reward, Direct Referral/Rank, Lifestyle Bonus / Matching Staking and Rank Salary rules.
 - Presale remains a separate neutral area.
 - Desktop/mobile responsive separation is implemented.
 
