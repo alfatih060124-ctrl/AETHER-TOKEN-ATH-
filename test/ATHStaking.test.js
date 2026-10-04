@@ -140,6 +140,80 @@ describe("AETHER ATH Staking v1", function () {
     expect(diamond.lockDays).to.equal(730n);
   });
 
+  it("assigns globally unique Staking Contract IDs and exposes the member owner/package snapshot", async function () {
+    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await staking.connect(user).stake(1, ethers.parseEther("100"), ethers.ZeroAddress);
+    await staking.connect(second).stake(0, ethers.parseEther("20"), ethers.ZeroAddress);
+
+    expect(await staking.totalStakingContracts()).to.equal(3n);
+    expect(await staking.totalActiveStakingContracts()).to.equal(3n);
+    expect(await staking.totalInactiveStakingContracts()).to.equal(0n);
+    expect(await staking.totalStakingMembers()).to.equal(2n);
+    expect(await staking.activeStakingMembers()).to.equal(2n);
+
+    expect(await staking.stakingContractId(user.address, 0)).to.equal(1n);
+    expect(await staking.stakingContractId(user.address, 1)).to.equal(2n);
+    expect(await staking.stakingContractId(second.address, 0)).to.equal(3n);
+
+    const c1 = await staking.getStakingContract(1);
+    expect(c1.account).to.equal(user.address);
+    expect(c1.stakeId).to.equal(0n);
+    expect(c1.packageId).to.equal(0n);
+    expect(c1.amountUSDT).to.equal(ethers.parseEther("10"));
+    expect(c1.principalATH).to.equal(athForUsd(ethers.parseEther("10"), PRICE_007));
+    expect(c1.dailyRateBps).to.equal(35n);
+    expect(c1.lockDays).to.equal(180n);
+    expect(c1.active).to.equal(true);
+    expect(c1.principalWithdrawn).to.equal(false);
+
+    const starter = await staking.getPackageContractStats(0);
+    expect(starter.totalContracts).to.equal(2n);
+    expect(starter.activeContracts).to.equal(2n);
+    expect(starter.inactiveContracts).to.equal(0n);
+
+    const basic = await staking.getPackageContractStats(1);
+    expect(basic.totalContracts).to.equal(1n);
+    expect(basic.activeContracts).to.equal(1n);
+    expect(basic.inactiveContracts).to.equal(0n);
+  });
+
+  it("moves closed member contracts from ACTIVE to N-ACTIVE without changing Package IDs", async function () {
+    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await staking.connect(user).stake(1, ethers.parseEther("100"), ethers.ZeroAddress);
+    await staking.connect(second).stake(0, ethers.parseEther("20"), ethers.ZeroAddress);
+
+    expect(await staking.activeContractCountByMember(user.address)).to.equal(2n);
+    expect(await staking.activeStakingMembers()).to.equal(2n);
+
+    await increase(180 * DAY);
+    await staking.connect(user).withdrawPrincipal(0);
+
+    expect(await staking.totalStakingContracts()).to.equal(3n);
+    expect(await staking.totalActiveStakingContracts()).to.equal(2n);
+    expect(await staking.totalInactiveStakingContracts()).to.equal(1n);
+    expect(await staking.activeContractCountByMember(user.address)).to.equal(1n);
+    expect(await staking.activeStakingMembers()).to.equal(2n);
+
+    let starter = await staking.getPackageContractStats(0);
+    expect(starter.totalContracts).to.equal(2n);
+    expect(starter.activeContracts).to.equal(1n);
+    expect(starter.inactiveContracts).to.equal(1n);
+
+    const closed = await staking.getStakingContract(1);
+    expect(closed.active).to.equal(false);
+    expect(closed.principalWithdrawn).to.equal(true);
+    expect(closed.packageId).to.equal(0n);
+
+    await staking.connect(user).withdrawPrincipal(1);
+    expect(await staking.activeContractCountByMember(user.address)).to.equal(0n);
+    expect(await staking.activeStakingMembers()).to.equal(1n);
+
+    const basic = await staking.getPackageContractStats(1);
+    expect(basic.totalContracts).to.equal(1n);
+    expect(basic.activeContracts).to.equal(0n);
+    expect(basic.inactiveContracts).to.equal(1n);
+  });
+
   it("keeps principal liability separate from reward and network/marketing reserves", async function () {
     const rewardBefore = await staking.rewardReserveATH();
     const networkBefore = await staking.networkReserveATH();
