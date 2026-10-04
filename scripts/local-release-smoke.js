@@ -91,24 +91,26 @@ async function main() {
 
   await (await token.transfer(await mining.getAddress(), miningAllocation)).wait();
 
-  await (await token.approve(await staking.getAddress(), stakingRewardPool)).wait();
+  await (await token.approve(await staking.getAddress(), stakingRewardPool + marketingAllocation)).wait();
   await (await staking.fundRewards(stakingRewardPool)).wait();
+  await (await staking.fundNetworkReserve(marketingAllocation)).wait();
 
   await (await token.transfer(await presaleContract.getAddress(), presaleAllocation)).wait();
-  await (await token.transfer(marketing.address, marketingAllocation)).wait();
   await (await token.transfer(await developmentVesting.getAddress(), developmentAllocation)).wait();
   await (await token.transfer(liquidity.address, liquidityAllocation)).wait();
   await (await token.transfer(stakingReserveWallet.address, reserveAllocation)).wait();
 
   assertEq(await token.totalSupply(), hre.ethers.parseEther("1000000000"), "fixed supply");
   assertEq(await token.balanceOf(await mining.getAddress()), miningAllocation, "Mining reserve");
-  assertEq(await staking.rewardReserveATH(), stakingRewardPool, "Staking reward reserve");
+  assertEq(await staking.rewardReserveATH(), stakingRewardPool, "Staking daily reward reserve");
+  assertEq(await staking.networkReserveATH(), marketingAllocation, "Staking Marketing/network reserve");
+  assertEq(await staking.totalNetworkFundedATH(), marketingAllocation, "Staking network funding ledger");
   assertEq(await token.balanceOf(await developmentVesting.getAddress()), developmentAllocation, "Development vesting reserve");
   assertEq(await token.balanceOf(await presaleContract.getAddress()), presaleAllocation, "Presale 30M allocation");
   assertEq(await presaleContract.currentPriceUSD8(), 7_000_000n, "Presale opening price $0.07");
   assertEq(await presaleContract.FINAL_PRICE_USD8(), 37_000_000n, "Presale sold-out price $0.37");
   assertEq(await presaleContract.STEP_SIZE_ATH(), hre.ethers.parseEther("100000"), "Presale price step size");
-  assertEq(await token.balanceOf(marketing.address), marketingAllocation, "Staking marketing allocation");
+  assertEq(await token.balanceOf(marketing.address), 0n, "Marketing allocation is reserved on-chain for network bonuses");
   assertEq(await token.balanceOf(liquidity.address), liquidityAllocation, "Staking liquidity allocation");
   assertEq(await token.balanceOf(stakingReserveWallet.address), reserveAllocation, "Staking reserve allocation");
   assertEq(await token.balanceOf(deployer.address), 0n, "deployer residual ATH");
@@ -265,7 +267,7 @@ async function main() {
       stakingBreakdown: {
         rewardPool: "160000000",
         presale: "30000000",
-        marketing: "50000000",
+        marketingNetworkReserve: "50000000",
         developmentVesting: "30000000",
         liquidity: "20000000",
         reserve: "10000000",
@@ -302,6 +304,8 @@ async function main() {
       level1NetworkATH: "0.04",
       rankRule: "5 direct sponsors; small-leg = total direct-leg turnover - largest direct leg",
       rankPayoutUtc: "00:30 weekly after 7-day qualification",
+      rankSalaryDuration: "LIFETIME",
+      networkingBonusSource: "50M Marketing/network reserve",
     },
   };
 
