@@ -110,7 +110,7 @@ async function main() {
   assertEq(await presaleContract.currentPriceUSD8(), 7_000_000n, "Presale opening price $0.07");
   assertEq(await presaleContract.FINAL_PRICE_USD8(), 37_000_000n, "Presale sold-out price $0.37");
   assertEq(await presaleContract.STEP_SIZE_ATH(), hre.ethers.parseEther("100000"), "Presale price step size");
-  assertEq(await token.balanceOf(marketing.address), 0n, "Marketing allocation is reserved on-chain for network bonuses");
+  assertEq(await token.balanceOf(marketing.address), 0n, "Marketing allocation is reserved on-chain for referral, Lifestyle Matching and Rank Salary");
   assertEq(await token.balanceOf(liquidity.address), liquidityAllocation, "Staking liquidity allocation");
   assertEq(await token.balanceOf(stakingReserveWallet.address), reserveAllocation, "Staking reserve allocation");
   assertEq(await token.balanceOf(deployer.address), 0n, "deployer residual ATH");
@@ -248,7 +248,7 @@ async function main() {
   assertEq(
     (await token.balanceOf(stakingReferrer.address)) - stakingRefNetworkBefore,
     40000000000000000n,
-    "Staking level-1 network reward at the $0.07 Presale price"
+    "Staking Lifestyle Bonus / Matching Staking Level 1 at the $0.07 Presale price"
   );
 
   const evidence = {
