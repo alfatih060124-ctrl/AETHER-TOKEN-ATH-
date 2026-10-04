@@ -1,0 +1,15 @@
+{
+  "name": "aether-ath-staking-reward-keeper",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node keeper.js",
+    "check": "node --check keeper.js"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=20 <23"
+  }
+}
