@@ -80,7 +80,6 @@ async function main() {
   const treasury = roleAddress("TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
   const presalePaymentToken = address("PRESALE_PAYMENT_TOKEN");
-  const marketingWallet = roleAddress("MARKETING_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
   const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
@@ -117,7 +116,6 @@ async function main() {
   console.log("presaleOpeningPriceUSD:", "0.07");
   console.log("presalePriceStepUSD:", "0.001 / 100000 ATH sold");
   console.log("presaleSoldOutPriceUSD:", "0.37");
-  console.log("marketingWallet:", marketingWallet);
   console.log("liquidityWallet:", liquidityWallet);
   console.log("stakingReserveWallet:", stakingReserveWallet);
   console.log("developmentBeneficiary:", developmentBeneficiary);
