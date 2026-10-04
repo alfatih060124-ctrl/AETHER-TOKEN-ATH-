@@ -56,6 +56,7 @@ const STAKING_ADMIN_ABI=[
   "function paused() view returns (bool)",
   "function principalLiabilityATH() view returns (uint256)",
   "function rewardReserveATH() view returns (uint256)",
+  "function networkReserveATH() view returns (uint256)",
   "function totalReferralPaidATH() view returns (uint256)",
   "function totalNetworkPaidATH() view returns (uint256)",
   "function totalRankSalaryPaidATH() view returns (uint256)",
@@ -236,8 +237,8 @@ async function refreshUnifiedModules(){
   if(addr(cfg?.stakingAddress)){
     try{
       stakingRead=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,readProvider);
-      const [owner,paused,principal,rewardReserve,referralPaid,networkPaid,rankPaidAth,rankPaidUsd]=await Promise.all([
-        stakingRead.owner(),stakingRead.paused(),stakingRead.principalLiabilityATH(),stakingRead.rewardReserveATH(),
+      const [owner,paused,principal,rewardReserve,networkReserve,referralPaid,networkPaid,rankPaidAth,rankPaidUsd]=await Promise.all([
+        stakingRead.owner(),stakingRead.paused(),stakingRead.principalLiabilityATH(),stakingRead.rewardReserveATH(),stakingRead.networkReserveATH(),
         stakingRead.totalReferralPaidATH(),stakingRead.totalNetworkPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT()
       ]);
       state.stakingOwner=owner; state.stakingPaused=paused;
@@ -245,11 +246,13 @@ async function refreshUnifiedModules(){
       $("stakingAddress").textContent=short(cfg.stakingAddress);
       $("stakingPrincipal").textContent=ath(principal);
       $("stakingRewardReserve").textContent=ath(rewardReserve);
+      $("stakingNetworkReserve").textContent=ath(networkReserve);
       $("rankSalaryPaid").textContent="$"+Number(ethers.formatEther(rankPaidUsd)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
       $("rankSalaryPaidAth").textContent=ath(rankPaidAth);
       $("stakingOwner").textContent=owner;
       $("stakingPause").textContent=paused?"PAUSED":"ACTIVE";
       $("stakingReserveDetail").textContent=ath(rewardReserve);
+      $("stakingNetworkReserveDetail").textContent=ath(networkReserve);
       $("stakingReferralPaid").textContent=ath(referralPaid);
       $("stakingNetworkPaid").textContent=ath(networkPaid);
       $("stakingRankPaidDetail").textContent="$"+Number(ethers.formatEther(rankPaidUsd)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" / "+ath(rankPaidAth);
