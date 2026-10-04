@@ -1,6 +1,68 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 FINAL NO-BNB AUDIT / QC — CURRENT SOURCE OF TRUTH
+
+This section supersedes older no-BNB / 25-test / legacy 70-20-5-5 notes below.
+
+### Internal work complete without BNB
+- Mining v3.3 source and all current Mining reward/referral/Booster/vesting rules: COMPLETE.
+- Staking source, 00:50 UTC reward schedule, unified Direct Referral 10%–35%, Same-Rank Skip, L1-L10 Network Bonus and lifetime Rank Salary: COMPLETE.
+- Presale 30M / $0.070 / +$0.001 per 100k / $0.370 sold-out reference: COMPLETE.
+- 1B supply conservation with 700M Mining + 300M Staking ecosystem: COMPLETE.
+- Separate Mining / Staking / Presale Admin wallet roles: COMPLETE.
+- Dedicated Mining Treasury role and shared current Mining/Presale Treasury destination policy: COMPLETE.
+- Keeper expected-wallet private-key match protection: COMPLETE.
+- Admin public wallet gate with Mining/Staking/Presale signed-session access: COMPLETE.
+- Control Panel Mining/Staking/System workspace isolation: COMPLETE.
+- Public holder Mining/Staking workspace separation: COMPLETE.
+- Mining Keeper / Staking Reward Keeper / Rank Salary Keeper fail-closed tooling: COMPLETE.
+- Release ABI export, local rehearsal, post-deploy invariants, verification tooling and Testnet checklist: COMPLETE.
+- No-BNB Completion register and all three keeper runbooks synchronized to current rules: COMPLETE.
+- Runtime production security gate: COMPLETE.
+- Public web production dependency audit: COMPLETE.
+
+### Latest validator evidence
+- Deployment: `fa704961-e278-40b3-87e3-653c915963e3` — **SUCCESS**.
+- Runtime high/critical vulnerabilities: **0**.
+- Non-BNB readiness: **PASSED**.
+- Source self-check: **PASSED**.
+- Release documentation synchronization gate: **PASSED**.
+- Script syntax: **PASSED**.
+- BSC Testnet RPC/readiness: **PASSED**.
+- Solidity: **28 files compiled**.
+- Automated tests: **69/69 PASS**.
+- ABI/release export: **PASS**.
+- Local Mining + Presale + Staking release rehearsal: **PASS**.
+
+### Latest public web evidence
+- Deployment: `9ebf369e-7ea9-4395-b09e-d0e160299cf1` — **SUCCESS**.
+- Production dependency audit: **0 vulnerabilities**.
+- Multilingual QC: **284 keys across 9 translated languages + English**.
+- Healthcheck: **PASS**.
+- Runtime remains TESTNET, contractConfigured=false, mainnetEnabled=false.
+
+### Not coding gaps — operator inputs still required
+- `PRESALE_PAYMENT_TOKEN`
+- `LIQUIDITY_WALLET`
+- `STAKING_RESERVE_WALLET`
+- `DEVELOPMENT_BENEFICIARY`
+- `BSCSCAN_API_KEY` (only needed for explorer verification after deployment)
+
+### Public-chain-only work intentionally pending
+- Fund Testnet deployer with required tBNB.
+- Deploy contracts on BSC Testnet.
+- Freeze public Testnet addresses.
+- Run real post-deploy invariant checks.
+- Verify deployed contracts on BscScan.
+- Execute real Mining / Presale / Staking holder flows.
+- Fund and activate Testnet keeper transactions.
+- Bind verified Testnet contracts to AETHER Wallet.
+
+No real BNB is required for Testnet. Mainnet remains CLOSED and no blockchain deployment transaction was executed during this final no-BNB audit.
+
+
+
 ## 2026-10-04 PUBLIC HOLDER WORKSPACE SEPARATION — CURRENT SOURCE OF TRUTH
 
 - Public holder portal now separates Mining and Staking into explicit operational workspaces.
