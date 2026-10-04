@@ -85,11 +85,14 @@ const STAKING_ABI = [
   "function paused() view returns (bool)",
   "function STAKING_ECOSYSTEM_ALLOCATION() view returns (uint256)",
   "function MAX_REWARD_POOL() view returns (uint256)",
+  "function MAX_NETWORK_MARKETING_POOL() view returns (uint256)",
   "function MIN_STAKE_USDT() view returns (uint256)",
   "function REFERRAL_BPS() view returns (uint256)",
   "function packageCount() view returns (uint256)",
   "function rewardReserveATH() view returns (uint256)",
+  "function networkReserveATH() view returns (uint256)",
   "function totalRewardFundedATH() view returns (uint256)",
+  "function totalNetworkFundedATH() view returns (uint256)",
   "function principalLiabilityATH() view returns (uint256)",
   "function totalActiveStakedUSDT() view returns (uint256)",
   "function MIN_DIRECT_SPONSORS_FOR_RANK() view returns (uint256)",
@@ -272,11 +275,14 @@ async function main() {
     stakingPaused,
     stakingAllocation,
     maxRewardPool,
+    maxNetworkMarketingPool,
     minStakeUSDT,
     referralBps,
     packageCount,
     rewardReserveATH,
+    networkReserveATH,
     totalRewardFundedATH,
+    totalNetworkFundedATH,
     principalLiabilityATH,
     totalActiveStakedUSDT,
     rankMinSponsors,
@@ -365,11 +371,14 @@ async function main() {
     staking.paused(),
     staking.STAKING_ECOSYSTEM_ALLOCATION(),
     staking.MAX_REWARD_POOL(),
+    staking.MAX_NETWORK_MARKETING_POOL(),
     staking.MIN_STAKE_USDT(),
     staking.REFERRAL_BPS(),
     staking.packageCount(),
     staking.rewardReserveATH(),
+    staking.networkReserveATH(),
     staking.totalRewardFundedATH(),
+    staking.totalNetworkFundedATH(),
     staking.principalLiabilityATH(),
     staking.totalActiveStakedUSDT(),
     staking.MIN_DIRECT_SPONSORS_FOR_RANK(),
@@ -481,9 +490,12 @@ async function main() {
   if (!eqAddr(stakingOwner, ownerExpected)) throw new Error("Staking owner mismatch");
   if (stakingPaused) throw new Error("Staking unexpectedly paused");
   assertEq(stakingAllocation, threeHundredM, "Staking ecosystem allocation");
-  assertEq(maxRewardPool, oneSixtyM, "Staking reward pool cap");
-  assertEq(rewardReserveATH, oneSixtyM, "Staking initial reward reserve");
-  assertEq(totalRewardFundedATH, oneSixtyM, "Staking initial reward funded");
+  assertEq(maxRewardPool, oneSixtyM, "Staking daily reward pool cap");
+  assertEq(maxNetworkMarketingPool, fiftyM, "Staking Marketing/network pool cap");
+  assertEq(rewardReserveATH, oneSixtyM, "Staking initial daily reward reserve");
+  assertEq(networkReserveATH, fiftyM, "Staking initial Marketing/network reserve");
+  assertEq(totalRewardFundedATH, oneSixtyM, "Staking initial daily reward funded");
+  assertEq(totalNetworkFundedATH, fiftyM, "Staking initial network funded from Marketing");
   assertEq(minStakeUSDT, ethers.parseEther("10"), "Staking minimum");
   assertEq(referralBps, 1000n, "Direct referral rate");
   assertEq(packageCount, 6n, "Staking package count");
@@ -516,7 +528,6 @@ async function main() {
     const key = address.toLowerCase();
     expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
   }
-  addExpected(marketingWallet, fiftyM);
   addExpected(liquidityWallet, twentyM);
   addExpected(stakingReserveWallet, tenM);
 
@@ -591,6 +602,11 @@ async function main() {
       weeklySalaryUSDT: [25, 75, 200, 500, 1000, 2000, 5000, 10000],
       payoutUtc: "00:30",
       firstPayoutDelayDays: 7,
+    },
+    stakingReservesATH: {
+      dailyReward: ethers.formatEther(rewardReserveATH),
+      marketingNetwork: ethers.formatEther(networkReserveATH),
+      principalLiability: ethers.formatEther(principalLiabilityATH),
     },
     stakingDestinationBalancesATH: destinationBalances,
     miningReferencePriceUSD: (Number(miningReferencePrice) / 1_000_000).toFixed(3),
