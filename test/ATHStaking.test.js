@@ -76,6 +76,7 @@ describe("AETHER ATH Staking v1", function () {
 
     await token.approve(await staking.getAddress(), ethers.MaxUint256);
     await staking.fundRewards(ethers.parseEther("160000000"));
+    await staking.fundNetworkReserve(ethers.parseEther("50000000"));
   });
 
   it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {
@@ -133,20 +134,23 @@ describe("AETHER ATH Staking v1", function () {
     expect(diamond.lockDays).to.equal(730n);
   });
 
-  it("keeps principal liability separate from the reward reserve", async function () {
-    const reserveBefore = await staking.rewardReserveATH();
+  it("keeps principal liability separate from reward and network/marketing reserves", async function () {
+    const rewardBefore = await staking.rewardReserveATH();
+    const networkBefore = await staking.networkReserveATH();
     const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
     await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
 
     expect(await staking.principalLiabilityATH()).to.equal(principal);
-    expect(await staking.rewardReserveATH()).to.equal(reserveBefore);
+    expect(await staking.rewardReserveATH()).to.equal(rewardBefore);
+    expect(await staking.networkReserveATH()).to.equal(networkBefore);
     expect(await token.balanceOf(await staking.getAddress())).to.equal(
-      reserveBefore + principal
+      rewardBefore + networkBefore + principal
     );
   });
 
-  it("pays the 10% direct referral reward from reward reserve, not principal", async function () {
-    const reserveBefore = await staking.rewardReserveATH();
+  it("pays the 10% direct referral from the 50M marketing/network reserve, not reward reserve or principal", async function () {
+    const rewardBefore = await staking.rewardReserveATH();
+    const networkBefore = await staking.networkReserveATH();
     const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
     const expectedReferral = (principal * 1_000n) / 10_000n;
     const refBefore = await token.balanceOf(referrer.address);
@@ -155,7 +159,8 @@ describe("AETHER ATH Staking v1", function () {
 
     expect(await token.balanceOf(referrer.address) - refBefore).to.equal(expectedReferral);
     expect(await staking.principalLiabilityATH()).to.equal(principal);
-    expect(await staking.rewardReserveATH()).to.equal(reserveBefore - expectedReferral);
+    expect(await staking.rewardReserveATH()).to.equal(rewardBefore);
+    expect(await staking.networkReserveATH()).to.equal(networkBefore - expectedReferral);
   });
 
   it("accrues rewards only by completed days and preserves partial-day time", async function () {
@@ -290,6 +295,22 @@ describe("AETHER ATH Staking v1", function () {
     await expect(fresh.fundRewards(1n)).to.be.revertedWith("reward pool cap");
   });
 
+  it("caps all networking bonus funding at the fixed 50M ATH marketing allocation", async function () {
+    const Staking = await ethers.getContractFactory("ATHStaking");
+    const fresh = await Staking.deploy(
+      await token.getAddress(),
+      await oracle.getAddress(),
+      owner.address
+    );
+    await fresh.waitForDeployment();
+    await token.approve(await fresh.getAddress(), ethers.MaxUint256);
+
+    await fresh.fundNetworkReserve(ethers.parseEther("50000000"));
+    expect(await fresh.networkReserveATH()).to.equal(ethers.parseEther("50000000"));
+    expect(await fresh.totalNetworkFundedATH()).to.equal(ethers.parseEther("50000000"));
+    await expect(fresh.fundNetworkReserve(1n)).to.be.revertedWith("network pool cap");
+  });
+
   it("only permits recovery of ATH above protected principal + reward reserve", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
     await token.transfer(await staking.getAddress(), ethers.parseEther("5"));
@@ -394,18 +415,46 @@ describe("AETHER ATH Staking v1", function () {
 
     await setNextTimestamp(info.nextPayoutAt);
     const before = await token.balanceOf(user.address);
-    const reserveBefore = await staking.rewardReserveATH();
+    const rewardBefore = await staking.rewardReserveATH();
+    const reserveBefore = await staking.networkReserveATH();
     const expectedSalaryATH = athForUsd(ethers.parseEther("25"), PRICE_007);
 
     await staking.connect(keeper).processRankSalary(user.address);
 
     expect((await token.balanceOf(user.address)) - before).to.equal(expectedSalaryATH);
-    expect(reserveBefore - (await staking.rewardReserveATH())).to.equal(expectedSalaryATH);
+    expect(await staking.rewardReserveATH()).to.equal(rewardBefore);
+    expect(reserveBefore - (await staking.networkReserveATH())).to.equal(expectedSalaryATH);
 
     const afterInfo = await staking.rankInfo(user.address);
     expect(afterInfo.totalSalaryPaidUSDT).to.equal(ethers.parseEther("25"));
     expect(afterInfo.totalSalaryPaidATH).to.equal(expectedSalaryATH);
     expect(afterInfo.nextPayoutAt).to.equal(info.nextPayoutAt + BigInt(7 * DAY));
+  });
+
+  it("keeps Rank Salary lifetime after staking principal is withdrawn", async function () {
+    const legs = [leg1, leg2, leg3, leg4, leg5];
+    const values = ["900","899","890","880","870"];
+    for (let i = 0; i < legs.length; i++) {
+      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+    }
+
+    const firstInfo = await staking.rankInfo(user.address);
+    expect(firstInfo.highestRank).to.equal(1n);
+
+    // The ranked account itself creates a stake, waits through its lock, then withdraws it.
+    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await increase(180 * DAY);
+    await staking.connect(user).withdrawPrincipal(0);
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
+
+    // Rank Salary remains due on the perpetual weekly schedule after principal withdrawal.
+    const infoAfterWithdraw = await staking.rankInfo(user.address);
+    if (BigInt(await ethers.provider.getBlock("latest").then(b=>b.timestamp)) < infoAfterWithdraw.nextPayoutAt) {
+      await setNextTimestamp(infoAfterWithdraw.nextPayoutAt);
+    }
+    const preview = await staking.rankSalaryPreview(user.address);
+    expect(preview.payableRankNow).to.equal(1n);
+    expect(preview.salaryUSDT).to.be.greaterThan(0n);
   });
 
   it("keeps the Rank salary fixed in USD while ATH amount follows the newer Presale price", async function () {
