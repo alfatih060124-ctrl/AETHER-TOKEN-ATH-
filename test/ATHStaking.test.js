@@ -20,6 +20,12 @@ async function setNextTimestamp(timestamp) {
   await ethers.provider.send("evm_mine", []);
 }
 
+async function advanceToRewardSlot(staking, account, stakeId, extraDays = 0) {
+  const schedule = await staking.getRewardSchedule(account, stakeId);
+  const target = Number(schedule.nextRewardAt) + (extraDays * DAY);
+  await setNextTimestamp(target);
+}
+
 describe("AETHER ATH Staking v1", function () {
   let signers;
   let owner, user, referrer, second, treasury, presaleBuyer, leg1, leg2, leg3, leg4, leg5, keeper;
@@ -163,10 +169,16 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.networkReserveATH()).to.equal(networkBefore - expectedReferral);
   });
 
-  it("accrues rewards only by completed days and preserves partial-day time", async function () {
+  it("credits one daily Staking reward only at the 00:50 UTC reward slot", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    const schedule = await staking.getRewardSchedule(user.address, 0);
+    expect(schedule.firstRewardAt % BigInt(DAY)).to.equal(3000n);
+    expect(schedule.totalRewardDays).to.equal(180n);
 
-    await increase(DAY + DAY / 2);
+    await setNextTimestamp(schedule.firstRewardAt - 1n);
+    expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(0n);
+
+    await setNextTimestamp(schedule.firstRewardAt);
     expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(
       ethers.parseEther("0.035")
     );
@@ -177,7 +189,10 @@ describe("AETHER ATH Staking v1", function () {
       athForUsd(ethers.parseEther("0.035"), PRICE_007)
     );
 
-    await increase(DAY / 2);
+    const afterClaim = await staking.getRewardSchedule(user.address, 0);
+    await setNextTimestamp(afterClaim.nextRewardAt - 1n);
+    expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(0n);
+    await setNextTimestamp(afterClaim.nextRewardAt);
     expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(
       ethers.parseEther("0.035")
     );
@@ -185,7 +200,7 @@ describe("AETHER ATH Staking v1", function () {
 
   it("distributes level-1 network reward at 8% of the user's daily reward", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
-    await increase(DAY);
+    await advanceToRewardSlot(staking, user.address, 0);
 
     const rewardATH = athForUsd(ethers.parseEther("0.035"), PRICE_007);
     const expectedNetwork = (rewardATH * 800n) / 10_000n;
@@ -210,9 +225,8 @@ describe("AETHER ATH Staking v1", function () {
       await staking.connect(chain[i]).stake(0, ethers.parseEther("10"), chain[i - 1].address);
     }
 
-    await increase(DAY);
-
     const leaf = chain[10];
+    await advanceToRewardSlot(staking, leaf.address, 0);
     const uplines = chain.slice(0, 10).reverse();
     const before = await Promise.all(uplines.map((u) => token.balanceOf(u.address)));
 
@@ -243,7 +257,7 @@ describe("AETHER ATH Staking v1", function () {
     expect(position.dailyRateBps).to.equal(35n);
     expect(position.lockDays).to.equal(180n);
 
-    await increase(DAY);
+    await advanceToRewardSlot(staking, user.address, 0);
     expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(
       ethers.parseEther("0.035")
     );
@@ -261,6 +275,9 @@ describe("AETHER ATH Staking v1", function () {
     expect((await token.balanceOf(user.address)) - before).to.equal(principal);
     expect(await staking.principalLiabilityATH()).to.equal(0n);
 
+    const schedule = await staking.getRewardSchedule(user.address, 0);
+    const now = BigInt((await ethers.provider.getBlock("latest")).timestamp);
+    if (now < schedule.lastRewardAt) await setNextTimestamp(schedule.lastRewardAt);
     expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(
       ethers.parseEther("6.3")
     );
@@ -354,6 +371,9 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.totalRankMembers()).to.equal(1n);
     expect(await staking.isRankMember(user.address)).to.equal(true);
     expect(await staking.getRankMembers(0, 200)).to.deep.equal([user.address]);
+    expect(await staking.totalDirectLegs(user.address)).to.equal(5n);
+    expect(await staking.getDirectLegMembers(user.address, 0, 200)).to.deep.equal(legs.map(x => x.address));
+    expect(await staking.totalWeeklyRankSalaryUSDT()).to.equal(ethers.parseEther("25"));
   });
 
   it("requires at least five direct sponsors even if four legs already meet small-leg turnover", async function () {
