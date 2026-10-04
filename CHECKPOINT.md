@@ -1,6 +1,35 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 PUBLIC PORTAL TOKENOMICS / HOLDER WORKSPACE CACHE FIX — CURRENT SOURCE OF TRUTH
+
+- Public holder portal has an explicit Mining/Staking workspace selector.
+- Mining holder area and Staking holder area are operationally separated; inactive engine controls are hidden.
+- Staking member area includes Rank Salary, Sponsor Network Hierarchy, turnover, Rank and Lifestyle Bonus / Matching Staking data.
+- Public tokenomics source of truth:
+  - Mining 70% = 700,000,000 ATH.
+  - Staking ecosystem 30% = 300,000,000 ATH.
+  - Staking breakdown: 160M Reward Pool + 50M Marketing/Network + 30M Presale + 30M Team/Developer + 20M Liquidity + 10M Ecosystem Reserve.
+- Legacy injected Whitepaper UI showing 20% / 200M Liquidity and 5% Team / 5% Marketing was removed from `ath-info.js`.
+- Injected Whitepaper panel now mirrors the same 70/30 tokenomics and six-part 300M Staking allocation.
+- A clear **GENERAL AETHER DOCUMENTATION** divider now separates holder operations from Whitepaper / Roadmap / Developer documentation.
+- Whitepaper source was synchronized:
+  - Direct Referral total 10%-35%.
+  - Lifestyle Bonus / Matching Staking naming.
+  - Referral / Rank uplift / Lifestyle Matching / Rank Salary use the protected 50M Marketing / Network Reserve.
+  - 160M Staking Reward Pool is for Daily Staking Reward.
+- Mobile/WebView stale-page protection is now enforced:
+  - HTML/CSS/JS/JSON: no-store + no-cache + must-revalidate.
+  - public root redirects to a FRONTEND_REV-versioned URL.
+- Regression source gate explicitly rejects legacy `20% / 200,000,000 ATH` liquidity tokenomics in the injected public Whitepaper panel.
+- Latest web deployment `96bc055c-4326-463c-90cc-54c8f43482fd`: SUCCESS, healthcheck PASS, multilingual QC 309 keys across 9 translated languages + English.
+- Latest validator `24ffd094-cd47-442d-96a5-694186cd4229`: SUCCESS.
+- Validator evidence: 28 Solidity files compiled, **72/72 tests PASS**, ABI/release package PASS, local release rehearsal PASS.
+- No blockchain deployment transaction was executed by this public UI correction.
+- Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 PUBLIC TOKENOMICS + STAKING MEMBER NETWORK — CURRENT SOURCE OF TRUTH
 
 - Public ATH tokenomics is now shown in two primary layers:
