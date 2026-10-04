@@ -183,6 +183,7 @@ function configPayload() {
     miningProtocolVersion: "3.3",
     stakingProtocolVersion: "1.0",
     whitepaperVersion: "1.1",
+    frontendRev: (process.env.FRONTEND_REV || "dev").trim(),
     networkMode: (process.env.NETWORK_MODE || "TESTNET").toUpperCase(),
     chainId: Number(process.env.PUBLIC_CHAIN_ID || 97),
     chainName: process.env.PUBLIC_CHAIN_NAME || "BSC Testnet",
@@ -247,11 +248,17 @@ function baseSecurityHeaders(controlPanelHost = false) {
 }
 
 function send(res, status, body, type, controlPanelHost = false, extraHeaders = {}) {
+  const dynamicAsset = type.includes("html") || type.includes("json") || type.includes("javascript") || type.includes("css");
   res.writeHead(status, {
     "content-type": type,
-    "cache-control": type.includes("html") || type.includes("json")
-      ? "no-store"
+    "cache-control": dynamicAsset
+      ? "no-store, no-cache, must-revalidate, max-age=0"
       : "public, max-age=300",
+    ...(dynamicAsset ? {
+      "pragma": "no-cache",
+      "expires": "0",
+      "surrogate-control": "no-store"
+    } : {}),
     ...baseSecurityHeaders(controlPanelHost),
     ...extraHeaders,
   });
@@ -293,7 +300,23 @@ function safePublicPath(urlPath, controlPanelHost = false) {
 
 const server = http.createServer((req, res) => {
   const controlPanelHost = isControlPanelHost(req);
-  const requestPath = String(req.url || "/").split("?")[0];
+  const requestUrl = new URL(String(req.url || "/"), "https://aether.local");
+  const requestPath = requestUrl.pathname;
+
+  if (!controlPanelHost && requestPath === "/") {
+    const rev = String(process.env.FRONTEND_REV || "dev").trim();
+    if (requestUrl.searchParams.get("rev") !== rev) {
+      const location = "/?rev=" + encodeURIComponent(rev);
+      res.writeHead(302, {
+        location,
+        "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+        pragma: "no-cache",
+        expires: "0",
+        ...baseSecurityHeaders(false),
+      });
+      return res.end();
+    }
+  }
   const controlPanelAllowedRequest = new Set([
     "/", "/admin", "/admin/", "/admin.html", "/admin.js",
     "/admin-login.html", "/admin-login.js", "/admin.css", "/vendor/ethers.umd.min.js",
@@ -550,9 +573,17 @@ const server = http.createServer((req, res) => {
   fs.stat(full, (statErr, stat) => {
     if (!statErr && stat.isFile()) {
       const ext = path.extname(full).toLowerCase();
+      const dynamicExt = [".html",".css",".js",".json"].includes(ext);
       res.writeHead(200, {
         "content-type": MIME[ext] || "application/octet-stream",
-        "cache-control": ext === ".html" ? "no-store" : "public, max-age=300",
+        "cache-control": dynamicExt
+          ? "no-store, no-cache, must-revalidate, max-age=0"
+          : "public, max-age=300",
+        ...(dynamicExt ? {
+          "pragma": "no-cache",
+          "expires": "0",
+          "surrogate-control": "no-store"
+        } : {}),
         ...baseSecurityHeaders(controlPanelHost),
       });
       fs.createReadStream(full).pipe(res);
