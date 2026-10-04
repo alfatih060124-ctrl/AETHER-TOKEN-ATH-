@@ -27,6 +27,9 @@ This section supersedes current-facing terminology that called the L1-L10 real-t
 - Control Panel displays **Lifestyle Bonus / Matching Staking Paid**.
 - Staking Reward Keeper documentation and Testnet acceptance checklist use the new official name.
 - Latest web multilingual QC after the rename: **288 keys across 9 translated languages + English**.
+- Latest public web deployment: `1fc16bfb-6a18-4ed2-96ed-6571852eab36` — **SUCCESS**, healthcheck PASS.
+- Latest validator deployment: `2e4a43f9-d223-46a4-898a-f7d4ab9dced0` — **SUCCESS**.
+- Validator evidence after the naming lock: **28 Solidity files compiled, 70/70 tests PASS, ABI export PASS, local release rehearsal PASS**.
 - Naming change does not modify Mining, Direct Referral/Rank, Rank Salary, Presale, tokenomics, reserve caps, or Mainnet gates.
 - Mainnet remains CLOSED.
 
