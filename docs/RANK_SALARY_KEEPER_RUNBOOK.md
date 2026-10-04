@@ -4,7 +4,7 @@
 
 The Rank Salary Keeper processes **lifetime weekly Rank Salary** for qualified accounts. It is permissionless automation only and holds no ATHStaking owner privilege.
 
-Rank Salary uses only the protected **50M Marketing / Network Reserve**.
+Rank Salary uses only the protected **50M Marketing / Lifestyle Matching Reserve**.
 
 ## Schedule
 
@@ -57,7 +57,7 @@ The private key derived wallet must exactly equal the configured Keeper wallet.
    - ATH conversion at current Presale-linked price,
    - RankSalaryPaid event,
    - persistent RankSalaryPayment history entry,
-   - 50M Marketing/Network Reserve reduction,
+   - 50M Marketing / Lifestyle Matching Reserve reduction,
    - principal and 160M Daily Reward Reserve unchanged.
 10. Only after evidence is correct, leave the Railway cron enabled for Testnet.
 
