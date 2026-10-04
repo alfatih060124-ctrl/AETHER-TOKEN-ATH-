@@ -232,8 +232,8 @@
           <p class="muted">Funding cannot exceed the fixed 160M Reward or 50M Marketing/Network tokenomic caps.</p>
         </div>
         <div>
-          <h3>Staking Package</h3>
-          <label>Package ID<input id="packageIdInput" inputmode="numeric" placeholder="0" /></label>
+          <h3>Staking Package Manager</h3>
+          <label>Package ID (0 Starter · 1 Basic · 2 Silver · 3 Gold · 4 Platinum · 5 Diamond)<input id="packageIdInput" inputmode="numeric" placeholder="0" /></label>
           <div class="form-grid">
             <label>Minimum USD<input id="packageMinInput" inputmode="decimal" placeholder="10" /></label>
             <label>Maximum USD<input id="packageMaxInput" inputmode="decimal" placeholder="99" /></label>
@@ -244,10 +244,48 @@
           <div class="button-row">
             <button id="loadPackageBtn" class="btn">Load Package</button>
             <button id="updatePackageBtn" class="btn gold" disabled>Update Package</button>
-            <button id="addPackageBtn" class="btn" disabled>Add Package</button>
+            <button id="addPackageBtn" class="btn" disabled>Add New Package</button>
           </div>
+          <p class="muted">The six original packages remain the base products. Editing a package changes future Staking contracts only; existing member contracts keep the rate and lock period captured when they joined.</p>
           <div id="packageList" class="admin-list"><div class="empty">Staking contract pending deployment.</div></div>
         </div>
+      </div>
+    </section>
+
+    <section class="panel control-zone" data-control-zone="staking" hidden>
+      <div class="section-head">
+        <div><span class="eyebrow">MEMBER & CONTRACT DASHBOARD</span><h2>Staking members and contract activity</h2></div>
+        <button id="refreshContractStatsBtn" class="btn">Refresh Contract Data</button>
+      </div>
+      <p class="muted">Package ID identifies the Staking product (Starter–Diamond). Contract ID is a unique ID automatically created for each member Staking contract. ACTIVE means the principal is still held in the Staking contract; N-ACTIVE means the principal has been withdrawn/closed.</p>
+
+      <div class="analytics-grid">
+        <div><small>Total Members</small><strong id="stakingMemberTotal">0</strong></div>
+        <div><small>Members With Active Contract</small><strong id="stakingMemberActive">0</strong></div>
+        <div><small>Total Contracts</small><strong id="stakingContractTotal">0</strong></div>
+        <div><small>ACTIVE Contracts</small><strong id="stakingContractActive">0</strong></div>
+        <div><small>N-ACTIVE Contracts</small><strong id="stakingContractInactive">0</strong></div>
+        <div><small>Available Packages</small><strong id="stakingPackageTotal">6</strong></div>
+      </div>
+
+      <div class="section-head subhead">
+        <div><span class="eyebrow">PACKAGE DISTRIBUTION</span><h3>Contracts per Staking package</h3></div>
+      </div>
+      <div id="packageContractStats" class="admin-table-wrap">
+        <div class="empty">Staking contract pending deployment.</div>
+      </div>
+
+      <div class="section-head subhead">
+        <div><span class="eyebrow">MEMBER CONTRACT LOOKUP</span><h3>Find contract owner by Contract ID</h3></div>
+      </div>
+      <div class="contract-lookup-row">
+        <label>Contract ID
+          <input id="stakingContractIdInput" inputmode="numeric" placeholder="Example: 1" />
+        </label>
+        <button id="lookupStakingContractBtn" class="btn gold">Find Contract</button>
+      </div>
+      <div id="stakingContractLookupResult" class="contract-detail-card">
+        <div class="empty">Enter a Contract ID to see the member wallet, package, amount, status and reward details.</div>
       </div>
     </section>
 
@@ -333,6 +371,6 @@
   </main>
 
   <script src="/vendor/ethers.umd.min.js?v=6.15.0"></script>
-  <script src="/admin.js?v=local-ethers-v1"></script>
+  <script src="/admin.js?v=staking-contract-dashboard-v1"></script>
 </body>
 </html>
