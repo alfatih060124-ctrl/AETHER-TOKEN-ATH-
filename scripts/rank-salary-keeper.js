@@ -7,7 +7,7 @@ const ABI = [
   "function getRankMembers(uint256 offset,uint256 limit) view returns (address[] result)",
   "function rankSalaryPreview(address account) view returns (uint8 highestRank,uint8 payableRankNow,uint256 periodsDue,uint256 salaryUSDT,uint256 salaryATH,uint256 nextPayoutAt,uint256 smallLegTurnover,uint256 sponsors)",
   "function processRankSalaryBatch(address[] accounts) returns (uint256 processed)",
-  "function rewardReserveATH() view returns (uint256)",
+  "function networkReserveATH() view returns (uint256)",
 ];
 
 function flag(name, fallback = false) {
@@ -78,10 +78,10 @@ async function main() {
   const scheduleGuard = flag("RANK_KEEPER_SCHEDULE_GUARD", true);
   const read = new ethers.Contract(stakingAddress, ABI, provider);
 
-  const [contractBatchMax, contractPageMax, rewardReserve] = await Promise.all([
+  const [contractBatchMax, contractPageMax, networkReserve] = await Promise.all([
     read.MAX_RANK_BATCH(),
     read.MAX_RANK_MEMBER_PAGE(),
-    read.rewardReserveATH(),
+    read.networkReserveATH(),
   ]);
 
   const batchSize = positiveInt("RANK_KEEPER_BATCH_SIZE", Math.min(25, Number(contractBatchMax)));
@@ -120,7 +120,7 @@ async function main() {
     dueAccounts: due.length,
     dueSalaryUSDT: ethers.formatEther(dueSalaryUSDT),
     dueSalaryATH: ethers.formatEther(dueSalaryATH),
-    rewardReserveATH: ethers.formatEther(rewardReserve),
+    networkMarketingReserveATH: ethers.formatEther(networkReserve),
     batchSize,
     pageSize,
     transactions: 0,
