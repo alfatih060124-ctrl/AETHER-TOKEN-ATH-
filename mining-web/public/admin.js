@@ -186,7 +186,6 @@ async function ensureChain(){
 async function connect(){
   if(!window.ethereum){toast("Open this page inside AETHER Wallet or another EVM-compatible wallet.",true);return;}
   try{
-    await ensureChain();
     browserProvider=new ethers.BrowserProvider(window.ethereum);
     await browserProvider.send("eth_requestAccounts",[]);
     signer=await browserProvider.getSigner();
@@ -196,6 +195,8 @@ async function connect(){
       throw new Error("Connected wallet no longer matches the authenticated admin session.");
     }
     $("connectBtn").textContent=short(account);
+    $("accessTitle").textContent=cfg?.adminRoleLabel||"Authenticated Admin";
+    $("accessText").textContent="Wallet session authenticated. Network switching is required only when an on-chain admin transaction is submitted.";
     if(addr(cfg.miningAddress)) miningWrite=new ethers.Contract(cfg.miningAddress,MINING_ABI,signer);
     if(addr(cfg.tokenAddress)) tokenWrite=new ethers.Contract(cfg.tokenAddress,TOKEN_ABI,signer);
     if(addr(cfg.stakingAddress)) stakingWrite=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,signer);
@@ -364,6 +365,7 @@ async function fundStakingReserve(kind){
   const remaining=kind==="reward"?state.rewardFundingRemaining:state.networkFundingRemaining;
   if(amount>remaining)return toast("Amount exceeds the remaining fixed tokenomic allocation.",true);
   try{
+    await ensureChain();
     await ensureStakingAllowance(amount);
     await runTx(kind==="reward"?"Fund Daily Reward Reserve":"Fund Marketing / Network Reserve",()=>kind==="reward"?stakingWrite.fundRewards(amount):stakingWrite.fundNetworkReserve(amount));
     input.value="";
@@ -522,6 +524,7 @@ async function loadRankHistory(){
 
 async function runTx(label,fn){
   try{
+    await ensureChain();
     toast(`${label}: confirm in your wallet.`);
     const tx=await fn();
     toast(`${label}: submitted ${short(tx.hash)}`);
