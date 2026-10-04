@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#070502" />
   <title>AETHER ATH — Mining, Presale & Staking</title>
   <meta name="description" content="AETHER ATH unified Mining, Presale and Staking portal — on-chain ATH utility with Presale-linked pricing starting at $0.07 and stepping $0.001 per 100,000 ATH sold." />
-  <link rel="stylesheet" href="/styles.css?v=20261004-holder-workspace-v1" />
-  <link rel="stylesheet" href="/staking.css?v=20261004-rank-v1" />
+  <link rel="stylesheet" href="/styles.css?v=20261004-tokenomics-network-v2" />
+  <link rel="stylesheet" href="/staking.css?v=20261004-network-tree-v2" />
 </head>
 <body>
   <div class="page-glow page-glow-a"></div>
@@ -102,6 +102,42 @@
         <strong>Mining reward/referral and Staking reward/referral are different programs.</strong>
         <small>Always confirm the area label before signing a transaction in your wallet.</small>
       </div>
+    </section>
+
+    <section id="tokenomics" class="shell ath-tokenomics">
+      <div class="ath-tokenomics-head">
+        <div>
+          <span class="ath-tokenomics-kicker">ATH TOKENOMICS</span>
+          <h2>1,000,000,000 ATH Fixed Supply</h2>
+          <p>The supply is separated first into Mining and Staking. The 300M Staking ecosystem is then divided into six protected allocations.</p>
+        </div>
+        <span class="ath-tokenomics-lock">NO POST-DEPLOY MINT</span>
+      </div>
+
+      <div class="ath-tokenomics-primary">
+        <article class="ath-allocation-card mining">
+          <span>MINING ALLOCATION</span>
+          <strong>70%</strong>
+          <b>700,000,000 ATH</b>
+          <small>ATH Mining reward, booster/referral mechanics and vesting engine.</small>
+        </article>
+        <article class="ath-allocation-card staking">
+          <span>STAKING ECOSYSTEM</span>
+          <strong>30%</strong>
+          <b>300,000,000 ATH</b>
+          <small>Staking reward, Presale, Marketing/Network, Development, Liquidity and Ecosystem Reserve.</small>
+        </article>
+      </div>
+
+      <div class="ath-tokenomics-breakdown">
+        <article><span>STAKING REWARD POOL</span><strong>160,000,000 ATH</strong><small>16% of total supply · Daily Staking reward reserve</small></article>
+        <article><span>MARKETING / NETWORK</span><strong>50,000,000 ATH</strong><small>5% · Direct Referral, Rank uplift, Lifestyle Bonus / Matching Staking and Rank Salary</small></article>
+        <article><span>PRESALE</span><strong>30,000,000 ATH</strong><small>3% · Presale-linked ATH price source</small></article>
+        <article><span>TEAM / DEVELOPER</span><strong>30,000,000 ATH</strong><small>3% · Development vesting allocation</small></article>
+        <article><span>LIQUIDITY</span><strong>20,000,000 ATH</strong><small>2% · Liquidity allocation</small></article>
+        <article><span>ECOSYSTEM RESERVE</span><strong>10,000,000 ATH</strong><small>1% · Protected ecosystem reserve</small></article>
+      </div>
+      <p class="ath-tokenomics-foot">Allocation check: 700M Mining + 300M Staking = 1B ATH. Staking breakdown: 160M + 50M + 30M + 30M + 20M + 10M = 300M ATH.</p>
     </section>
 
     <section class="shell holder-area-banner mining" data-holder-zone="mining">
@@ -308,7 +344,48 @@
             <div><span>Salary Status</span><strong id="stakingRankDue">Not due</strong></div>
           </div>
           <button id="stakingRankClaimBtn" class="btn btn-dark staking-rank-claim" disabled>Claim Rank Salary</button>
-          <p class="staking-note">Qualification requires at least 5 direct sponsors. Small-leg turnover = all direct-leg turnover minus the single largest dynamic leg. Salary is defined in USD and paid in ATH using the current Presale-linked price. Payment is subject to the protected Staking reward reserve.</p>
+          <p class="staking-note">Qualification requires at least 5 direct sponsors. Small-leg turnover = all direct-leg turnover minus the single largest dynamic leg. Salary is defined in USD and paid in ATH using the current Presale-linked price. Payment is subject to the protected Marketing / Network reserve.</p>
+        </article>
+
+        <article class="staking-panel staking-network-panel">
+          <div class="staking-network-head">
+            <div>
+              <span class="staking-network-kicker">STAKING NETWORK</span>
+              <h3>Sponsor Network Hierarchy</h3>
+              <p>Inspect your sponsor tree, direct-leg turnover, member Rank and Lifestyle Bonus / Matching Staking data from the Staking contract.</p>
+            </div>
+            <button id="stakingNetworkRefreshBtn" class="btn btn-dark" type="button">Refresh Network</button>
+          </div>
+
+          <div class="staking-network-summary">
+            <div><span>Direct Members</span><strong id="stakingDirectMembers">0</strong></div>
+            <div><span>Total Network Turnover</span><strong id="stakingNetworkTurnover">$0.00</strong></div>
+            <div><span>Small-leg Turnover</span><strong id="stakingNetworkSmallLeg">$0.00</strong></div>
+            <div><span>Current Rank</span><strong id="stakingNetworkRank">No Rank</strong></div>
+            <div><span>Lifestyle / Matching Earned</span><strong id="stakingLifestyleEarned">0 ATH</strong></div>
+            <div><span>Dynamic Big Leg</span><strong id="stakingNetworkBigLeg">—</strong></div>
+          </div>
+
+          <div class="staking-lifestyle-rates" aria-label="Lifestyle Bonus Matching Staking rates">
+            <div><span>L1</span><strong>8%</strong></div>
+            <div><span>L2</span><strong>5%</strong></div>
+            <div><span>L3</span><strong>3%</strong></div>
+            <div><span>L4</span><strong>2%</strong></div>
+            <div><span>L5</span><strong>1%</strong></div>
+            <div><span>L6</span><strong>0.5%</strong></div>
+            <div><span>L7</span><strong>0.5%</strong></div>
+            <div><span>L8</span><strong>0.5%</strong></div>
+            <div><span>L9</span><strong>0.5%</strong></div>
+            <div><span>L10</span><strong>0.5%</strong></div>
+          </div>
+
+          <div class="staking-network-toolbar">
+            <span id="stakingNetworkTreeStatus">Connect wallet to load your Staking network.</span>
+            <small>Hierarchy view is bounded for mobile performance. Tap a member to expand the next sponsor level.</small>
+          </div>
+          <div id="stakingNetworkTree" class="staking-network-tree">
+            <div class="staking-network-empty">No Staking network loaded.</div>
+          </div>
         </article>
       </div>
       <div id="stakingPackages" class="staking-packages"></div>
