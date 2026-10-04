@@ -76,9 +76,14 @@ async function main() {
   const singleWalletMode = testnetSingleWalletEnabled(target);
   const roleAddress = (name) => singleWalletMode ? wallet.address : address(name);
 
-  const owner = roleAddress("OWNER_ADDRESS");
-  const treasury = roleAddress("TREASURY_ADDRESS");
+  const miningOwner = roleAddress("MINING_OWNER_ADDRESS");
+  const stakingOwner = roleAddress("STAKING_OWNER_ADDRESS");
+  const presaleOwner = roleAddress("PRESALE_OWNER_ADDRESS");
+  const tokenOwner = presaleOwner;
+  const priceRegistryOwner = presaleOwner;
+  const treasury = miningOwner;
   const presaleWallet = roleAddress("PRESALE_WALLET");
+  const keeperWallet = roleAddress("KEEPER_WALLET_ADDRESS");
   const presalePaymentToken = address("PRESALE_PAYMENT_TOKEN");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
@@ -109,8 +114,13 @@ async function main() {
   console.log("deployerBNB:", ethers.formatEther(balance));
   console.log("testnetMinBNB:", isTestnet ? MIN_TESTNET_BNB : "n/a");
   console.log("testnetSingleWalletMode:", singleWalletMode ? "ENABLED" : "DISABLED");
-  console.log("owner:", owner);
-  console.log("treasury:", treasury);
+  console.log("miningOwner:", miningOwner);
+  console.log("stakingOwner:", stakingOwner);
+  console.log("presaleOwner:", presaleOwner);
+  console.log("tokenOwner:", tokenOwner);
+  console.log("priceRegistryOwner:", priceRegistryOwner);
+  console.log("keeperWallet:", keeperWallet);
+  console.log("miningTreasury:", treasury);
   console.log("presaleTreasury:", presaleWallet);
   console.log("presalePaymentToken:", presalePaymentToken);
   console.log("presaleOpeningPriceUSD:", "0.07");
