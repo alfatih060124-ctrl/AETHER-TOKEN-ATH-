@@ -46,6 +46,7 @@ const MINING_ABI = [
 ];
 
 const PRICE_REGISTRY_ABI = [
+  "function owner() view returns (address)",
   "function getPrice() view returns (uint256)",
   "function getReferencePrice() view returns (uint256)",
   "function PRICE_DECIMALS() view returns (uint256)",
@@ -174,8 +175,13 @@ async function main() {
   const deployerAddress = singleWalletMode ? requiredAddress("DEPLOYER_ADDRESS") : null;
   const roleAddress = (name) => singleWalletMode ? deployerAddress : requiredAddress(name);
 
-  const ownerExpected = roleAddress("OWNER_ADDRESS");
-  const treasuryExpected = roleAddress("TREASURY_ADDRESS");
+  const miningOwnerExpected = roleAddress("MINING_OWNER_ADDRESS");
+  const stakingOwnerExpected = roleAddress("STAKING_OWNER_ADDRESS");
+  const presaleOwnerExpected = roleAddress("PRESALE_OWNER_ADDRESS");
+  const tokenOwnerExpected = presaleOwnerExpected;
+  const priceRegistryOwnerExpected = presaleOwnerExpected;
+  const keeperWalletExpected = roleAddress("KEEPER_WALLET_ADDRESS");
+  const treasuryExpected = miningOwnerExpected;
   const presaleWallet = roleAddress("PRESALE_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
@@ -266,6 +272,7 @@ async function main() {
     globalBurned,
     liability,
     miningReferencePrice,
+    registryOwner,
     registryPrice,
     registryReferencePrice,
     registryDecimals,
@@ -379,6 +386,7 @@ async function main() {
     mining.globalBurned(),
     mining.outstandingVestingLiability(),
     mining.getCurrentPrice(),
+    priceRegistry.owner(),
     priceRegistry.getPrice(),
     priceRegistry.getReferencePrice(),
     priceRegistry.PRICE_DECIMALS(),
@@ -454,14 +462,14 @@ async function main() {
   const tenM = ethers.parseEther("10000000");
 
   assertEq(totalSupply, oneBillion, "ATH total supply");
-  if (!eqAddr(tokenOwner, ownerExpected)) throw new Error("ATH token owner mismatch");
+  if (!eqAddr(tokenOwner, tokenOwnerExpected)) throw new Error("ATH token owner mismatch");
   if (tokenPaused) throw new Error("ATH token unexpectedly paused after deployment");
 
   // Presale invariants.
   if (!eqAddr(presaleToken, tokenAddress)) throw new Error("Presale ATH token mismatch");
   if (!eqAddr(presalePayment, presalePaymentToken)) throw new Error("Presale payment token mismatch");
   if (!eqAddr(presaleTreasury, presaleWallet)) throw new Error("Presale treasury mismatch");
-  if (!eqAddr(presaleOwner, ownerExpected)) throw new Error("Presale owner mismatch");
+  if (!eqAddr(presaleOwner, presaleOwnerExpected)) throw new Error("Presale owner mismatch");
   if (!presalePaused) throw new Error("Presale must deploy PAUSED until explicit operator opening");
   assertEq(presaleStartPrice, 7_000_000n, "Presale opening price $0.07");
   assertEq(presalePriceStep, 100_000n, "Presale price step $0.001");
@@ -478,7 +486,7 @@ async function main() {
   // Mining v3.3 locked invariants.
   if (!eqAddr(miningToken, tokenAddress)) throw new Error("Mining contract token mismatch");
   if (!eqAddr(miningPriceRegistry, priceRegistryAddress)) throw new Error("Mining price registry mismatch");
-  if (!eqAddr(miningOwner, ownerExpected)) throw new Error("Mining owner mismatch");
+  if (!eqAddr(miningOwner, miningOwnerExpected)) throw new Error("Mining owner mismatch");
   if (!eqAddr(treasury, treasuryExpected)) throw new Error("Mining treasury mismatch");
   if (miningPaused) throw new Error("Mining unexpectedly paused");
   assertEq(miningBalance, sevenHundredM, "Mining 700M reserve");
@@ -499,6 +507,7 @@ async function main() {
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
   assertEq(miningReferencePrice, 70_000n, "ATH Mining Presale-linked opening price $0.07");
 
+  if (!eqAddr(registryOwner, priceRegistryOwnerExpected)) throw new Error("ATH Price Registry owner mismatch");
   assertEq(registryPrice, 7_000_000n, "ATH registry Presale-linked opening price $0.07");
   assertEq(registryReferencePrice, 7_000_000n, "ATH registry reference price $0.07");
   assertEq(registryDecimals, 8n, "ATH registry price decimals");
@@ -530,7 +539,7 @@ async function main() {
   // Staking v1 invariants.
   if (!eqAddr(stakingToken, tokenAddress)) throw new Error("Staking token mismatch");
   if (!eqAddr(stakingOracle, oracleAddress)) throw new Error("Staking oracle mismatch");
-  if (!eqAddr(stakingOwner, ownerExpected)) throw new Error("Staking owner mismatch");
+  if (!eqAddr(stakingOwner, stakingOwnerExpected)) throw new Error("Staking owner mismatch");
   if (stakingPaused) throw new Error("Staking unexpectedly paused");
   assertEq(stakingAllocation, threeHundredM, "Staking ecosystem allocation");
   assertEq(maxRewardPool, oneSixtyM, "Staking daily reward pool cap");
@@ -611,6 +620,7 @@ async function main() {
     stakingVersion: STAKING_VERSION,
     tokenomicsVersion: "2.0",
     chainId: 97,
+    keeperWallet: keeperWalletExpected,
     blockNumber: latestBlock.number,
     testnetSingleWalletMode: singleWalletMode,
     contracts: {
