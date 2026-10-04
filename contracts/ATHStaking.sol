@@ -271,6 +271,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 availableDays = _availableRewardDays(position);
         if (availableDays <= position.rewardDaysClaimed) return 0;
 
+        uint256 pendingDays = availableDays - position.rewardDaysClaimed;
         return (position.amountUSDT * position.dailyRateBps * pendingDays) / BPS;
     }
 
