@@ -1,6 +1,45 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 STAKING CONTROL PANEL + 00:50 PAYMENT LOCK — CURRENT SOURCE OF TRUTH
+
+This section supersedes older Staking timing / reserve-source / Control Panel notes below.
+
+- **Daily Staking reward settlement:** **00:50 UTC**.
+- On-chain daily reward accounting is aligned to discrete 00:50 UTC slots; holder self-claim remains available.
+- Permissionless `processDailyReward` and bounded `processDailyRewardBatch` allow the dedicated keeper to settle due holder rewards at 00:50 UTC.
+- **L1-L10 Network Bonus is real-time on the reward-settlement transaction**; it is transferred to each upline in the same transaction that pays the downline's due Staking reward.
+- **Direct Referral 10% remains real-time at stake creation.**
+- Rank Salary remains the separately locked **weekly 00:30 UTC** schedule, first eligible after at least 7 full days from qualification, and is **lifetime** after Rank qualification.
+- Daily Staking reward uses only the protected **160M ATH Reward Reserve**.
+- Direct Referral + L1-L10 Network Bonus + Rank Salary use only the protected **50M ATH Marketing / Network Reserve**.
+- Principal liability remains separate and cannot be used to pay rewards or bonuses.
+- Dedicated Railway cron service `ath-staking-reward-keeper`: schedule **`50 0 * * *`**, current state **cronReady**, latest deployment **SUCCESS** (`a94cd90d-fc4e-4c9c-b577-e2d7f62b11bc`).
+- The Staking reward keeper remains **fail-closed** while Testnet contracts are undeployed: `STAKING_REWARD_KEEPER_ENABLED=false`, dry-run support enabled, no keeper private key / deployed Staking address required until Testnet activation.
+- Control Panel `pm.aether.boats` now includes:
+  - Staking Pause / Unpause.
+  - Fund Daily Reward Reserve up to the fixed 160M cap.
+  - Fund Marketing / Network Reserve up to the fixed 50M cap.
+  - Add Staking package.
+  - Load/edit package min/max USD, daily %, lock days, and active/inactive state.
+  - Rank member registry with payout-due queue and owner-triggered due payout.
+  - Paginated **all direct legs** for a selected Rank member, with dynamic big-leg identification and turnover.
+  - Persistent **complete on-chain Rank Salary payment history**, paginated from the contract rather than limited recent event scans.
+  - Active daily reward run-rate.
+  - Daily Reward Reserve runway projection.
+  - Lifetime weekly Rank Salary liability.
+  - Rank-only Marketing / Network Reserve runway projection.
+  - Totals for Direct Referral, L1-L10 Network Bonus and Rank Salary paid.
+- Rank Salary history is persisted in `RankSalaryPayment[]` with account, payable Rank, paid timestamp, periods, USD amount, ATH amount, ATH price at settlement and next payout slot.
+- Latest Control Panel deployment: `c12647be-5b91-4b0d-89aa-d0d5bf9920c8` — **SUCCESS**, healthcheck PASS, multilingual QC **259 keys across 9 translated languages + English**.
+- Latest core validator: `c4b3a08b-e3c8-4c21-bf71-25e1e00efc38` — **SUCCESS**.
+- Latest validator evidence: **28 Solidity files compiled, 65/65 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Runtime remains **TESTNET / fail-closed**, `contractConfigured=false`, `mainnetEnabled=false`.
+- Mining remains **LOCKED and unchanged** by this Staking revision.
+- No Testnet/Mainnet contract deployment transaction was executed by this revision.
+
+
+
 ## 2026-10-04 NETWORK BONUS / PAYMENT QC — AUDITED
 
 - Current audited HEAD: `199aa6597f6fcd24908f064fb44a3b329ac2a2c4`.
