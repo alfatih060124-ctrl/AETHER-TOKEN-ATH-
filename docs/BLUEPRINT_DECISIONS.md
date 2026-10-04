@@ -1,5 +1,21 @@
 # ATH Blueprint Decision Register
 
+## FINAL OPERATOR DECISION — 2026-10-04
+
+This section supersedes every older price rule in this register.
+
+- Fixed total supply remains **1,000,000,000 ATH**: 700M Mining + 300M Staking ecosystem.
+- Mining reward/booster/referral/vesting mechanics remain locked.
+- Before official listing, **Mining and Staking both follow the ATH Presale price** through ATHPriceRegistry.
+- Presale opens at **$0.070 / ATH** and increases **$0.001 after each complete 100,000 ATH sold**.
+- Presale allocation is 30M ATH; the sold-out reference is **$0.370 / ATH**.
+- Staking Rank qualification requires at least **5 direct sponsors**.
+- Dynamic small-leg turnover = total direct-leg turnover minus the single largest direct leg.
+- Rank weekly salary policy: R1 $1k/$25; R2 $5k/$75; R3 $15k/$200; R4 $50k/$500; R5 $100k/$1k; R6 $250k/$2k; R7 $500k/$5k; R8 $1M/$10k.
+- First Rank salary slot is **00:30 UTC after at least 7 full days from qualification**, then weekly.
+- Salary is USD-denominated accounting value, converted to ATH at the current Presale-linked price when paid.
+- Rank salary is funded only from the Staking reward reserve; holder principal remains protected.
+
 This register separates original blueprint requirements from later operator-approved ATH Mining v3.3 rules. The v3.3 rules below supersede conflicting v3.2 assumptions.
 
 ## Fixed token policy — Ecosystem Tokenomics v2
@@ -15,7 +31,7 @@ This register separates original blueprint requirements from later operator-appr
   - Development Vesting: 30,000,000 ATH.
   - Liquidity: 20,000,000 ATH.
   - Ecosystem Reserve: 10,000,000 ATH.
-- ATH Staking v1 pre-listing reference valuation is **1 ATH = $0.37**.
+- Current final pricing policy: ATH pre-listing valuation follows the Presale curve ($0.070 opening, +$0.001 / complete 100,000 ATH sold, $0.370 sold-out reference).
 - Mining v3.3 reward/booster/vesting mechanics remain source-locked, while its compatibility price getter is now wired to the shared `ATHPriceRegistry`. Staking uses the same registry through its adapter.
 - The Staking reference valuation is a protocol accounting value, not a guarantee of an external market price.
 
@@ -64,7 +80,7 @@ Referral attribution becomes effective at a defined reward snapshot so a previou
 - Requires at least 5 referrals.
 - Multiplies the active Power-Booster reward by 3x.
 - Effective formula is: Base Reward x Referral Multiplier x 2 x 3.
-- Example at +50% referral: 1 x 1.5 x 2 x 3 = 9 ATH/day.
+- Example at +50% referral with the locked 10 ATH base reward: 10 x 1.5 x 2 x 3 = 90 ATH/day.
 - Double Power has no independent expiry. It ends when the underlying Power Booster ends.
 - It does not extend the Power Booster expiry.
 - Price is stored on-chain and is owner-configurable through the Control Panel.
