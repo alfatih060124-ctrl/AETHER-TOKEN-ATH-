@@ -190,6 +190,10 @@ async function connect(){
     await browserProvider.send("eth_requestAccounts",[]);
     signer=await browserProvider.getSigner();
     account=await signer.getAddress();
+    if(cfg?.authenticatedAddress && account.toLowerCase()!==cfg.authenticatedAddress.toLowerCase()){
+      await logoutAdmin(false);
+      throw new Error("Connected wallet no longer matches the authenticated admin session.");
+    }
     $("connectBtn").textContent=short(account);
     if(addr(cfg.miningAddress)) miningWrite=new ethers.Contract(cfg.miningAddress,MINING_ABI,signer);
     if(addr(cfg.tokenAddress)) tokenWrite=new ethers.Contract(cfg.tokenAddress,TOKEN_ABI,signer);
@@ -551,6 +555,19 @@ async function loadActivity(){
   }catch(err){console.error(err);box.innerHTML='<div class="empty">Event history is temporarily unavailable; contract metrics remain readable.</div>'}
 }
 
+async function logoutAdmin(redirect=true){
+  try{
+    await fetch("/api/admin/logout",{method:"POST",credentials:"same-origin"});
+  }catch{}
+  account="";
+  signer=null;
+  miningWrite=null;
+  tokenWrite=null;
+  stakingWrite=null;
+  presaleWrite=null;
+  if(redirect)window.location.assign("/");
+}
+
 const CONTROL_WORKSPACES={
   overview:{
     badge:"OVERVIEW",
@@ -614,8 +631,18 @@ function initWorkspaceSwitcher(){
 }
 
 async function boot(){
-  initWorkspaceSwitcher();
-  cfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());
+  const response=await fetch("/api/admin/config",{cache:"no-store",credentials:"same-origin"});
+  if(response.status===401){window.location.replace("/");return}
+  cfg=await response.json();
+  if(!response.ok)throw new Error(cfg?.error||"Unable to load authenticated admin configuration.");
+
+  const viewByRole={mining:"mining",staking:"staking",presale:"system"};
+  const authorizedView=viewByRole[cfg.adminRole];
+  if(!authorizedView){await logoutAdmin();return}
+  setControlWorkspace(authorizedView,{persist:false});
+  const switcher=document.querySelector(".workspace-switcher");
+  if(switcher)switcher.hidden=true;
+
   $("networkBadge").textContent=cfg.chainName;
   $("requiredMiningAdmin").textContent=cfg.expectedMiningAdmin||"Pending configuration";
   $("requiredMiningTreasury").textContent=cfg.expectedMiningTreasury||"Pending configuration";
@@ -624,6 +651,7 @@ async function boot(){
   $("requiredKeeperWallet").textContent=cfg.expectedKeeperWallet||"Pending configuration";
   $("requiredPresaleTreasury").textContent=cfg.expectedPresaleTreasury||"Pending configuration";
   $("connectBtn").addEventListener("click",connect);
+  $("logoutBtn").addEventListener("click",()=>logoutAdmin(true));
   $("refreshBtn").addEventListener("click",refresh);
   $("pauseMiningBtn").addEventListener("click",()=>runTx("Pause Mining",()=>miningWrite.pause()));
   $("unpauseMiningBtn").addEventListener("click",()=>runTx("Unpause Mining",()=>miningWrite.unpause()));
@@ -673,13 +701,19 @@ async function boot(){
     return runTx("Recover Excess ATH",()=>miningWrite.withdrawExcessATH(recipient,amount));
   });
   if(window.ethereum){
-    window.ethereum.on?.("accountsChanged",async(accounts)=>{
-      if(!accounts?.length){account="";signer=null;miningWrite=null;tokenWrite=null;stakingWrite=null;presaleWrite=null;$("connectBtn").textContent="Connect Admin Wallet";paintAccess();return}
-      await connect();
+    window.ethereum.on?.("accountsChanged",async()=>{
+      await logoutAdmin(true);
     });
     window.ethereum.on?.("chainChanged",()=>window.location.reload());
   }
-  await refresh();
+  if(window.ethereum){
+    try{await connect()}catch{}
+  }else{
+    await refresh();
+  }
 }
 
-boot().catch(err=>{console.error(err);toast("Unable to initialize ATH Control Panel.",true)});
+boot().catch(err=>{
+  console.error(err);
+  toast("Unable to initialize authenticated ATH Control Panel.",true);
+});
