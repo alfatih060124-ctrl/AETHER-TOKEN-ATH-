@@ -215,11 +215,11 @@
 
     <section id="staking" class="shell staking-zone">
       <div class="staking-head">
-        <div><span class="staking-kicker">ATH UNIFIED PROGRAM</span><h2>ATH Staking</h2><p>300,000,000 ATH ecosystem allocation · same ATH Price Registry as Mining.</p></div>
+        <div><span class="staking-kicker">ATH UNIFIED PROGRAM</span><h2>ATH Staking</h2><p>300,000,000 ATH ecosystem allocation · Mining and Staking follow the live Presale price curve.</p></div>
         <span id="stakingContractStatus" class="staking-badge">Contract pending</span>
       </div>
       <div class="staking-price-grid">
-        <div><span>Official ATH Price</span><strong id="stakingPrice">$0.3700</strong><small id="stakingPriceMode">PRE-LISTING FIXED</small></div>
+        <div><span>Official ATH Price</span><strong id="stakingPrice">$0.0700</strong><small id="stakingPriceMode">PRESALE-LINKED</small></div>
         <div><span>Listing Holder Gate</span><strong><b id="stakingHolderCount">0</b> / 15,000</strong><small id="stakingListingStatus">Listing pending</small></div>
         <div><span>Staking Allocation</span><strong>300M ATH</strong><small>160M reward pool + ecosystem allocations</small></div>
         <div><span>Your Wallet</span><strong id="stakingWalletStatus">Not Connected</strong><small>Uses the same EVM wallet as Mining</small></div>
@@ -253,7 +253,22 @@
             <div><span>Direct Referral Earned</span><strong id="stakingReferralEarned">0 ATH</strong></div>
             <div><span>Network Earned</span><strong id="stakingNetworkEarned">0 ATH</strong></div>
           </div>
-          <p class="staking-note">Pre-listing valuation remains $0.37. A DEX quote may be visible separately, but it does not replace the official reference before the 15,000-holder listing gate and official activation.</p>
+          <p class="staking-note">ATH valuation follows the Presale contract: $0.070 opening, +$0.001 after each complete 100,000 ATH sold, up to the $0.370 sold-out reference.</p>
+        </article>
+        <article class="staking-panel staking-rank-panel">
+          <h3>Network Rank Salary</h3>
+          <div class="staking-account">
+            <div><span>Current Rank</span><strong id="stakingRank">No Rank</strong></div>
+            <div><span>Direct Sponsors</span><strong id="stakingSponsors">0 / 5</strong></div>
+            <div><span>Small-leg Turnover</span><strong id="stakingSmallLeg">$0.00</strong></div>
+            <div><span>Dynamic Big Leg</span><strong id="stakingBigLeg">—</strong></div>
+            <div><span>Weekly Salary</span><strong id="stakingRankSalary">$0 / week</strong></div>
+            <div><span>Next Salary Slot</span><strong id="stakingNextRankPayout">—</strong></div>
+            <div><span>Total Rank Salary</span><strong id="stakingRankSalaryPaid">$0.00</strong></div>
+            <div><span>Salary Status</span><strong id="stakingRankDue">Not due</strong></div>
+          </div>
+          <button id="stakingRankClaimBtn" class="btn btn-dark staking-rank-claim" disabled>Claim Rank Salary</button>
+          <p class="staking-note">Qualification requires at least 5 direct sponsors. Small-leg turnover = all direct-leg turnover minus the single largest dynamic leg. Salary is defined in USD and paid in ATH using the current Presale-linked price. Payment is subject to the protected Staking reward reserve.</p>
         </article>
       </div>
       <div id="stakingPackages" class="staking-packages"></div>
