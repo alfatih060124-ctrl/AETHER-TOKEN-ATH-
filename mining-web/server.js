@@ -8,6 +8,12 @@ const { answerQuestion, cleanQuestion } = require("./assistant");
 
 const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = path.join(__dirname, "public");
+const ETHERS_BROWSER_BUNDLE = path.join(
+  path.dirname(require.resolve("ethers")),
+  "..",
+  "dist",
+  "ethers.umd.min.js"
+);
 const aiRate = new Map();
 const adminAuthRate = new Map();
 const adminChallenges = new Map();
@@ -227,7 +233,7 @@ function baseSecurityHeaders(controlPanelHost = false) {
     headers["x-robots-tag"] = "noindex, nofollow, noarchive";
     headers["content-security-policy"] = [
       "default-src 'self'",
-      "script-src 'self' https://cdn.jsdelivr.net",
+      "script-src 'self'",
       "style-src 'self'",
       "img-src 'self' data:",
       "connect-src 'self' https: wss:",
@@ -290,7 +296,7 @@ const server = http.createServer((req, res) => {
   const requestPath = String(req.url || "/").split("?")[0];
   const controlPanelAllowedRequest = new Set([
     "/", "/admin", "/admin/", "/admin.html", "/admin.js",
-    "/admin-login.html", "/admin-login.js", "/admin.css",
+    "/admin-login.html", "/admin-login.js", "/admin.css", "/vendor/ethers.umd.min.js",
     "/config", "/health", "/favicon.ico",
     "/api/admin/challenge", "/api/admin/verify", "/api/admin/session",
     "/api/admin/config", "/api/admin/logout",
@@ -298,6 +304,23 @@ const server = http.createServer((req, res) => {
 
   if (controlPanelHost && !controlPanelAllowedRequest.has(requestPath)) {
     return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
+  }
+
+  if (controlPanelHost && requestPath === "/vendor/ethers.umd.min.js" && req.method === "GET") {
+    return fs.readFile(ETHERS_BROWSER_BUNDLE, (err, data) => {
+      if (err) {
+        console.error("Unable to load local ethers browser bundle:", err.message || err);
+        return send(res, 500, "Vendor bundle unavailable", "text/plain; charset=utf-8", true);
+      }
+      return send(
+        res,
+        200,
+        data,
+        MIME[".js"],
+        true,
+        { "cache-control": "public, max-age=86400, immutable" }
+      );
+    });
   }
 
   if (controlPanelHost && requestPath === "/api/admin/challenge" && req.method === "GET") {
