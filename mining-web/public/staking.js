@@ -37,8 +37,8 @@ async function sRefreshAccount(){
   }
   try{
     const read=sstaking||new ethers.Contract(scfg.stakingAddress,STAKING_ABI,srpc);
-    const x=await Promise.all([read.userInfo(saccount),read.stakeCount(saccount),read.rankSalaryPreview(saccount),read.getSmallLegTurnoverUSDT(saccount)]);
-    const u=x[0],count=Number(x[1]),rank=x[2],legs=x[3];
+    const x=await Promise.all([read.userInfo(saccount),read.stakeCount(saccount),read.rankSalaryPreview(saccount),read.getSmallLegTurnoverUSDT(saccount),read.rankInfo(saccount)]);
+    const u=x[0],count=Number(x[1]),rank=x[2],legs=x[3],rankState=x[4];
     sPositionCount=count;
     se("stakingActiveUsd").textContent=sFmtUsd(u.activeStakedUSDT);se("stakingPositionCount").textContent=String(count);se("stakingReferralEarned").textContent=sFmtAth(u.totalReferralEarnedATH);se("stakingNetworkEarned").textContent=sFmtAth(u.totalNetworkEarnedATH);
     const highest=Number(rank.highestRank),periods=Number(rank.periodsDue),sponsors=Number(rank.sponsors);
@@ -49,8 +49,7 @@ async function sRefreshAccount(){
     const weekly=highest>0?await read.rankWeeklySalaryUSDT(highest-1):0n;
     se("stakingRankSalary").textContent=highest>0?sFmtUsd(weekly)+" / week":"$0 / week";
     se("stakingNextRankPayout").textContent=rank.nextPayoutAt>0n?new Date(Number(rank.nextPayoutAt)*1000).toLocaleString():"—";
-    se("stakingRankSalaryPaid").textContent=sFmtUsd(rank.salaryUSDT===0n?0n:0n);
-    try{const info=await read.rankInfo?.(saccount);if(info)se("stakingRankSalaryPaid").textContent=sFmtUsd(info.totalSalaryPaidUSDT)}catch{}
+    se("stakingRankSalaryPaid").textContent=sFmtUsd(rankState.totalSalaryPaidUSDT);
     se("stakingRankDue").textContent=periods>0&&rank.salaryUSDT>0n?sFmtUsd(rank.salaryUSDT)+" due":"Not due";
     se("stakingRankClaimBtn").disabled=!(periods>0&&rank.salaryUSDT>0n);
     se("stakingPositionSelect").innerHTML=count?Array.from({length:count},(_,n)=>count-1-n).map(i=>"<option value=\""+i+"\">Stake #"+(i+1)+(i===count-1?" · Latest":"")+"</option>").join(""):"<option>No positions yet</option>";
