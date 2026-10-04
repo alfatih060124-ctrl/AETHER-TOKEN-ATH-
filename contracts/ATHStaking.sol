@@ -38,6 +38,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant MAX_RANK_MEMBER_PAGE = 200;
     uint256 public constant MAX_DIRECT_LEG_PAGE = 200;
     uint256 public constant MAX_STAKING_MEMBER_PAGE = 200;
+    uint256 public constant MAX_RANK_HISTORY_PAGE = 200;
     uint256 public constant MAX_RANK_CATCHUP_WEEKS = 12;
 
     IERC20 public immutable athToken;
@@ -79,6 +80,17 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 totalSalaryPaidATH;
     }
 
+    struct RankSalaryPayment {
+        address account;
+        uint8 payableRank;
+        uint64 paidAt;
+        uint16 periodsPaid;
+        uint256 salaryUSDT;
+        uint256 salaryATH;
+        uint256 priceUSD8;
+        uint256 nextPayoutAt;
+    }
+
     Package[] public packages;
     mapping(address => UserInfo) public userInfo;
     mapping(address => StakeInfo[]) public userStakes;
@@ -99,6 +111,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     mapping(address => RankInfo) public rankInfo;
     address[] private rankMembers;
     mapping(address => bool) public isRankMember;
+    RankSalaryPayment[] private rankSalaryPayments;
 
     uint256 public totalActiveStakedUSDT;
     uint256 public principalLiabilityATH;
@@ -340,6 +353,25 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         if (totalWeeklyRankSalaryUSDT == 0) return type(uint256).max;
         uint256 reserveUSDT = (networkReserveATH * priceOracle.getPrice()) / 1e8;
         return reserveUSDT / totalWeeklyRankSalaryUSDT;
+    }
+
+    function totalRankSalaryPayments() external view returns (uint256) {
+        return rankSalaryPayments.length;
+    }
+
+    function getRankSalaryPayments(uint256 offset, uint256 limit)
+        external
+        view
+        returns (RankSalaryPayment[] memory result)
+    {
+        require(limit > 0 && limit <= MAX_RANK_HISTORY_PAGE, "invalid page");
+        if (offset >= rankSalaryPayments.length) return new RankSalaryPayment[](0);
+        uint256 end = offset + limit;
+        if (end > rankSalaryPayments.length) end = rankSalaryPayments.length;
+        result = new RankSalaryPayment[](end - offset);
+        for (uint256 i = offset; i < end; i++) {
+            result[i - offset] = rankSalaryPayments[i];
+        }
     }
 
     function getEligibleRank(address account) public view returns (uint8 rank) {
@@ -804,11 +836,23 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         totalRankSalaryPaidATH += salaryATH;
         totalRankSalaryPaidUSDT += salaryUSDT;
 
+        uint8 paidRank = getPayableRankAt(account, block.timestamp);
+        rankSalaryPayments.push(RankSalaryPayment({
+            account: account,
+            payableRank: paidRank,
+            paidAt: uint64(block.timestamp),
+            periodsPaid: uint16(periodsDue),
+            salaryUSDT: salaryUSDT,
+            salaryATH: salaryATH,
+            priceUSD8: priceUSD8,
+            nextPayoutAt: info.nextPayoutAt
+        }));
+
         athToken.safeTransfer(account, salaryATH);
 
         emit RankSalaryPaid(
             account,
-            getPayableRankAt(account, block.timestamp),
+            paidRank,
             periodsDue,
             salaryUSDT,
             salaryATH,
