@@ -7,7 +7,7 @@
 - [x] No post-deployment mint function.
 - [x] Mining allocation = 700,000,000 ATH.
 - [x] Staking ecosystem allocation = 300,000,000 ATH.
-- [x] Staking breakdown = 160M Reward / 30M Presale / 50M Marketing-Network / 30M Development / 20M Liquidity / 10M Reserve.
+- [x] Staking breakdown = 160M Reward / 30M Presale / 50M Marketing / Lifestyle Matching / 30M Development / 20M Liquidity / 10M Reserve.
 - [x] Mining Admin, Staking Admin and Presale/Token Admin are separate owner roles.
 - [x] Mining Treasury is a separate role from Mining Admin.
 - [x] Keeper is separate from owner/treasury roles.
@@ -40,9 +40,9 @@
 ### Staking
 - [x] Package ladder and rate/lock snapshots.
 - [x] Daily Staking reward slot = 00:50 UTC.
-- [x] Principal liability isolated from reward/network reserves.
+- [x] Principal liability isolated from reward/Lifestyle Matching reserves.
 - [x] Daily Reward Reserve = 160M ATH.
-- [x] Marketing / Network Reserve = 50M ATH.
+- [x] Marketing / Lifestyle Matching Reserve = 50M ATH.
 - [x] Unified Direct Referral baseline = 10% total.
 - [x] Ranked total Direct Referral rates = 13/16/19/22/25/28/31/35%.
 - [x] Differential Rank uplift.
@@ -109,7 +109,7 @@ The first four are operator/business inputs, not coding gaps.
 - [ ] Confirm each contract owner matches its dedicated wallet.
 - [ ] Confirm Mining Treasury and Presale Treasury mapping.
 - [ ] Confirm 700M + 300M supply conservation.
-- [ ] Confirm 160M Daily Reward Reserve and 50M Marketing/Network Reserve funding.
+- [ ] Confirm 160M Daily Reward Reserve and 50M Marketing / Lifestyle Matching Reserve funding.
 - [ ] Confirm Presale is paused until explicit opening.
 - [ ] Confirm Mainnet gates remain closed.
 
@@ -160,7 +160,7 @@ Then:
 ## G. Real Testnet Staking flow
 
 - [ ] Fund Staking Daily Reward Reserve.
-- [ ] Fund Marketing / Network Reserve.
+- [ ] Fund Marketing / Lifestyle Matching Reserve.
 - [ ] Create stake position.
 - [ ] Verify principal liability.
 - [ ] At 00:50 UTC settle daily reward.
