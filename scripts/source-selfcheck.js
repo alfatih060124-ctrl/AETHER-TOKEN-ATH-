@@ -268,6 +268,10 @@ must(adminLoginHtml, /Connect Wallet Mining/, "Public admin gate exposes only Mi
 must(adminLoginHtml, /Connect Wallet Staking/, "Public admin gate exposes only Staking wallet login");
 must(adminLoginHtml, /Connect Wallet Presale/, "Public admin gate exposes only Presale wallet login");
 must(adminLoginWeb, /signMessage\(challenge\.message\)/, "Admin login requires wallet signature");
+mustNot(adminLoginWeb, /wallet_switchEthereumChain/, "Admin authentication must not force a blockchain network switch");
+mustNot(adminLoginWeb, /wallet_addEthereumChain/, "Admin authentication must not require adding a blockchain network");
+must(adminWeb, /async function runTx\(label,fn\)\{[\s\S]*await ensureChain\(\)/, "Admin write transactions enforce the configured blockchain network");
+must(adminWeb, /async function connect\(\)[\s\S]*BrowserProvider\(window\.ethereum\)[\s\S]*eth_requestAccounts/, "Authenticated Control Panel connects the signing wallet without forcing a network first");
 must(adminLoginWeb, /\/api\/admin\/challenge/, "Admin login requests a one-time challenge");
 must(adminLoginWeb, /\/api\/admin\/verify/, "Admin login verifies the signed challenge");
 must(webServer, /ADMIN_CHALLENGE_TTL_MS\s*=\s*5 \* 60 \* 1000/, "Admin challenge expires after five minutes");
