@@ -21,6 +21,7 @@ const stakingRewardKeeper = read("scripts/staking-reward-keeper.js");
 const deploy = read("scripts/deploy.js");
 const preflight = read("scripts/preflight.js");
 const nonBnbReadiness = read("scripts/nonbnb-readiness.js");
+const runtimeSecurityAudit = read("scripts/runtime-security-audit.js");
 const env = read(".env.example");
 const miningWeb = read("mining-web/public/app.js");
 const holderWorkspaceWeb = read("mining-web/public/holder-workspace.js");
@@ -348,6 +349,11 @@ must(nonBnbReadiness, /Mining, Staking and Presale owners must remain separate w
 must(nonBnbReadiness, /Current policy requires Mining Treasury = Presale Treasury/, "Mining Treasury override is enforced");
 must(nonBnbReadiness, /Keeper wallet must remain separate/, "Keeper role isolation is enforced");
 console.log("OK: explicit non-BNB readiness classification");
+
+must(runtimeSecurityAudit, /runtimeHighCritical/, "Runtime security audit reports high\/critical count");
+must(runtimeSecurityAudit, /devToolingFindings/, "Runtime security audit separates dev-tooling findings");
+must(runtimeSecurityAudit, /runtimeSecurityAudit: PASSED/, "Runtime security audit has explicit PASS marker");
+console.log("OK: runtime dependency audit is locked to production tree");
 
 for (const gate of [
   "ALLOW_MAINNET_DEPLOY",
