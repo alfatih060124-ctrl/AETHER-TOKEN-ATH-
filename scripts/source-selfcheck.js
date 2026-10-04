@@ -100,8 +100,21 @@ must(staking, /_addPackage\(50_000 ether, type\(uint256\)\.max, 85, 730\)/, "Sta
 must(staking, /principalLiabilityATH/, "Staking protects principal liability");
 must(staking, /rewardReserveATH/, "Staking separates reward reserve");
 must(staking, /recoverExcessATH[\s\S]*onlyOwner whenPaused/, "Staking excess recovery is owner-only and pause-gated");
+must(staking, /MIN_DIRECT_SPONSORS_FOR_RANK\s*=\s*5/, "Rank salary requires at least 5 direct sponsors");
+must(staking, /rankSmallLegThresholdUSDT\[0\]\s*=\s*1_000 ether/, "Rank 1 small-leg threshold is $1,000");
+must(staking, /rankSmallLegThresholdUSDT\[7\]\s*=\s*1_000_000 ether/, "Rank 8 small-leg threshold is $1,000,000");
+must(staking, /rankWeeklySalaryUSDT\[0\]\s*=\s*25 ether/, "Rank 1 salary is $25 weekly");
+must(staking, /rankWeeklySalaryUSDT\[7\]\s*=\s*10_000 ether/, "Rank 8 salary is $10,000 weekly");
+must(staking, /RANK_PAYOUT_UTC_OFFSET\s*=\s*30 minutes/, "Rank salary schedule is 00:30 UTC");
+must(staking, /RANK_FIRST_DELAY\s*=\s*7 days/, "Rank salary first payout waits at least 7 days");
+must(staking, /smallLegTurnover = totalTurnover > largestTurnover \? totalTurnover - largestTurnover : 0/, "Small-leg turnover excludes the dynamic largest leg");
+must(staking, /processRankSalaryBatch/, "Rank salary supports permissionless batch processing");
+must(staking, /rewardReserveATH -= salaryATH/, "Rank salary is paid from reward reserve, not principal");
 
-must(priceRegistry, /PRE_LISTING_PRICE\s*=\s*37_000_000/, "ATH pre-listing reference price is fixed at $0.37");
+must(priceRegistry, /PRESALE_START_PRICE\s*=\s*7_000_000/, "ATH unified price starts from Presale at $0.07");
+must(priceRegistry, /PRESALE_FINAL_PRICE\s*=\s*37_000_000/, "ATH Presale-linked reference reaches $0.37 at sell-out");
+must(priceRegistry, /presalePriceSource/, "ATH Price Registry is bound to the Presale price source");
+must(priceRegistry, /return _readPresalePrice\(\)/, "ATH Price Registry reads Presale before official listing");
 must(priceRegistry, /HOLDER_TARGET\s*=\s*15_000/, "ATH official listing holder target is 15,000");
 must(priceRegistry, /function getMarketPrice\(\) external view/, "DEX market price can be viewed separately before listing");
 must(priceRegistry, /recordedHolderCount >= HOLDER_TARGET/, "Official listing requires the holder gate");
@@ -135,7 +148,10 @@ must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Contr
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
 must(stakingWeb, /withdrawPrincipal/, "Staking frontend exposes principal withdrawal");
-must(webServer, /preListingPriceUsd: "0.37"/, "Web config exposes the $0.37 pre-listing price");
+must(webServer, /preListingPriceUsd: "0.07"/, "Web config exposes the Presale opening price $0.07");
+must(webServer, /priceSource: "PRESALE_LINKED"/, "Web config identifies Presale as the ATH reference-price source");
+must(webServer, /presalePriceStepUsd: "0.001"/, "Web config exposes the $0.001 Presale price step");
+must(webServer, /presaleStepSizeAth: 100000/, "Web config exposes the 100,000 ATH price-step size");
 must(webServer, /listingHolderTarget: 15000/, "Web config exposes the 15,000-holder listing gate");
 must(webServer, /presaleAddress: \(process\.env\.ATH_PRESALE_ADDRESS/, "Web config exposes the deployed Presale address");
 must(webServer, /presalePaymentToken: \(process\.env\.PRESALE_PAYMENT_TOKEN/, "Web config exposes the Presale payment-token address");
@@ -182,4 +198,4 @@ for (const gate of [
 }
 console.log("OK: Mainnet release gates remain fail-closed");
 
-console.log("\nAETHER ATH Mining + Staking + Presale + unified $0.37 Price Registry self-check PASSED.");
+console.log("\nAETHER ATH Mining + Staking + Presale-linked pricing + Rank salary self-check PASSED.");
