@@ -99,3 +99,88 @@
 .button-row.compact{margin-top:0}
 @media(max-width:900px){.analytics-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.form-grid,.analytics-grid{grid-template-columns:1fr}.admin-list-row{align-items:flex-start;flex-direction:column}.table-actions{flex-direction:column}}
+
+
+/* Operational workspace separation */
+.workspace-switcher{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,184,77,.06),rgba(255,255,255,.015));
+  border-radius:18px;
+  padding:18px;
+  margin:14px 0 18px;
+}
+.workspace-switcher-head,.workspace-zone-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+.workspace-switcher h2,.workspace-zone-head h2{margin:4px 0 0}
+.workspace-badge,.workspace-zone-tag{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  white-space:nowrap;
+  color:var(--gold2);
+  background:#0b0804;
+}
+.workspace-tabs{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+  margin-top:16px;
+}
+.workspace-tab{
+  border:1px solid var(--line);
+  border-radius:13px;
+  min-height:48px;
+  padding:10px 12px;
+  background:#0c0905;
+  color:var(--text);
+  font-weight:800;
+  cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease;
+}
+.workspace-tab:hover{transform:translateY(-1px);border-color:#7f6329}
+.workspace-tab.active{
+  border-color:var(--gold);
+  background:linear-gradient(180deg,rgba(240,181,66,.18),rgba(240,181,66,.06));
+  color:var(--gold2);
+  box-shadow:inset 0 0 0 1px rgba(240,181,66,.08);
+}
+.workspace-tab.mining-tab.active{box-shadow:inset 4px 0 0 var(--gold),inset 0 0 0 1px rgba(240,181,66,.08)}
+.workspace-tab.staking-tab.active{box-shadow:inset 4px 0 0 #d6b36a,inset 0 0 0 1px rgba(240,181,66,.08)}
+.workspace-note,.workspace-zone-note{
+  margin:12px 0 0;
+  color:var(--muted);
+  line-height:1.55;
+}
+.engine-zone{
+  position:relative;
+  overflow:hidden;
+  border-width:1px;
+}
+.engine-zone::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:var(--gold);
+}
+.staking-zone::before{background:#d6b36a}
+.system-zone::before{background:#8d7a55}
+.control-zone[hidden]{display:none!important}
+body[data-control-view="mining"] .hero .eyebrow::after{content:" · MINING WORKSPACE"}
+body[data-control-view="staking"] .hero .eyebrow::after{content:" · STAKING WORKSPACE"}
+body[data-control-view="system"] .hero .eyebrow::after{content:" · TOKEN & PRESALE"}
+@media(max-width:760px){
+  .workspace-tabs{grid-template-columns:1fr 1fr}
+  .workspace-switcher-head,.workspace-zone-head{align-items:flex-start}
+}
+@media(max-width:420px){
+  .workspace-tabs{grid-template-columns:1fr}
+  .workspace-badge,.workspace-zone-tag{font-size:10px}
+}
