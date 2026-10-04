@@ -34,6 +34,11 @@ const adminLoginWeb = read("mining-web/public/admin-login.js");
 const adminHtml = read("mining-web/public/admin.html");
 const portalHtml = read("mining-web/public/index.html");
 const webServer = read("mining-web/server.js");
+const noBnbCompletionDoc = read("docs/NO_BNB_COMPLETION.md");
+const testnetChecklistDoc = read("docs/TESTNET_ACCEPTANCE_CHECKLIST.md");
+const miningKeeperRunbookDoc = read("docs/REWARD_KEEPER_RUNBOOK.md");
+const stakingKeeperRunbookDoc = read("docs/STAKING_REWARD_KEEPER_RUNBOOK.md");
+const rankKeeperRunbookDoc = read("docs/RANK_SALARY_KEEPER_RUNBOOK.md");
 
 must(token, /TOTAL_SUPPLY\s*=\s*1_000_000_000\s*\*\s*10\s*\*\*\s*18/, "ATH fixed supply is 1,000,000,000");
 must(token, /ERC20\("Aether",\s*"ATH"\)/, "token identity Aether / ATH");
@@ -354,6 +359,21 @@ must(runtimeSecurityAudit, /runtimeHighCritical/, "Runtime security audit report
 must(runtimeSecurityAudit, /devToolingFindings/, "Runtime security audit separates dev-tooling findings");
 must(runtimeSecurityAudit, /runtimeSecurityAudit: PASSED/, "Runtime security audit has explicit PASS marker");
 console.log("OK: runtime dependency audit is locked to production tree");
+
+must(noBnbCompletionDoc, /Daily Staking Reward settles on the \*\*00:50 UTC daily slot\*\*/, "No-BNB register documents Staking 00:50 reward");
+must(noBnbCompletionDoc, /Same Rank = skip, not stop/, "No-BNB register documents Same-Rank Skip");
+must(noBnbCompletionDoc, /69 passing/, "No-BNB register carries current automated test count");
+must(testnetChecklistDoc, /Mining allocation = 700,000,000 ATH/, "Testnet checklist carries current Mining allocation");
+must(testnetChecklistDoc, /Staking ecosystem allocation = 300,000,000 ATH/, "Testnet checklist carries current Staking ecosystem allocation");
+must(testnetChecklistDoc, /Daily base reward = 10 ATH/, "Testnet checklist carries current Mining reward");
+must(testnetChecklistDoc, /Same Rank = skip; higher Rank above it remains eligible/, "Testnet checklist carries Same-Rank Skip");
+must(testnetChecklistDoc, /Admin public surface exposes only Connect Wallet Mining \/ Staking \/ Presale/, "Testnet checklist includes wallet-gated admin access");
+must(miningKeeperRunbookDoc, /00:05:00 UTC/, "Mining keeper runbook carries Mining schedule");
+must(stakingKeeperRunbookDoc, /00:50 UTC daily slot/, "Staking keeper runbook carries Staking reward schedule");
+must(stakingKeeperRunbookDoc, /KEEPER_WALLET_ADDRESS/, "Staking keeper runbook carries expected-wallet gate");
+must(rankKeeperRunbookDoc, /00:30 UTC/, "Rank keeper runbook carries Rank Salary schedule");
+must(rankKeeperRunbookDoc, /lifetime weekly Rank Salary/, "Rank keeper runbook carries lifetime salary rule");
+console.log("OK: release documentation is synchronized with current Mining/Staking/Admin rules");
 
 for (const gate of [
   "ALLOW_MAINNET_DEPLOY",
