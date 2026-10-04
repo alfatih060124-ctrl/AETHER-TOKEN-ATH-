@@ -49,7 +49,10 @@ const PRICE_REGISTRY_ABI = [
   "function getPrice() view returns (uint256)",
   "function getReferencePrice() view returns (uint256)",
   "function PRICE_DECIMALS() view returns (uint256)",
-  "function PRE_LISTING_PRICE() view returns (uint256)",
+  "function PRESALE_START_PRICE() view returns (uint256)",
+  "function PRESALE_FINAL_PRICE() view returns (uint256)",
+  "function presalePriceSource() view returns (address)",
+  "function getPresalePrice() view returns (uint256)",
   "function HOLDER_TARGET() view returns (uint256)",
   "function recordedHolderCount() view returns (uint256)",
   "function priceMode() view returns (uint8)",
@@ -89,6 +92,12 @@ const STAKING_ABI = [
   "function totalRewardFundedATH() view returns (uint256)",
   "function principalLiabilityATH() view returns (uint256)",
   "function totalActiveStakedUSDT() view returns (uint256)",
+  "function MIN_DIRECT_SPONSORS_FOR_RANK() view returns (uint256)",
+  "function RANK_PAYOUT_UTC_OFFSET() view returns (uint256)",
+  "function rankSmallLegThresholdUSDT(uint256) view returns (uint256)",
+  "function rankWeeklySalaryUSDT(uint256) view returns (uint256)",
+  "function totalRankSalaryPaidATH() view returns (uint256)",
+  "function totalRankSalaryPaidUSDT() view returns (uint256)",
 ];
 
 const ORACLE_ABI = [
@@ -248,7 +257,10 @@ async function main() {
     registryPrice,
     registryReferencePrice,
     registryDecimals,
-    registryPreListingPrice,
+    registryPresaleStartPrice,
+    registryPresaleFinalPrice,
+    registryPresaleSource,
+    registryPresalePrice,
     registryHolderTarget,
     registryRecordedHolderCount,
     registryPriceMode,
@@ -267,6 +279,14 @@ async function main() {
     totalRewardFundedATH,
     principalLiabilityATH,
     totalActiveStakedUSDT,
+    rankMinSponsors,
+    rankPayoutUtcOffset,
+    rank1Threshold,
+    rank8Threshold,
+    rank1Salary,
+    rank8Salary,
+    totalRankSalaryPaidATH,
+    totalRankSalaryPaidUSDT,
     oraclePrice,
     oracleDecimals,
     oraclePriceRegistry,
@@ -330,7 +350,10 @@ async function main() {
     priceRegistry.getPrice(),
     priceRegistry.getReferencePrice(),
     priceRegistry.PRICE_DECIMALS(),
-    priceRegistry.PRE_LISTING_PRICE(),
+    priceRegistry.PRESALE_START_PRICE(),
+    priceRegistry.PRESALE_FINAL_PRICE(),
+    priceRegistry.presalePriceSource(),
+    priceRegistry.getPresalePrice(),
     priceRegistry.HOLDER_TARGET(),
     priceRegistry.recordedHolderCount(),
     priceRegistry.priceMode(),
@@ -349,6 +372,14 @@ async function main() {
     staking.totalRewardFundedATH(),
     staking.principalLiabilityATH(),
     staking.totalActiveStakedUSDT(),
+    staking.MIN_DIRECT_SPONSORS_FOR_RANK(),
+    staking.RANK_PAYOUT_UTC_OFFSET(),
+    staking.rankSmallLegThresholdUSDT(0),
+    staking.rankSmallLegThresholdUSDT(7),
+    staking.rankWeeklySalaryUSDT(0),
+    staking.rankWeeklySalaryUSDT(7),
+    staking.totalRankSalaryPaidATH(),
+    staking.totalRankSalaryPaidUSDT(),
     oracle.getPrice(),
     oracle.PRICE_DECIMALS(),
     oracle.priceRegistry(),
@@ -414,12 +445,15 @@ async function main() {
   assertEq(maxMinerPage, 200n, "Miner registry page cap");
   assertEq(powerBoosterPrice, ethers.parseEther("0.001"), "Initial Power Booster price");
   assertEq(doublePowerBoosterPrice, ethers.parseEther("0.001"), "Initial Double Power price");
-  assertEq(miningReferencePrice, 370_000n, "ATH pre-listing Mining price $0.37");
+  assertEq(miningReferencePrice, 70_000n, "ATH Mining Presale-linked opening price $0.07");
 
-  assertEq(registryPrice, 37_000_000n, "ATH registry official pre-listing price $0.37");
-  assertEq(registryReferencePrice, 37_000_000n, "ATH registry reference price $0.37");
+  assertEq(registryPrice, 7_000_000n, "ATH registry Presale-linked opening price $0.07");
+  assertEq(registryReferencePrice, 7_000_000n, "ATH registry reference price $0.07");
   assertEq(registryDecimals, 8n, "ATH registry price decimals");
-  assertEq(registryPreListingPrice, 37_000_000n, "ATH registry fixed price constant");
+  assertEq(registryPresaleStartPrice, 7_000_000n, "ATH registry Presale start price");
+  assertEq(registryPresaleFinalPrice, 37_000_000n, "ATH registry Presale final price");
+  if (!eqAddr(registryPresaleSource, presaleAddress)) throw new Error("ATH registry Presale source mismatch");
+  assertEq(registryPresalePrice, presaleCurrentPrice, "ATH registry mirrors Presale current price");
   assertEq(registryHolderTarget, 15_000n, "ATH official listing holder target");
   assertEq(registryRecordedHolderCount, 0n, "ATH initial recorded holder count");
   assertEq(registryPriceMode, 0n, "ATH pre-listing price mode");
@@ -455,7 +489,15 @@ async function main() {
   assertEq(packageCount, 6n, "Staking package count");
   assertEq(principalLiabilityATH, 0n, "Staking initial principal liability");
   assertEq(totalActiveStakedUSDT, 0n, "Staking initial active USDT");
-  assertEq(oraclePrice, 37_000_000n, "ATH Staking pre-listing price $0.37");
+  assertEq(rankMinSponsors, 5n, "Rank minimum direct sponsors");
+  assertEq(rankPayoutUtcOffset, 1800n, "Rank salary payout time 00:30 UTC");
+  assertEq(rank1Threshold, ethers.parseEther("1000"), "Rank 1 small-leg threshold");
+  assertEq(rank8Threshold, ethers.parseEther("1000000"), "Rank 8 small-leg threshold");
+  assertEq(rank1Salary, ethers.parseEther("25"), "Rank 1 weekly salary");
+  assertEq(rank8Salary, ethers.parseEther("10000"), "Rank 8 weekly salary");
+  assertEq(totalRankSalaryPaidATH, 0n, "Rank salary ATH initial state");
+  assertEq(totalRankSalaryPaidUSDT, 0n, "Rank salary USDT initial state");
+  assertEq(oraclePrice, 7_000_000n, "ATH Staking Presale-linked opening price $0.07");
   if (!eqAddr(oraclePriceRegistry, priceRegistryAddress)) throw new Error("Staking oracle price registry mismatch");
   assertEq(oracleDecimals, 8n, "ATH staking oracle decimals");
 
@@ -529,7 +571,8 @@ async function main() {
       liquidity: "20000000",
       reserve: "10000000",
     },
-    preListingReferencePriceUSD: "0.37",
+    preListingPriceSource: "ATH_PRESALE",
+    openingReferencePriceUSD: "0.07",
     listingHolderTarget: 15000,
     presale: {
       allocationATH: "30000000",
@@ -541,7 +584,14 @@ async function main() {
       paymentToken: presalePaymentToken,
       treasury: presaleWallet,
     },
-    priceMode: "PRE_LISTING_FIXED",
+    priceMode: "PRESALE_LINKED",
+    rankRules: {
+      minimumDirectSponsors: 5,
+      smallLegThresholdUSDT: [1000, 5000, 15000, 50000, 100000, 250000, 500000, 1000000],
+      weeklySalaryUSDT: [25, 75, 200, 500, 1000, 2000, 5000, 10000],
+      payoutUtc: "00:30",
+      firstPayoutDelayDays: 7,
+    },
     stakingDestinationBalancesATH: destinationBalances,
     miningReferencePriceUSD: (Number(miningReferencePrice) / 1_000_000).toFixed(3),
     checkedAt: new Date().toISOString(),
