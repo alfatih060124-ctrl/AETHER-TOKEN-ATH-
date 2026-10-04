@@ -1,6 +1,41 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 SEPARATE ADMIN WALLET ROLES — CURRENT SOURCE OF TRUTH
+
+- Separate-wallet mode is now enforced for ATH operational ownership; TESTNET_USE_DEPLOYER_ROLES=false.
+- Five configured public roles are stored as Railway environment variables, not hardcoded into public repository source:
+  - Mining Admin / initial Mining revenue treasury.
+  - Staking Admin.
+  - Token + Presale + ATH Price Registry Admin.
+  - Presale Treasury.
+  - Automation Keeper.
+- Smart-contract ownership mapping:
+  - MiningAirdrop.owner() -> Mining Admin.
+  - ATHStaking.owner() -> Staking Admin.
+  - ATHPresale.owner() -> Presale Admin.
+  - ATHToken.owner() -> Presale/Token Admin after allocation funding.
+  - ATHPriceRegistry.owner() -> Presale/Token Admin.
+- Keeper is never a contract owner. Keeper scripts require KEEPER_WALLET_ADDRESS; transactional mode derives the signer from PRIVATE_KEY and fail-closes if the derived address does not exactly match the configured Keeper wallet.
+- Presale Treasury is payout destination only and has no owner privileges.
+- Deployment order was corrected to: ATH Token -> ATH Presale -> ATH Price Registry -> Mining -> Staking Oracle -> Staking -> Development Vesting.
+- BscScan verification and post-deploy checks now verify the separate owners rather than a legacy shared OWNER_ADDRESS.
+- Legacy readiness requirements OWNER_ADDRESS, TREASURY_ADDRESS, and MARKETING_WALLET were removed.
+- Control Panel now displays the required Admin wallet for Mining, Staking and Token/Presale workspaces plus the configured Keeper and Presale Treasury roles.
+- Public wallet-role variables are configured in Railway; no seed phrase or private key is committed.
+- Keeper services remain disabled / dry-run until a deployed Testnet Staking address and explicit activation.
+- Current readiness still blocks chain deployment for non-admin configuration that has not yet been supplied:
+  - PRESALE_PAYMENT_TOKEN
+  - LIQUIDITY_WALLET
+  - STAKING_RESERVE_WALLET
+  - DEVELOPMENT_BENEFICIARY
+- Latest Control Panel runtime: wallet-role-map-v1 — healthcheck PASS, multilingual QC PASS.
+- Latest validator deployment: 62f169d4-b1d3-40a8-abf1-2ad7cd9f8d42 — SUCCESS, 28 Solidity files compile PASS, 69/69 tests PASS, ABI export PASS, local release rehearsal PASS.
+- No Testnet/Mainnet contract deployment transaction was executed by this wallet-role configuration.
+- Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 CONTROL PANEL WORKSPACE SEPARATION — CURRENT SOURCE OF TRUTH
 
 - Control Panel is now separated into four explicit operator workspaces:
