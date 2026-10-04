@@ -198,6 +198,46 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
+  it("allows a permissionless 00:50 keeper to settle holder reward and Network Bonus in real time", async function () {
+    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+    await advanceToRewardSlot(staking, user.address, 0);
+
+    const rewardATH = athForUsd(ethers.parseEther("0.035"), PRICE_007);
+    const networkATH = (rewardATH * 800n) / 10_000n;
+    const userBefore = await token.balanceOf(user.address);
+    const refBefore = await token.balanceOf(referrer.address);
+
+    await staking.connect(keeper).processDailyReward(user.address, 0);
+
+    expect((await token.balanceOf(user.address)) - userBefore).to.equal(rewardATH);
+    expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(networkATH);
+    expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(0n);
+  });
+
+  it("batch-settles multiple due positions at the 00:50 slot", async function () {
+    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await staking.connect(second).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+
+    const s1 = await staking.getRewardSchedule(user.address, 0);
+    const s2 = await staking.getRewardSchedule(second.address, 0);
+    const target = s1.nextRewardAt > s2.nextRewardAt ? s1.nextRewardAt : s2.nextRewardAt;
+    await setNextTimestamp(target);
+
+    expect(
+      await staking.connect(keeper).processDailyRewardBatch.staticCall(
+        [user.address, second.address],
+        [0, 0]
+      )
+    ).to.equal(2n);
+
+    await staking.connect(keeper).processDailyRewardBatch(
+      [user.address, second.address],
+      [0, 0]
+    );
+    expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(0n);
+    expect(await staking.getPendingRewardUSDT(second.address, 0)).to.equal(0n);
+  });
+
   it("distributes level-1 network reward at 8% of the user's daily reward", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
     await advanceToRewardSlot(staking, user.address, 0);
