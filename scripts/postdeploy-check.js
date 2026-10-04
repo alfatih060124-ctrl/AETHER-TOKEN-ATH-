@@ -103,7 +103,12 @@ const STAKING_ABI = [
   "function DAILY_REWARD_UTC_OFFSET() view returns (uint256)",
   "function MAX_DAILY_REWARD_BATCH() view returns (uint256)",
   "function MAX_STAKING_MEMBER_PAGE() view returns (uint256)",
+  "function MAX_STAKING_CONTRACT_PAGE() view returns (uint256)",
   "function totalStakingMembers() view returns (uint256)",
+  "function activeStakingMembers() view returns (uint256)",
+  "function totalStakingContracts() view returns (uint256)",
+  "function totalActiveStakingContracts() view returns (uint256)",
+  "function totalInactiveStakingContracts() view returns (uint256)",
   "function activeDailyRewardRunRateUSDT() view returns (uint256)",
   "function totalWeeklyRankSalaryUSDT() view returns (uint256)",
   "function rankSmallLegThresholdUSDT(uint256) view returns (uint256)",
@@ -311,7 +316,12 @@ async function main() {
     dailyRewardUtcOffset,
     maxDailyRewardBatch,
     maxStakingMemberPage,
+    maxStakingContractPage,
     totalStakingMembers,
+    activeStakingMembers,
+    totalStakingContracts,
+    totalActiveStakingContracts,
+    totalInactiveStakingContracts,
     activeDailyRewardRunRate,
     totalWeeklyRankSalary,
     rank1Threshold,
@@ -428,7 +438,12 @@ async function main() {
     staking.DAILY_REWARD_UTC_OFFSET(),
     staking.MAX_DAILY_REWARD_BATCH(),
     staking.MAX_STAKING_MEMBER_PAGE(),
+    staking.MAX_STAKING_CONTRACT_PAGE(),
     staking.totalStakingMembers(),
+    staking.activeStakingMembers(),
+    staking.totalStakingContracts(),
+    staking.totalActiveStakingContracts(),
+    staking.totalInactiveStakingContracts(),
     staking.activeDailyRewardRunRateUSDT(),
     staking.totalWeeklyRankSalaryUSDT(),
     staking.rankSmallLegThresholdUSDT(0),
@@ -569,7 +584,12 @@ async function main() {
   assertEq(dailyRewardUtcOffset, 3000n, "Staking daily reward time 00:50 UTC");
   assertEq(maxDailyRewardBatch, 50n, "Staking daily reward keeper batch cap");
   assertEq(maxStakingMemberPage, 200n, "Staking member registry page cap");
+  assertEq(maxStakingContractPage, 200n, "Staking contract registry page cap");
   assertEq(totalStakingMembers, 0n, "Staking initial member registry");
+  assertEq(activeStakingMembers, 0n, "Staking initial active member count");
+  assertEq(totalStakingContracts, 0n, "Staking initial Contract ID count");
+  assertEq(totalActiveStakingContracts, 0n, "Staking initial ACTIVE contract count");
+  assertEq(totalInactiveStakingContracts, 0n, "Staking initial N-ACTIVE contract count");
   assertEq(activeDailyRewardRunRate, 0n, "Staking initial daily reward run-rate");
   assertEq(totalWeeklyRankSalary, 0n, "Staking initial weekly Rank Salary liability");
   assertEq(rank1Threshold, ethers.parseEther("1000"), "Rank 1 small-leg threshold");
