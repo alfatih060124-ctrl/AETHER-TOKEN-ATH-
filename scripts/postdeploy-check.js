@@ -97,6 +97,12 @@ const STAKING_ABI = [
   "function totalActiveStakedUSDT() view returns (uint256)",
   "function MIN_DIRECT_SPONSORS_FOR_RANK() view returns (uint256)",
   "function RANK_PAYOUT_UTC_OFFSET() view returns (uint256)",
+  "function DAILY_REWARD_UTC_OFFSET() view returns (uint256)",
+  "function MAX_DAILY_REWARD_BATCH() view returns (uint256)",
+  "function MAX_STAKING_MEMBER_PAGE() view returns (uint256)",
+  "function totalStakingMembers() view returns (uint256)",
+  "function activeDailyRewardRunRateUSDT() view returns (uint256)",
+  "function totalWeeklyRankSalaryUSDT() view returns (uint256)",
   "function rankSmallLegThresholdUSDT(uint256) view returns (uint256)",
   "function rankWeeklySalaryUSDT(uint256) view returns (uint256)",
   "function totalRankSalaryPaidATH() view returns (uint256)",
@@ -286,6 +292,12 @@ async function main() {
     totalActiveStakedUSDT,
     rankMinSponsors,
     rankPayoutUtcOffset,
+    dailyRewardUtcOffset,
+    maxDailyRewardBatch,
+    maxStakingMemberPage,
+    totalStakingMembers,
+    activeDailyRewardRunRate,
+    totalWeeklyRankSalary,
     rank1Threshold,
     rank8Threshold,
     rank1Salary,
@@ -382,6 +394,12 @@ async function main() {
     staking.totalActiveStakedUSDT(),
     staking.MIN_DIRECT_SPONSORS_FOR_RANK(),
     staking.RANK_PAYOUT_UTC_OFFSET(),
+    staking.DAILY_REWARD_UTC_OFFSET(),
+    staking.MAX_DAILY_REWARD_BATCH(),
+    staking.MAX_STAKING_MEMBER_PAGE(),
+    staking.totalStakingMembers(),
+    staking.activeDailyRewardRunRateUSDT(),
+    staking.totalWeeklyRankSalaryUSDT(),
     staking.rankSmallLegThresholdUSDT(0),
     staking.rankSmallLegThresholdUSDT(7),
     staking.rankWeeklySalaryUSDT(0),
@@ -502,6 +520,12 @@ async function main() {
   assertEq(totalActiveStakedUSDT, 0n, "Staking initial active USDT");
   assertEq(rankMinSponsors, 5n, "Rank minimum direct sponsors");
   assertEq(rankPayoutUtcOffset, 1800n, "Rank salary payout time 00:30 UTC");
+  assertEq(dailyRewardUtcOffset, 3000n, "Staking daily reward time 00:50 UTC");
+  assertEq(maxDailyRewardBatch, 50n, "Staking daily reward keeper batch cap");
+  assertEq(maxStakingMemberPage, 200n, "Staking member registry page cap");
+  assertEq(totalStakingMembers, 0n, "Staking initial member registry");
+  assertEq(activeDailyRewardRunRate, 0n, "Staking initial daily reward run-rate");
+  assertEq(totalWeeklyRankSalary, 0n, "Staking initial weekly Rank Salary liability");
   assertEq(rank1Threshold, ethers.parseEther("1000"), "Rank 1 small-leg threshold");
   assertEq(rank8Threshold, ethers.parseEther("1000000"), "Rank 8 small-leg threshold");
   assertEq(rank1Salary, ethers.parseEther("25"), "Rank 1 weekly salary");
@@ -600,6 +624,8 @@ async function main() {
       smallLegThresholdUSDT: [1000, 5000, 15000, 50000, 100000, 250000, 500000, 1000000],
       weeklySalaryUSDT: [25, 75, 200, 500, 1000, 2000, 5000, 10000],
       payoutUtc: "00:30",
+      dailyRewardUtc: "00:50",
+      networkBonusSettlement: "REAL_TIME_ON_TRIGGER",
       firstPayoutDelayDays: 7,
     },
     stakingReservesATH: {
