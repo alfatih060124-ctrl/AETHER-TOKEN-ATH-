@@ -1,13 +1,44 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 LIFESTYLE BONUS / MATCHING STAKING — OFFICIAL NAME LOCK
+
+This section supersedes current-facing terminology that called the L1-L10 real-time Staking payout "Network Bonus" or "Network Reward".
+
+- Official holder/operator name: **Lifestyle Bonus / Matching Staking**.
+- This is the existing **L1-L10 real-time Staking matching payout**; economics and settlement logic are unchanged.
+- Locked rates:
+  - L1 = 8%
+  - L2 = 5%
+  - L3 = 3%
+  - L4 = 2%
+  - L5 = 1%
+  - L6-L10 = 0.5% each
+- Maximum full 10-level payout remains **21.5% of the downline's settled Daily Staking Reward**.
+- Settlement remains **real-time in the same transaction** that settles the downline's due Staking reward at/after the 00:50 UTC slot.
+- Funding source remains the protected **50M ATH Marketing / Network Reserve**.
+- Principal and the 160M Daily Reward Reserve remain isolated.
+- Backward-compatible technical identifiers such as `networkRates`, `totalNetworkPaidATH`, and `NetworkRewardPaid` are retained so existing integrations do not break.
+- Official on-chain aliases added:
+  - `LifestyleMatchingStakingPaid`
+  - `lifestyleMatchingRateBps(level)`
+  - `totalLifestyleMatchingPaidATH()`
+- Holder web displays **Lifestyle Bonus / Matching Staking Earned**.
+- Control Panel displays **Lifestyle Bonus / Matching Staking Paid**.
+- Staking Reward Keeper documentation and Testnet acceptance checklist use the new official name.
+- Latest web multilingual QC after the rename: **288 keys across 9 translated languages + English**.
+- Naming change does not modify Mining, Direct Referral/Rank, Rank Salary, Presale, tokenomics, reserve caps, or Mainnet gates.
+- Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 FINAL NO-BNB AUDIT / QC — CURRENT SOURCE OF TRUTH
 
 This section supersedes older no-BNB / 25-test / legacy 70-20-5-5 notes below.
 
 ### Internal work complete without BNB
 - Mining v3.3 source and all current Mining reward/referral/Booster/vesting rules: COMPLETE.
-- Staking source, 00:50 UTC reward schedule, unified Direct Referral 10%–35%, Same-Rank Skip, L1-L10 Network Bonus and lifetime Rank Salary: COMPLETE.
+- Staking source, 00:50 UTC reward schedule, unified Direct Referral 10%–35%, Same-Rank Skip, L1-L10 Lifestyle Bonus / Matching Staking and lifetime Rank Salary: COMPLETE.
 - Presale 30M / $0.070 / +$0.001 per 100k / $0.370 sold-out reference: COMPLETE.
 - 1B supply conservation with 700M Mining + 300M Staking ecosystem: COMPLETE.
 - Separate Mining / Staking / Presale Admin wallet roles: COMPLETE.
