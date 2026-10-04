@@ -34,8 +34,10 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant RANK_PAYOUT_UTC_OFFSET = 30 minutes; // 00:30 UTC
     uint256 public constant DAILY_REWARD_UTC_OFFSET = 50 minutes; // 00:50 UTC
     uint256 public constant MAX_RANK_BATCH = 50;
+    uint256 public constant MAX_DAILY_REWARD_BATCH = 50;
     uint256 public constant MAX_RANK_MEMBER_PAGE = 200;
     uint256 public constant MAX_DIRECT_LEG_PAGE = 200;
+    uint256 public constant MAX_STAKING_MEMBER_PAGE = 200;
     uint256 public constant MAX_RANK_CATCHUP_WEEKS = 12;
 
     IERC20 public immutable athToken;
@@ -80,6 +82,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     Package[] public packages;
     mapping(address => UserInfo) public userInfo;
     mapping(address => StakeInfo[]) public userStakes;
+    address[] private stakingMembers;
+    mapping(address => bool) public isStakingMember;
 
     // Dynamic direct-leg accounting used by the small-leg rank rule.
     mapping(address => uint256) public directSponsorCount;
@@ -215,6 +219,21 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         return userStakes[user].length;
     }
 
+    function totalStakingMembers() external view returns (uint256) {
+        return stakingMembers.length;
+    }
+
+    function getStakingMembers(uint256 offset, uint256 limit) external view returns (address[] memory result) {
+        require(limit > 0 && limit <= MAX_STAKING_MEMBER_PAGE, "invalid page");
+        if (offset >= stakingMembers.length) return new address[](0);
+        uint256 end = offset + limit;
+        if (end > stakingMembers.length) end = stakingMembers.length;
+        result = new address[](end - offset);
+        for (uint256 i = offset; i < end; i++) {
+            result[i - offset] = stakingMembers[i];
+        }
+    }
+
     function getATHAmount(uint256 amountUSDT) public view returns (uint256) {
         uint256 price = priceOracle.getPrice();
         require(price > 0, "invalid price");
@@ -252,7 +271,6 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 availableDays = _availableRewardDays(position);
         if (availableDays <= position.rewardDaysClaimed) return 0;
 
-        uint256 pendingDays = availableDays - position.rewardDaysClaimed;
         return (position.amountUSDT * position.dailyRateBps * pendingDays) / BPS;
     }
 
@@ -417,6 +435,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             emit DirectSponsorAdded(referrer, msg.sender, directSponsorCount[referrer]);
         }
 
+        if (!isStakingMember[msg.sender]) {
+            isStakingMember[msg.sender] = true;
+            stakingMembers.push(msg.sender);
+        }
+
         uint256 principalATH = getATHAmount(amountUSDT);
         require(principalATH > 0, "zero principal");
         athToken.safeTransferFrom(msg.sender, address(this), principalATH);
@@ -458,21 +481,60 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     function claimReward(uint256 stakeId) external nonReentrant whenNotPaused {
-        require(stakeId < userStakes[msg.sender].length, "invalid stake");
-        StakeInfo storage position = userStakes[msg.sender][stakeId];
+        _settleDailyReward(msg.sender, stakeId, true);
+    }
 
-        uint256 pendingUSDT = getPendingRewardUSDT(msg.sender, stakeId);
-        require(pendingUSDT > 0, "no reward");
+    /// @notice Permissionless settlement used by the 00:50 UTC Staking reward keeper.
+    /// @dev Reward goes to the position owner; L1-L10 Network bonuses are transferred in the same transaction.
+    function processDailyReward(address account, uint256 stakeId) external nonReentrant whenNotPaused {
+        require(account != address(0), "zero account");
+        _settleDailyReward(account, stakeId, true);
+    }
+
+    function processDailyRewardBatch(address[] calldata accounts, uint256[] calldata stakeIds)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 processed)
+    {
+        require(accounts.length > 0 && accounts.length == stakeIds.length, "invalid batch");
+        require(accounts.length <= MAX_DAILY_REWARD_BATCH, "batch too large");
+
+        for (uint256 i = 0; i < accounts.length; i++) {
+            if (accounts[i] == address(0)) continue;
+            if (_settleDailyReward(accounts[i], stakeIds[i], false)) processed += 1;
+        }
+    }
+
+    function _settleDailyReward(address account, uint256 stakeId, bool strict)
+        internal
+        returns (bool settled)
+    {
+        if (stakeId >= userStakes[account].length) {
+            if (strict) revert("invalid stake");
+            return false;
+        }
+        StakeInfo storage position = userStakes[account][stakeId];
+
+        uint256 pendingUSDT = getPendingRewardUSDT(account, stakeId);
+        if (pendingUSDT == 0) {
+            if (strict) revert("no reward");
+            return false;
+        }
 
         uint256 rewardATH = getATHAmount(pendingUSDT);
         (address[10] memory uplines, uint256[10] memory payouts, uint256 networkTotal) =
-            _previewNetwork(msg.sender, rewardATH);
+            _previewNetwork(account, rewardATH);
 
-        require(rewardReserveATH >= rewardATH, "insufficient reward reserve");
-        require(networkReserveATH >= networkTotal, "insufficient network reserve");
+        if (rewardReserveATH < rewardATH || networkReserveATH < networkTotal) {
+            if (strict) {
+                require(rewardReserveATH >= rewardATH, "insufficient reward reserve");
+                revert("insufficient network reserve");
+            }
+            return false;
+        }
 
         uint256 availableDays = _availableRewardDays(position);
-        uint256 pendingDays = availableDays - position.rewardDaysClaimed;
         position.rewardDaysClaimed = availableDays;
         uint256 firstRewardAt = _first0050AtOrAfter(position.startTime + 1 days);
         position.lastClaimTime = firstRewardAt + ((availableDays - 1) * 1 days);
@@ -482,7 +544,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         networkReserveATH -= networkTotal;
         totalRewardPaidATH += rewardATH + networkTotal;
 
-        athToken.safeTransfer(msg.sender, rewardATH);
+        athToken.safeTransfer(account, rewardATH);
 
         for (uint8 i = 0; i < 10; i++) {
             if (uplines[i] == address(0)) break;
@@ -491,10 +553,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             userInfo[uplines[i]].totalNetworkEarnedATH += amount;
             totalNetworkPaidATH += amount;
             athToken.safeTransfer(uplines[i], amount);
-            emit NetworkRewardPaid(uplines[i], msg.sender, i + 1, amount);
+            emit NetworkRewardPaid(uplines[i], account, i + 1, amount);
         }
 
-        emit RewardClaimed(msg.sender, stakeId, pendingUSDT, rewardATH, networkTotal);
+        emit RewardClaimed(account, stakeId, pendingUSDT, rewardATH, networkTotal);
+        return true;
     }
 
     /// @notice Holder can claim salary after a scheduled weekly slot if no keeper has processed it.
