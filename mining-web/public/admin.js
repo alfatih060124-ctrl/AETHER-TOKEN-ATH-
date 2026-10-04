@@ -115,6 +115,8 @@ function paintAccess(){
   $("withdrawExcessBtn").disabled=!miningAuthorized()||!state.miningPaused||!$("excessAck").checked;
   $("pauseTokenBtn").disabled=!tokenAuthorized()||state.tokenPaused;
   $("unpauseTokenBtn").disabled=!tokenAuthorized()||!state.tokenPaused;
+  $("pauseStakingBtn").disabled=!stakingAuthorized()||state.stakingPaused;
+  $("unpauseStakingBtn").disabled=!stakingAuthorized()||!state.stakingPaused;
   $("openPresaleBtn").disabled=!presaleAuthorized()||!state.presalePaused;
   $("pausePresaleBtn").disabled=!presaleAuthorized()||state.presalePaused;
 }
