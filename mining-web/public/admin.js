@@ -551,7 +551,70 @@ async function loadActivity(){
   }catch(err){console.error(err);box.innerHTML='<div class="empty">Event history is temporarily unavailable; contract metrics remain readable.</div>'}
 }
 
+const CONTROL_WORKSPACES={
+  overview:{
+    badge:"OVERVIEW",
+    note:"Read-only overview of ATH Mining, Staking, Presale and tokenomics. Select an operational workspace before making changes."
+  },
+  mining:{
+    badge:"MINING CONTROL",
+    note:"Mining-only workspace: emergency control, treasury, booster pricing, Mining reserve safety and Mining event history."
+  },
+  staking:{
+    badge:"STAKING CONTROL",
+    note:"Staking-only workspace: reserves, packages, Direct Referral/Rank rules, payout queue, network legs and Rank Salary history."
+  },
+  system:{
+    badge:"TOKEN & PRESALE",
+    note:"Shared system workspace: ATH Token transfer safety, Presale operations and Team Lock. Mining and Staking controls stay hidden."
+  }
+};
+
+function setControlWorkspace(view,{persist=true}={}){
+  const safe=CONTROL_WORKSPACES[view]?view:"overview";
+  document.body.dataset.controlView=safe;
+  document.querySelectorAll("[data-control-zone]").forEach(zone=>{
+    zone.hidden=zone.dataset.controlZone!==safe;
+  });
+  document.querySelectorAll("[data-control-view]").forEach(btn=>{
+    const active=btn.dataset.controlView===safe;
+    btn.classList.toggle("active",active);
+    btn.setAttribute("aria-selected",active?"true":"false");
+    btn.tabIndex=active?0:-1;
+  });
+  $("workspaceBadge").textContent=CONTROL_WORKSPACES[safe].badge;
+  $("workspaceNote").textContent=CONTROL_WORKSPACES[safe].note;
+  if(persist){
+    try{localStorage.setItem("athAdminWorkspace",safe)}catch{}
+  }
+}
+
+function initWorkspaceSwitcher(){
+  const buttons=[...document.querySelectorAll("[data-control-view]")];
+  buttons.forEach((btn,index)=>{
+    btn.addEventListener("click",()=>setControlWorkspace(btn.dataset.controlView));
+    btn.addEventListener("keydown",event=>{
+      if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+      event.preventDefault();
+      let next=index;
+      if(event.key==="ArrowRight")next=(index+1)%buttons.length;
+      if(event.key==="ArrowLeft")next=(index-1+buttons.length)%buttons.length;
+      if(event.key==="Home")next=0;
+      if(event.key==="End")next=buttons.length-1;
+      buttons[next].focus();
+      setControlWorkspace(buttons[next].dataset.controlView);
+    });
+  });
+  let initial="overview";
+  try{
+    const saved=localStorage.getItem("athAdminWorkspace");
+    if(CONTROL_WORKSPACES[saved])initial=saved;
+  }catch{}
+  setControlWorkspace(initial,{persist:false});
+}
+
 async function boot(){
+  initWorkspaceSwitcher();
   cfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());
   $("networkBadge").textContent=cfg.chainName;
   $("connectBtn").addEventListener("click",connect);
