@@ -131,6 +131,7 @@ async function main() {
   assertEq(await staking.rankWeeklySalaryUSDT(0), hre.ethers.parseEther("25"), "Rank 1 weekly salary");
   assertEq(await staking.rankWeeklySalaryUSDT(7), hre.ethers.parseEther("10000"), "Rank 8 weekly salary");
   assertEq(await staking.RANK_PAYOUT_UTC_OFFSET(), 1800n, "Rank salary payout UTC offset");
+  assertEq(await staking.DAILY_REWARD_UTC_OFFSET(), 3000n, "Staking daily reward UTC offset 00:50");
 
   // ---------------- Mining smoke flow ----------------
   const block = await hre.ethers.provider.getBlock("latest");
@@ -229,7 +230,9 @@ async function main() {
     "Staking direct referral reward"
   );
 
-  await increase(86400);
+  const stakingSchedule = await staking.getRewardSchedule(stakingUser.address, 0);
+  await hre.network.provider.send("evm_setNextBlockTimestamp", [Number(stakingSchedule.nextRewardAt)]);
+  await hre.network.provider.send("evm_mine");
   const pendingStakingUSDT = await staking.getPendingRewardUSDT(stakingUser.address, 0);
   assertEq(pendingStakingUSDT, hre.ethers.parseEther("0.035"), "Staking Starter daily reward");
 
@@ -303,6 +306,8 @@ async function main() {
       dailyRewardATH: "0.5",
       level1NetworkATH: "0.04",
       rankRule: "5 direct sponsors; small-leg = total direct-leg turnover - largest direct leg",
+      dailyRewardUtc: "00:50",
+      networkBonusSettlement: "REAL_TIME_ON_TRIGGER",
       rankPayoutUtc: "00:30 weekly after 7-day qualification",
       rankSalaryDuration: "LIFETIME",
       networkingBonusSource: "50M Marketing/network reserve",
