@@ -102,7 +102,10 @@ must(staking, /STAKING_ECOSYSTEM_ALLOCATION\s*=\s*300_000_000 ether/, "Staking a
 must(staking, /MAX_REWARD_POOL\s*=\s*160_000_000 ether/, "Staking reward pool is capped at 160,000,000 ATH");
 must(staking, /MIN_STAKE_USDT\s*=\s*10 ether/, "Staking minimum is $10 USDT");
 must(staking, /REFERRAL_BPS\s*=\s*1_000/, "Staking direct referral is 10%");
-must(staking, /uint256\[10\] public networkRates\s*=\s*\[800, 500, 300, 200, 100, 50, 50, 50, 50, 50\]/, "Staking network reward has 10 configured levels");
+must(staking, /uint256\[10\] public networkRates\s*=\s*\[800, 500, 300, 200, 100, 50, 50, 50, 50, 50\]/, "Lifestyle Bonus / Matching Staking has 10 locked levels");
+must(staking, /event LifestyleMatchingStakingPaid\(/, "Lifestyle Bonus / Matching Staking emits an official on-chain event");
+must(staking, /function lifestyleMatchingRateBps\(/, "Lifestyle Bonus / Matching Staking exposes the official rate alias");
+must(staking, /function totalLifestyleMatchingPaidATH\(/, "Lifestyle Bonus / Matching Staking exposes the official paid-total alias");
 must(staking, /_addPackage\(10 ether, 99 ether, 35, 180\)/, "Staking Starter package is configured");
 must(staking, /_addPackage\(100 ether, 499 ether, 45, 180\)/, "Staking Basic package is configured");
 must(staking, /_addPackage\(500 ether, 1_999 ether, 55, 365\)/, "Staking Silver package is configured");
@@ -168,9 +171,9 @@ must(rankKeeper, /00:30-00:59 UTC/, "Rank keeper enforces the 00:30 UTC schedule
 must(rankKeeper, /totalRankMembers/, "Rank keeper reads the on-chain Rank registry");
 must(staking, /networkReserveATH -= salaryATH/, "Rank salary is paid from the 50M Marketing/network reserve");
 must(staking, /networkReserveATH -= directAmount/, "Unified Direct Referral is paid from the 50M Marketing/network reserve");
-must(staking, /networkReserveATH -= networkTotal/, "L1-L10 Network reward is paid from the 50M Marketing/network reserve");
+must(staking, /networkReserveATH -= networkTotal/, "Lifestyle Bonus / Matching Staking is paid from the 50M Marketing/network reserve");
 must(staking, /athToken\.safeTransfer\(directSponsor, directAmount\)/, "Unified Direct Referral is transferred in real time during stake");
-must(staking, /athToken\.safeTransfer\(uplines\[i\], amount\)/, "L1-L10 Network Bonus is transferred in real time during reward settlement");
+must(staking, /athToken\.safeTransfer\(uplines\[i\], amount\)/, "Lifestyle Bonus / Matching Staking is transferred in real time during reward settlement");
 must(staking, /rewardReserveATH -= rewardATH/, "Daily Staking reward remains isolated to the 160M reward pool");
 must(staking, /protectedBalance = principalLiabilityATH \+ rewardReserveATH \+ networkReserveATH/, "Principal, daily reward and network reserves are all protected from excess recovery");
 
@@ -213,7 +216,9 @@ must(holderWorkspaceWeb, /href="#mining"/, "Mining navigation opens the Mining w
 must(holderWorkspaceWeb, /href="#staking"/, "Staking navigation opens the Staking workspace");
 must(portalHtml, /Mining Referral Program/, "Mining referral is explicitly labeled as Mining-only");
 must(portalHtml, /Staking Direct Referral Earned/, "Staking referral earnings are explicitly labeled as Staking");
-must(portalHtml, /Staking Network Earned/, "Staking network earnings are explicitly labeled as Staking");
+must(portalHtml, /Lifestyle Bonus \/ Matching Staking Earned/, "Staking matching earnings use the official Lifestyle Bonus / Matching Staking label");
+must(portalHtml, /Lifestyle Bonus \/ Matching Staking/, "Holder Staking workspace uses the official Lifestyle Bonus / Matching Staking name");
+must(adminHtml, /Lifestyle Bonus \/ Matching Staking Paid/, "Control Panel uses the official Lifestyle Bonus / Matching Staking name");
 must(presaleWeb, /quotePaymentForATH/, "Presale storefront reads contract-native quotes");
 must(presaleWeb, /payment\.approve\(cfg\.presaleAddress, maxPayment\)/, "Presale storefront performs holder-signed payment approval");
 must(presaleWeb, /presale\.buyATH\(amount, maxPayment\)/, "Presale storefront executes direct on-chain ATH purchase");
