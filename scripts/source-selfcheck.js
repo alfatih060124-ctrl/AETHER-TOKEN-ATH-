@@ -9,6 +9,11 @@ function must(text, pattern, label) {
   console.log("OK:", label);
 }
 
+function mustNot(text, pattern, label) {
+  if (pattern.test(text)) throw new Error("SELF-CHECK FAILED: " + label);
+  console.log("OK:", label);
+}
+
 const token = read("contracts/ATHToken.sol");
 const mining = read("contracts/MiningAirdrop.sol");
 const priceRegistry = read("contracts/ATHPriceRegistry.sol");
