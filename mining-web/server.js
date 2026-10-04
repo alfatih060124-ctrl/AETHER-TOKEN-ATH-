@@ -81,6 +81,7 @@ function configPayload() {
     presalePaymentToken: (process.env.PRESALE_PAYMENT_TOKEN || "").trim(),
     tokenAddress: (process.env.ATH_TOKEN_ADDRESS || "").trim(),
     expectedMiningAdmin: (process.env.MINING_OWNER_ADDRESS || "").trim(),
+    expectedMiningTreasury: (process.env.MINING_TREASURY_ADDRESS || "").trim(),
     expectedStakingAdmin: (process.env.STAKING_OWNER_ADDRESS || "").trim(),
     expectedPresaleAdmin: (process.env.PRESALE_OWNER_ADDRESS || "").trim(),
     expectedKeeperWallet: (process.env.KEEPER_WALLET_ADDRESS || "").trim(),
