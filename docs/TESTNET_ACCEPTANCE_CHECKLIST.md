@@ -48,8 +48,8 @@
 - [x] Differential Rank uplift.
 - [x] Full referral path hard-capped at 35%.
 - [x] Same Rank = skip; higher Rank above it remains eligible.
-- [x] L1–L10 Network Bonus = 8/5/3/2/1/0.5/0.5/0.5/0.5/0.5%.
-- [x] Network Bonus settles in real time during Staking reward settlement.
+- [x] L1–L10 Lifestyle Bonus / Matching Staking = 8/5/3/2/1/0.5/0.5/0.5/0.5/0.5%.
+- [x] Lifestyle Bonus / Matching Staking settles in real time during Staking reward settlement.
 - [x] Rank 1–8 small-leg thresholds and lifetime weekly salaries.
 - [x] Rank Salary schedule = 00:30 UTC weekly after qualification delay.
 - [x] Complete Rank Salary history + payout queue + direct-leg pagination.
@@ -169,7 +169,7 @@ Then:
 - [ ] Confirm unranked direct sponsor receives 10% total.
 - [ ] Confirm ranked direct sponsor receives its 13–35% total rate.
 - [ ] Confirm Same Rank is skipped while higher Rank remains eligible.
-- [ ] Confirm L1–L10 Network Bonus settles in the same reward transaction.
+- [ ] Confirm L1–L10 Lifestyle Bonus / Matching Staking settles in the same reward transaction.
 - [ ] Confirm Rank qualification from small-leg turnover.
 - [ ] Confirm Rank Salary first maturity and 00:30 weekly schedule.
 - [ ] Confirm Rank Salary history record.
@@ -207,7 +207,7 @@ Only after verified Testnet addresses are frozen:
 - [ ] Bind Mining, Presale and Staking modules.
 - [ ] Test connect/sign/send callbacks.
 - [ ] Show Mining reward deadline/vesting.
-- [ ] Show Staking reward, referral, network and Rank state.
+- [ ] Show Staking reward, referral, Lifestyle Bonus / Matching Staking and Rank state.
 - [ ] Show explorer links for all user transactions.
 
 ## J. Mainnet remains blocked
