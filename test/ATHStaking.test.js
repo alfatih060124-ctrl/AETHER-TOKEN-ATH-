@@ -540,7 +540,9 @@ describe("AETHER ATH Staking v1", function () {
     const expectedRankUplift = (principal * 300n) / 10_000n;
     const expectedDirectTotal = (principal * 1300n) / 10_000n;
 
+    const userBefore = await token.balanceOf(user.address);
     const refBefore = await token.balanceOf(referrer.address);
+    const referralBefore = await staking.totalReferralPaidATH();
     const refRankBefore = await staking.rankSponsorEarnedATH(referrer.address);
     const totalRankBefore = await staking.totalRankSponsorPaidATH();
     const preview = await staking.previewRankSponsorBonus(extraB.address, principal);
@@ -551,14 +553,12 @@ describe("AETHER ATH Staking v1", function () {
       .to.emit(staking, "RankSponsorSameRankBreak")
       .withArgs(referrer.address, extraB.address, 1n);
 
-    const userReferralBefore = await staking.totalReferralPaidATH();
-    // ReferralPaid was already emitted inside the stake. The direct Rank-1 sponsor receives 13% total.
+    expect((await token.balanceOf(user.address)) - userBefore).to.equal(expectedDirectTotal);
+    expect((await staking.totalReferralPaidATH()) - referralBefore).to.equal(expectedDirectTotal);
     expect(await staking.rankSponsorEarnedATH(user.address)).to.equal(expectedRankUplift);
     expect((await staking.rankSponsorEarnedATH(referrer.address)) - refRankBefore).to.equal(0n);
     expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(0n);
     expect((await staking.totalRankSponsorPaidATH()) - totalRankBefore).to.equal(expectedRankUplift);
-    expect(expectedDirectTotal).to.be.greaterThan(expectedRankUplift);
-    expect(userReferralBefore).to.be.greaterThan(0n);
   });
 
   it("caps a ranked direct sponsor at 35% total including the common 10% referral", async function () {
