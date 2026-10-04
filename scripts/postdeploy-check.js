@@ -94,6 +94,8 @@ const STAKING_ABI = [
   "function networkReserveATH() view returns (uint256)",
   "function totalRewardFundedATH() view returns (uint256)",
   "function totalNetworkFundedATH() view returns (uint256)",
+  "function lifestyleMatchingRateBps(uint256) view returns (uint256)",
+  "function totalLifestyleMatchingPaidATH() view returns (uint256)",
   "function principalLiabilityATH() view returns (uint256)",
   "function totalActiveStakedUSDT() view returns (uint256)",
   "function MIN_DIRECT_SPONSORS_FOR_RANK() view returns (uint256)",
@@ -299,6 +301,9 @@ async function main() {
     networkReserveATH,
     totalRewardFundedATH,
     totalNetworkFundedATH,
+    lifestyleLevel1Bps,
+    lifestyleLevel10Bps,
+    totalLifestyleMatchingPaidATH,
     principalLiabilityATH,
     totalActiveStakedUSDT,
     rankMinSponsors,
@@ -413,6 +418,9 @@ async function main() {
     staking.networkReserveATH(),
     staking.totalRewardFundedATH(),
     staking.totalNetworkFundedATH(),
+    staking.lifestyleMatchingRateBps(1),
+    staking.lifestyleMatchingRateBps(10),
+    staking.totalLifestyleMatchingPaidATH(),
     staking.principalLiabilityATH(),
     staking.totalActiveStakedUSDT(),
     staking.MIN_DIRECT_SPONSORS_FOR_RANK(),
@@ -553,6 +561,9 @@ async function main() {
   assertEq(packageCount, 6n, "Staking package count");
   assertEq(principalLiabilityATH, 0n, "Staking initial principal liability");
   assertEq(totalActiveStakedUSDT, 0n, "Staking initial active USDT");
+  assertEq(lifestyleLevel1Bps, 800n, "Lifestyle Bonus / Matching Staking L1 rate");
+  assertEq(lifestyleLevel10Bps, 50n, "Lifestyle Bonus / Matching Staking L10 rate");
+  assertEq(totalLifestyleMatchingPaidATH, 0n, "Lifestyle Bonus / Matching Staking initial paid total");
   assertEq(rankMinSponsors, 5n, "Rank minimum direct sponsors");
   assertEq(rankPayoutUtcOffset, 1800n, "Rank salary payout time 00:30 UTC");
   assertEq(dailyRewardUtcOffset, 3000n, "Staking daily reward time 00:50 UTC");
@@ -672,7 +683,11 @@ async function main() {
       weeklySalaryUSDT: [25, 75, 200, 500, 1000, 2000, 5000, 10000],
       payoutUtc: "00:30",
       dailyRewardUtc: "00:50",
-      networkBonusSettlement: "REAL_TIME_ON_TRIGGER",
+      lifestyleBonusMatchingStaking: {
+        levels: 10,
+        ratesBps: [800,500,300,200,100,50,50,50,50,50],
+        settlement: "REAL_TIME_ON_REWARD_SETTLEMENT"
+      },
       firstPayoutDelayDays: 7,
     },
     stakingReservesATH: {
