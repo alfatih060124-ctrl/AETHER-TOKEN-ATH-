@@ -1,6 +1,6 @@
 [build]
 builder = "RAILPACK"
-buildCommand = "npm run check"
+buildCommand = "npm run security:audit:runtime && npm run check"
 
 [deploy]
 startCommand = "npm start"
