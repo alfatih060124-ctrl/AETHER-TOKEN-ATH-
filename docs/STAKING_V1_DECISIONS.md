@@ -57,16 +57,16 @@ Package terms are snapshotted into each position. Later admin edits cannot rewri
 
 - Holder ATH principal increases principalLiabilityATH.
 - The 160M reward allocation is separately funded to rewardReserveATH.
-- Daily rewards, direct referral, network rewards and Rank salaries are paid from the reward reserve.
+- Daily Staking rewards are paid from the protected 160M reward reserve. Unified Direct Referral, Lifestyle Bonus / Matching Staking and lifetime Rank Salary are paid from the separate protected 50M Marketing / Network Reserve.
 - Principal is not consumed to fund rewards.
 - Owner excess recovery is pause-gated and can recover only ATH above protected principal + reward reserve.
 
-## Direct referral and 10-level network
+## Direct referral and 10-level Lifestyle Bonus / Matching Staking
 
 - First valid referrer is bound on-chain.
 - Self-referral and referral cycles are rejected.
-- Direct referral reward: **10%** of ATH principal, paid from reward reserve.
-- Daily network rates: Level 1 8%, Level 2 5%, Level 3 3%, Level 4 2%, Level 5 1%, Levels 6–10 0.5% each.
+- Direct Referral baseline is **10% total** for an unranked direct sponsor; ranked total rates are 13%–35%. The unified Direct Referral path is paid from the 50M Marketing / Network Reserve.
+- Lifestyle Bonus / Matching Staking rates: Level 1 8%, Level 2 5%, Level 3 3%, Level 4 2%, Level 5 1%, Levels 6–10 0.5% each.
 
 ## Final Network Rank salary policy
 
