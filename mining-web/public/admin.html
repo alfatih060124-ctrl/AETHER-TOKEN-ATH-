@@ -49,7 +49,8 @@
       <article><small>Listing Holder Gate</small><strong id="holderGate">0 / 15,000</strong><span id="listingState">Pending</span></article>
       <article><small>Staking Contract</small><strong id="stakingState">Pending</strong><span id="stakingAddress">—</span></article>
       <article><small>Staking Principal</small><strong id="stakingPrincipal">0 ATH</strong><span>Protected user principal liability</span></article>
-      <article><small>Staking Reward Reserve</small><strong id="stakingRewardReserve">0 ATH</strong><span>Daily / referral / network / Rank salary source</span></article>
+      <article><small>Staking Reward Reserve</small><strong id="stakingRewardReserve">0 ATH</strong><span>160M allocation · daily Staking reward only</span></article>
+      <article><small>Marketing / Network Reserve</small><strong id="stakingNetworkReserve">0 ATH</strong><span>50M allocation · referral / L1-L10 / lifetime Rank salary</span></article>
       <article><small>Rank Salary Paid</small><strong id="rankSalaryPaid">$0.00</strong><span id="rankSalaryPaidAth">0 ATH</span></article>
       <article><small>Presale Status</small><strong id="presaleState">Pending</strong><span id="presaleAddress">—</span></article>
       <article><small>Presale Price</small><strong id="presalePrice">$0.070</strong><span id="presaleProgress">0 / 30,000,000 ATH</span></article>
@@ -64,7 +65,7 @@
         <div><strong>700M</strong><span>Mining Reward</span><small>70% · Mining smart-contract reserve</small></div>
         <div><strong>160M</strong><span>Staking Reward Pool</span><small>16% · protected reward reserve</small></div>
         <div><strong>30M</strong><span>ATH Presale</span><small>3% · $0.070 stepped pricing</small></div>
-        <div><strong>50M</strong><span>Marketing</span><small>5% · ecosystem growth</small></div>
+        <div><strong>50M</strong><span>Marketing / Network Bonus</span><small>5% · direct referral + L1-L10 + lifetime Rank salary</small></div>
         <div><strong>30M</strong><span>Development Vesting</span><small>3% · vesting contract</small></div>
         <div><strong>20M</strong><span>Liquidity</span><small>2% · later listing phase</small></div>
         <div><strong>10M</strong><span>Ecosystem Reserve</span><small>1% · reserve allocation</small></div>
@@ -130,7 +131,8 @@
         <div>
           <div class="row"><span>Staking Owner</span><code id="stakingOwner">—</code></div>
           <div class="row"><span>Staking Status</span><strong id="stakingPause">—</strong></div>
-          <div class="row"><span>Reward Reserve</span><strong id="stakingReserveDetail">0 ATH</strong></div>
+          <div class="row"><span>Daily Reward Reserve</span><strong id="stakingReserveDetail">0 ATH</strong></div>
+          <div class="row"><span>Marketing / Network Reserve</span><strong id="stakingNetworkReserveDetail">0 ATH</strong></div>
           <div class="button-row">
             <button id="pauseStakingBtn" class="btn danger" disabled>Pause Staking</button>
             <button id="unpauseStakingBtn" class="btn" disabled>Unpause Staking</button>
@@ -142,7 +144,7 @@
           <div class="row"><span>Rank Salary Paid</span><strong id="stakingRankPaidDetail">$0.00 / 0 ATH</strong></div>
         </div>
       </div>
-      <p class="muted">Rank thresholds and weekly salary amounts are contract-locked: $1k/$25, $5k/$75, $15k/$200, $50k/$500, $100k/$1k, $250k/$2k, $500k/$5k, $1M/$10k. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Salary slots are weekly at 00:30 UTC after the 7-day qualification delay and are paid only from the protected reward reserve.</p>
+      <p class="muted">Rank thresholds and weekly salary amounts are contract-locked: $1k/$25, $5k/$75, $15k/$200, $50k/$500, $100k/$1k, $250k/$2k, $500k/$5k, $1M/$10k. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Salary slots are weekly at 00:30 UTC after the 7-day qualification delay. Rank Salary is lifetime after qualification and all Networking bonuses are paid only from the protected 50M Marketing / Network Reserve; unpaid salary remains due if the reserve is temporarily insufficient.</p>
     </section>
 
     <section class="panel">
@@ -195,6 +197,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-  <script src="/admin.js?v=20261004-rank-v1"></script>
+  <script src="/admin.js?v=20261004-network-reserve-v1"></script>
 </body>
 </html>
