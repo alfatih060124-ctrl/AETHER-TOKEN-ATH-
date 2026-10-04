@@ -1,7 +1,0 @@
-[build]
-builder = "RAILPACK"
-buildCommand = "npm ci --omit=dev --no-audit --no-fund && node --check scripts/staking-reward-keeper.js"
-
-[deploy]
-startCommand = "npm run keeper:staking-reward"
-restartPolicyType = "NEVER"
