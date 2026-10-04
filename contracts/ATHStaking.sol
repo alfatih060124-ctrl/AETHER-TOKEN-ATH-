@@ -32,8 +32,10 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant RANK_SALARY_PERIOD = 7 days;
     uint256 public constant RANK_FIRST_DELAY = 7 days;
     uint256 public constant RANK_PAYOUT_UTC_OFFSET = 30 minutes; // 00:30 UTC
+    uint256 public constant DAILY_REWARD_UTC_OFFSET = 50 minutes; // 00:50 UTC
     uint256 public constant MAX_RANK_BATCH = 50;
     uint256 public constant MAX_RANK_MEMBER_PAGE = 200;
+    uint256 public constant MAX_DIRECT_LEG_PAGE = 200;
     uint256 public constant MAX_RANK_CATCHUP_WEEKS = 12;
 
     IERC20 public immutable athToken;
@@ -55,6 +57,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 lockDays;
         uint256 startTime;
         uint256 lastClaimTime;
+        uint256 rewardDaysClaimed;
         uint256 totalClaimedUSDT;
         bool principalWithdrawn;
     }
@@ -84,6 +87,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     mapping(address => uint256) public largestLegTurnoverUSDT;
     mapping(address => address) public largestLegAddress;
     mapping(address => mapping(address => uint256)) public legTurnoverUSDT;
+    mapping(address => address[]) private directLegMembers;
+    mapping(address => mapping(address => bool)) public isDirectLegMember;
 
     // Rank 1..8 qualification timestamp. A higher rank never erases lower-rank history.
     mapping(address => mapping(uint8 => uint64)) public rankQualifiedAt;
@@ -102,6 +107,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalNetworkPaidATH;
     uint256 public totalRankSalaryPaidATH;
     uint256 public totalRankSalaryPaidUSDT;
+    uint256 public totalWeeklyRankSalaryUSDT;
+    uint256 public activeDailyRewardRunRateUSDT;
 
     // L1 8%, L2 5%, L3 3%, L4 2%, L5 1%, L6-L10 0.5%.
     uint256[10] public networkRates = [800, 500, 300, 200, 100, 50, 50, 50, 50, 50];
@@ -219,16 +226,34 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         return position.startTime + (position.lockDays * 1 days);
     }
 
+    function getRewardSchedule(address user, uint256 stakeId)
+        external
+        view
+        returns (
+            uint256 firstRewardAt,
+            uint256 lastRewardAt,
+            uint256 nextRewardAt,
+            uint256 rewardDaysClaimed,
+            uint256 totalRewardDays
+        )
+    {
+        StakeInfo storage position = userStakes[user][stakeId];
+        firstRewardAt = _first0050AtOrAfter(position.startTime + 1 days);
+        lastRewardAt = firstRewardAt + ((position.lockDays - 1) * 1 days);
+        rewardDaysClaimed = position.rewardDaysClaimed;
+        totalRewardDays = position.lockDays;
+        nextRewardAt = rewardDaysClaimed >= position.lockDays
+            ? 0
+            : firstRewardAt + (rewardDaysClaimed * 1 days);
+    }
+
     function getPendingRewardUSDT(address user, uint256 stakeId) public view returns (uint256) {
         StakeInfo storage position = userStakes[user][stakeId];
-        uint256 end = position.startTime + (position.lockDays * 1 days);
-        uint256 effectiveNow = block.timestamp < end ? block.timestamp : end;
-        if (effectiveNow <= position.lastClaimTime) return 0;
+        uint256 availableDays = _availableRewardDays(position);
+        if (availableDays <= position.rewardDaysClaimed) return 0;
 
-        uint256 fullDays = (effectiveNow - position.lastClaimTime) / 1 days;
-        if (fullDays == 0) return 0;
-
-        return (position.amountUSDT * position.dailyRateBps * fullDays) / BPS;
+        uint256 pendingDays = availableDays - position.rewardDaysClaimed;
+        return (position.amountUSDT * position.dailyRateBps * pendingDays) / BPS;
     }
 
     function getPendingRewardATH(address user, uint256 stakeId) external view returns (uint256) {
@@ -264,6 +289,38 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         for (uint256 i = offset; i < end; i++) {
             result[i - offset] = rankMembers[i];
         }
+    }
+
+    function totalDirectLegs(address account) external view returns (uint256) {
+        return directLegMembers[account].length;
+    }
+
+    function getDirectLegMembers(address account, uint256 offset, uint256 limit)
+        external
+        view
+        returns (address[] memory result)
+    {
+        require(limit > 0 && limit <= MAX_DIRECT_LEG_PAGE, "invalid page");
+        address[] storage members = directLegMembers[account];
+        if (offset >= members.length) return new address[](0);
+        uint256 end = offset + limit;
+        if (end > members.length) end = members.length;
+        result = new address[](end - offset);
+        for (uint256 i = offset; i < end; i++) {
+            result[i - offset] = members[i];
+        }
+    }
+
+    function rewardReserveRunwayDays() external view returns (uint256) {
+        if (activeDailyRewardRunRateUSDT == 0) return type(uint256).max;
+        uint256 reserveUSDT = (rewardReserveATH * priceOracle.getPrice()) / 1e8;
+        return reserveUSDT / activeDailyRewardRunRateUSDT;
+    }
+
+    function rankSalaryRunwayWeeks() external view returns (uint256) {
+        if (totalWeeklyRankSalaryUSDT == 0) return type(uint256).max;
+        uint256 reserveUSDT = (networkReserveATH * priceOracle.getPrice()) / 1e8;
+        return reserveUSDT / totalWeeklyRankSalaryUSDT;
     }
 
     function getEligibleRank(address account) public view returns (uint8 rank) {
@@ -354,6 +411,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             require(!_createsReferralCycle(msg.sender, referrer), "referral cycle");
             user.referrer = referrer;
             directSponsorCount[referrer] += 1;
+            directLegMembers[referrer].push(msg.sender);
+            isDirectLegMember[referrer][msg.sender] = true;
             emit ReferrerBound(msg.sender, referrer);
             emit DirectSponsorAdded(referrer, msg.sender, directSponsorCount[referrer]);
         }
@@ -365,6 +424,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         principalLiabilityATH += principalATH;
         user.activeStakedUSDT += amountUSDT;
         totalActiveStakedUSDT += amountUSDT;
+        activeDailyRewardRunRateUSDT += (amountUSDT * pkg.dailyRateBps) / BPS;
 
         userStakes[msg.sender].push(StakeInfo({
             amountUSDT: amountUSDT,
@@ -374,6 +434,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             lockDays: pkg.lockDays,
             startTime: block.timestamp,
             lastClaimTime: block.timestamp,
+            rewardDaysClaimed: 0,
             totalClaimedUSDT: 0,
             principalWithdrawn: false
         }));
@@ -410,10 +471,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         require(rewardReserveATH >= rewardATH, "insufficient reward reserve");
         require(networkReserveATH >= networkTotal, "insufficient network reserve");
 
-        uint256 end = position.startTime + (position.lockDays * 1 days);
-        uint256 effectiveNow = block.timestamp < end ? block.timestamp : end;
-        uint256 fullDays = (effectiveNow - position.lastClaimTime) / 1 days;
-        position.lastClaimTime += fullDays * 1 days;
+        uint256 availableDays = _availableRewardDays(position);
+        uint256 pendingDays = availableDays - position.rewardDaysClaimed;
+        position.rewardDaysClaimed = availableDays;
+        uint256 firstRewardAt = _first0050AtOrAfter(position.startTime + 1 days);
+        position.lastClaimTime = firstRewardAt + ((availableDays - 1) * 1 days);
         position.totalClaimedUSDT += pendingUSDT;
 
         rewardReserveATH -= rewardATH;
@@ -482,6 +544,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         principalLiabilityATH -= position.principalATH;
         userInfo[msg.sender].activeStakedUSDT -= position.amountUSDT;
         totalActiveStakedUSDT -= position.amountUSDT;
+        activeDailyRewardRunRateUSDT -= (position.amountUSDT * position.dailyRateBps) / BPS;
 
         athToken.safeTransfer(msg.sender, position.principalATH);
         emit PrincipalWithdrawn(msg.sender, stakeId, position.principalATH);
@@ -607,6 +670,10 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             }
         }
 
+        uint256 previousWeeklySalary = previous == 0 ? 0 : rankWeeklySalaryUSDT[previous - 1];
+        uint256 newWeeklySalary = rankWeeklySalaryUSDT[eligible - 1];
+        totalWeeklyRankSalaryUSDT = totalWeeklyRankSalaryUSDT - previousWeeklySalary + newWeeklySalary;
+
         info.highestRank = eligible;
         if (info.firstRankAchievedAt == 0) {
             info.firstRankAchievedAt = nowTs;
@@ -684,6 +751,34 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             priceUSD8,
             info.nextPayoutAt
         );
+    }
+
+    function _availableRewardDays(StakeInfo storage position) internal view returns (uint256) {
+        uint256 firstRewardAt = _first0050AtOrAfter(position.startTime + 1 days);
+        if (block.timestamp < firstRewardAt) return 0;
+
+        uint256 latestRewardAt = _latest0050AtOrBefore(block.timestamp);
+        if (latestRewardAt < firstRewardAt) return 0;
+
+        uint256 availableDays = ((latestRewardAt - firstRewardAt) / 1 days) + 1;
+        return availableDays > position.lockDays ? position.lockDays : availableDays;
+    }
+
+    function _first0050AtOrAfter(uint256 timestamp) internal pure returns (uint256) {
+        uint256 dayStart = (timestamp / 1 days) * 1 days;
+        uint256 slot = dayStart + DAILY_REWARD_UTC_OFFSET;
+        if (slot < timestamp) slot += 1 days;
+        return slot;
+    }
+
+    function _latest0050AtOrBefore(uint256 timestamp) internal pure returns (uint256) {
+        uint256 dayStart = (timestamp / 1 days) * 1 days;
+        uint256 slot = dayStart + DAILY_REWARD_UTC_OFFSET;
+        if (slot > timestamp) {
+            if (dayStart == 0) return 0;
+            slot -= 1 days;
+        }
+        return slot;
     }
 
     function _first0030AtOrAfter(uint256 timestamp) internal pure returns (uint256) {
