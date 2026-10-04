@@ -135,6 +135,10 @@ must(staking, /processRankSalaryBatch/, "Rank salary supports permissionless bat
 must(staking, /MAX_RANK_MEMBER_PAGE\s*=\s*200/, "Rank member registry page is capped at 200");
 must(staking, /function totalRankMembers\(\)/, "Rank member registry count getter is present");
 must(staking, /function getRankMembers\(/, "Rank member registry pagination getter is present");
+must(staking, /RankSalaryPayment\[\] private rankSalaryPayments/, "Rank Salary complete on-chain history is persisted");
+must(staking, /function totalRankSalaryPayments\(\)/, "Rank Salary history exposes a total count");
+must(staking, /function getRankSalaryPayments\(/, "Rank Salary history is paginated");
+must(staking, /MAX_RANK_HISTORY_PAGE\s*=\s*200/, "Rank Salary history page is bounded");
 must(rankKeeper, /RANK_KEEPER_ENABLED/, "Rank keeper is fail-closed behind an explicit enable flag");
 must(rankKeeper, /RANK_KEEPER_DRY_RUN/, "Rank keeper defaults to dry-run support");
 must(rankKeeper, /00:30-00:59 UTC/, "Rank keeper enforces the 00:30 UTC schedule window");
@@ -191,6 +195,10 @@ must(adminWeb, /stakingWrite\.addPackage\(/, "Control Panel can add Staking pack
 must(adminWeb, /getRankMembers/, "Control Panel reads Rank member registry");
 must(adminWeb, /getDirectLegMembers/, "Control Panel reads member leg details");
 must(adminWeb, /RankSalaryPaid/, "Control Panel reads Rank Salary history");
+must(adminWeb, /getRankSalaryPayments/, "Control Panel reads complete on-chain Rank Salary history");
+must(adminWeb, /totalRankSalaryPayments/, "Control Panel paginates complete Rank Salary history");
+must(adminWeb, /getDirectLegMembers/, "Control Panel paginates all direct network legs");
+must(adminHtml, /Complete payment history/, "Control Panel labels Rank Salary history as complete");
 must(adminWeb, /processRankSalary/, "Control Panel exposes due Rank payout processing");
 must(adminHtml, /Reserve runway & Rank payout queue/, "Control Panel exposes reserve runway and Rank payout queue");
 must(adminHtml, /00:50 UTC/, "Control Panel shows the Staking daily reward time");
