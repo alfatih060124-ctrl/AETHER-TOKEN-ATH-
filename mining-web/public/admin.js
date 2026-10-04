@@ -515,6 +515,14 @@ async function boot(){
   $("unpauseTokenBtn").addEventListener("click",()=>runTx("Unpause ATH",()=>tokenWrite.unpause()));
   $("pauseStakingBtn").addEventListener("click",()=>runTx("Pause Staking",()=>stakingWrite.pause()));
   $("unpauseStakingBtn").addEventListener("click",()=>runTx("Unpause Staking",()=>stakingWrite.unpause()));
+  $("fundRewardBtn").addEventListener("click",()=>fundStakingReserve("reward"));
+  $("fundNetworkBtn").addEventListener("click",()=>fundStakingReserve("network"));
+  $("loadPackageBtn").addEventListener("click",()=>loadPackageEditor());
+  $("updatePackageBtn").addEventListener("click",updatePackage);
+  $("addPackageBtn").addEventListener("click",addPackage);
+  $("refreshRankBtn").addEventListener("click",async()=>{await Promise.all([loadRankDashboard(),loadRankHistory()]);toast("Rank data refreshed.");});
+  $("rankPrevBtn").addEventListener("click",async()=>{if(rankPage>0){rankPage--;await loadRankDashboard();}});
+  $("rankNextBtn").addEventListener("click",async()=>{rankPage++;await loadRankDashboard();});
   $("openPresaleBtn").addEventListener("click",()=>runTx("Open Presale",()=>presaleWrite.unpause()));
   $("pausePresaleBtn").addEventListener("click",()=>runTx("Pause Presale",()=>presaleWrite.pause()));
   $("setTreasuryBtn").addEventListener("click",()=>{
