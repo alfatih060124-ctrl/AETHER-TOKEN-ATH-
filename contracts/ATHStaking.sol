@@ -128,7 +128,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalWeeklyRankSalaryUSDT;
     uint256 public activeDailyRewardRunRateUSDT;
 
+    // Official product name: Lifestyle Bonus / Matching Staking.
     // L1 8%, L2 5%, L3 3%, L4 2%, L5 1%, L6-L10 0.5%.
+    // networkRates is retained as the backward-compatible technical storage name.
     uint256[10] public networkRates = [800, 500, 300, 200, 100, 50, 50, 50, 50, 50];
 
     // Rank thresholds are based on cumulative SMALL-LEG USDT turnover:
@@ -200,6 +202,13 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 networkATH
     );
     event NetworkRewardPaid(
+        address indexed beneficiary,
+        address indexed sourceUser,
+        uint8 indexed level,
+        uint256 amountATH
+    );
+    // Official event alias for the L1-L10 Staking matching payout.
+    event LifestyleMatchingStakingPaid(
         address indexed beneficiary,
         address indexed sourceUser,
         uint8 indexed level,
@@ -452,7 +461,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Funds all Staking-network payouts from the fixed 50M ATH Marketing allocation.
-    /// @dev Direct referral, L1-L10 network rewards and lifetime Rank Salary use only this reserve.
+    /// @dev Direct referral, L1-L10 Lifestyle Bonus / Matching Staking and lifetime Rank Salary use only this reserve.
     function fundNetworkReserve(uint256 amount) external onlyOwner nonReentrant {
         require(amount > 0, "zero amount");
         require(totalNetworkFundedATH + amount <= MAX_NETWORK_MARKETING_POOL, "network pool cap");
@@ -532,7 +541,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Permissionless settlement used by the 00:50 UTC Staking reward keeper.
-    /// @dev Reward goes to the position owner; L1-L10 Network bonuses are transferred in the same transaction.
+    /// @dev Reward goes to the position owner; L1-L10 Lifestyle Bonus / Matching Staking is transferred in the same transaction.
     function processDailyReward(address account, uint256 stakeId) external nonReentrant whenNotPaused {
         require(account != address(0), "zero account");
         _settleDailyReward(account, stakeId, true);
@@ -601,6 +610,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             totalNetworkPaidATH += amount;
             athToken.safeTransfer(uplines[i], amount);
             emit NetworkRewardPaid(uplines[i], account, i + 1, amount);
+            emit LifestyleMatchingStakingPaid(uplines[i], account, i + 1, amount);
         }
 
         emit RewardClaimed(account, stakeId, pendingUSDT, rewardATH, networkTotal);
@@ -853,6 +863,17 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             }
             current = userInfo[current].referrer;
         }
+    }
+
+    /// @notice Official product-name alias for the L1-L10 matching schedule.
+    function lifestyleMatchingRateBps(uint256 level) external view returns (uint256) {
+        require(level >= 1 && level <= 10, "invalid level");
+        return networkRates[level - 1];
+    }
+
+    /// @notice Official product-name alias for total L1-L10 matching payouts.
+    function totalLifestyleMatchingPaidATH() external view returns (uint256) {
+        return totalNetworkPaidATH;
     }
 
     function _previewNetwork(address sourceUser, uint256 rewardATH)
