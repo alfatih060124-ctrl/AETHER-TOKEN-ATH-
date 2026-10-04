@@ -6,14 +6,15 @@
   <meta name="theme-color" content="#070502" />
   <title>AETHER ATH Control Panel</title>
   <meta name="robots" content="noindex,nofollow" />
-  <link rel="stylesheet" href="/admin.css?v=workspace-v1" />
+  <link rel="stylesheet" href="/admin.css?v=wallet-gate-v2" />
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="/"><span class="brand-mark">A</span><span>AETHER</span></a>
     <div class="top-actions">
       <span id="networkBadge" class="badge">BSC Testnet</span>
-      <button id="connectBtn" class="btn gold">Connect Admin Wallet</button>
+      <button id="connectBtn" class="btn gold">Signing Wallet</button>
+      <button id="logoutBtn" class="btn">Lock Panel</button>
     </div>
   </header>
 
@@ -22,11 +23,11 @@
       <div>
         <span class="eyebrow">ATH OPERATIONS</span>
         <h1>Control Panel</h1>
-        <p>Owner-gated monitoring and controls for AETHER ATH Mining, Staking, and the unified ATH Price Registry. No private key is stored by this panel.</p>
+        <p>This authenticated session exposes only the operational workspace authorized by the wallet that signed the AETHER access challenge.</p>
       </div>
       <div id="accessCard" class="access-card pending">
         <span id="accessDot"></span>
-        <div><strong id="accessTitle">Read-only</strong><small id="accessText">Connect the contract owner wallet to enable admin actions.</small></div>
+        <div><strong id="accessTitle">Authenticated session</strong><small id="accessText">The signing wallet must still match the on-chain owner before write actions are enabled.</small></div>
       </div>
     </section>
 
@@ -332,6 +333,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-  <script src="/admin.js?v=mining-treasury-v2"></script>
+  <script src="/admin.js?v=wallet-gate-v2"></script>
 </body>
 </html>
