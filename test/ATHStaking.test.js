@@ -445,6 +445,112 @@ describe("AETHER ATH Staking v1", function () {
     expect(snapshot.smallLegTurnover).to.equal(ethers.parseEther("3540"));
   });
 
+  it("locks Rank Sponsor Bonus rates at 13/16/19/22/25/28/31/35 percent", async function () {
+    const expected = [1300n, 1600n, 1900n, 2200n, 2500n, 2800n, 3100n, 3500n];
+    for (let i = 0; i < expected.length; i++) {
+      expect(await staking.rankSponsorBonusBps(i)).to.equal(expected[i]);
+    }
+  });
+
+  it("pays Rank Sponsor Bonus as a differential pass-up above the separate 10% direct referral", async function () {
+    // Bind Rank-1 candidate (user) under future Rank-2 upline (referrer).
+    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+
+    // user -> Rank 1: small-leg = 1,000 (300 + 250 + 250 + 250 + 250; largest 300).
+    const userLegs = [leg1, leg2, leg3, leg4, leg5];
+    const userValues = ["300","250","250","250","250"];
+    for (let i = 0; i < userLegs.length; i++) {
+      await staking.connect(userLegs[i]).stake(1, ethers.parseEther(userValues[i]), user.address);
+    }
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
+
+    // referrer -> Rank 2. Its A-leg already carries the user subtree;
+    // five more direct legs bring small-leg turnover above $5,000 but below $15,000.
+    const extraA = signers[12];
+    const extraB = signers[13];
+    for (const signer of [presaleBuyer, keeper, treasury, extraA, extraB]) {
+      await token.transfer(signer.address, ethers.parseEther("100000"));
+      await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
+    }
+    const r2Legs = [second, presaleBuyer, keeper, treasury, extraA];
+    const r2Values = ["1500","1000","1000","1000","1000"];
+    for (let i = 0; i < r2Legs.length; i++) {
+      await staking.connect(r2Legs[i]).stake(2, ethers.parseEther(r2Values[i]), referrer.address);
+    }
+    expect((await staking.rankInfo(referrer.address)).highestRank).to.equal(2n);
+
+    // Fresh personally sponsored member under Rank 1.
+    await token.transfer(extraB.address, ethers.parseEther("10000"));
+    await token.connect(extraB).approve(await staking.getAddress(), ethers.MaxUint256);
+
+    const principal = athForUsd(ethers.parseEther("100"), PRICE_007);
+    const rank1Full = (principal * 1300n) / 10_000n;
+    const rank2Diff = (principal * 300n) / 10_000n;
+    const directReferral = (principal * 1000n) / 10_000n;
+
+    const userBefore = await token.balanceOf(user.address);
+    const refBefore = await token.balanceOf(referrer.address);
+    const reserveBefore = await staking.networkReserveATH();
+
+    await staking.connect(extraB).stake(1, ethers.parseEther("100"), user.address);
+
+    expect((await token.balanceOf(user.address)) - userBefore).to.equal(directReferral + rank1Full);
+    expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(rank2Diff);
+    expect(await staking.rankSponsorEarnedATH(user.address)).to.equal(rank1Full);
+    expect(await staking.rankSponsorEarnedATH(referrer.address)).to.equal(rank2Diff);
+    expect(await staking.totalRankSponsorPaidATH()).to.equal(rank1Full + rank2Diff);
+    expect(reserveBefore - (await staking.networkReserveATH())).to.equal(
+      directReferral + rank1Full + rank2Diff
+    );
+  });
+
+  it("breaks Rank Sponsor pass-up when the same paid Rank appears again", async function () {
+    // Bind user under referrer before either has a Rank.
+    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+
+    // user -> Rank 1.
+    const userLegs = [leg1, leg2, leg3, leg4, leg5];
+    const userValues = ["300","250","250","250","250"];
+    for (let i = 0; i < userLegs.length; i++) {
+      await staking.connect(userLegs[i]).stake(1, ethers.parseEther(userValues[i]), user.address);
+    }
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
+
+    // referrer -> also Rank 1.
+    const extraA = signers[12];
+    const extraB = signers[13];
+    for (const signer of [presaleBuyer, keeper, treasury, extraA, extraB]) {
+      await token.transfer(signer.address, ethers.parseEther("100000"));
+      await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
+    }
+    const r1Legs = [second, presaleBuyer, keeper, treasury, extraA];
+    const r1Values = ["900","300","300","300","300"];
+    for (let i = 0; i < r1Legs.length; i++) {
+      await staking.connect(r1Legs[i]).stake(1, ethers.parseEther(r1Values[i]), referrer.address);
+    }
+    expect((await staking.rankInfo(referrer.address)).highestRank).to.equal(1n);
+
+    await token.transfer(extraB.address, ethers.parseEther("10000"));
+    await token.connect(extraB).approve(await staking.getAddress(), ethers.MaxUint256);
+
+    const principal = athForUsd(ethers.parseEther("100"), PRICE_007);
+    const expectedRankBonus = (principal * 1300n) / 10_000n;
+
+    const refBefore = await token.balanceOf(referrer.address);
+    const preview = await staking.previewRankSponsorBonus(extraB.address, principal);
+    // Before binding the new source there is no sponsor path yet.
+    expect(preview.totalBonusATH).to.equal(0n);
+
+    await expect(staking.connect(extraB).stake(1, ethers.parseEther("100"), user.address))
+      .to.emit(staking, "RankSponsorSameRankBreak")
+      .withArgs(referrer.address, extraB.address, 1n);
+
+    expect(await staking.rankSponsorEarnedATH(user.address)).to.equal(expectedRankBonus);
+    expect(await staking.rankSponsorEarnedATH(referrer.address)).to.equal(0n);
+    expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(0n);
+    expect(await staking.totalRankSponsorPaidATH()).to.equal(expectedRankBonus);
+  });
+
   it("qualifies Rank 8 at $1,000,000 small-leg turnover with five direct sponsors", async function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["300000","250000","250000","250000","250000"];
