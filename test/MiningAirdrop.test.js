@@ -56,8 +56,21 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     const token = await Token.deploy(deployer.address);
     await token.waitForDeployment();
 
+    const Stable = await ethers.getContractFactory("MockStablecoin");
+    const paymentToken = await Stable.deploy(6);
+    await paymentToken.waitForDeployment();
+
+    const Presale = await ethers.getContractFactory("ATHPresale");
+    const presale = await Presale.deploy(
+      await token.getAddress(),
+      await paymentToken.getAddress(),
+      treasury.address,
+      owner.address
+    );
+    await presale.waitForDeployment();
+
     const PriceRegistry = await ethers.getContractFactory("ATHPriceRegistry");
-    const priceRegistry = await PriceRegistry.deploy(owner.address);
+    const priceRegistry = await PriceRegistry.deploy(await presale.getAddress(), owner.address);
     await priceRegistry.waitForDeployment();
 
     const Mining = await ethers.getContractFactory("MiningAirdrop");
@@ -485,11 +498,13 @@ describe("AETHER ATH Mining Engine v3.3", function () {
     expect(await token.balanceOf(await mining.getAddress())).to.equal(liability);
   });
 
-  it("keeps ATH at the fixed $0.37 pre-listing reference price", async function () {
+  it("reads the Presale-linked ATH reference price without changing Mining reward mechanics", async function () {
     const { mining, priceRegistry } = await deployFixture();
-    expect(await priceRegistry.getPrice()).to.equal(37_000_000n);
+    expect(await priceRegistry.getPrice()).to.equal(7_000_000n);
     expect(await priceRegistry.HOLDER_TARGET()).to.equal(15_000n);
     expect(await priceRegistry.priceMode()).to.equal(0n);
-    expect(await mining.getCurrentPrice()).to.equal(370_000n);
+    expect(await mining.getCurrentPrice()).to.equal(70_000n);
+    expect(await mining.BASE_REWARD()).to.equal(ethers.parseEther("10"));
+    expect(await mining.MINING_POOL_ALLOCATION()).to.equal(ethers.parseEther("700000000"));
   });
 });
