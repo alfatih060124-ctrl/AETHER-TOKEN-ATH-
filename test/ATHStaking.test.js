@@ -532,7 +532,7 @@ describe("AETHER ATH Staking v1", function () {
     // referrer -> Rank 2 using second as one direct leg plus four additional direct legs.
     const topLegs = signers.slice(16, 20);
     for (const signer of topLegs) {
-      await token.transfer(signer.address, ethers.parseEther("10000"));
+      await token.transfer(signer.address, ethers.parseEther("50000"));
       await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
       await staking.connect(signer).stake(2, ethers.parseEther("1500"), referrer.address);
     }
