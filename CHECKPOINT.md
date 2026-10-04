@@ -1,5 +1,28 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
+
+## 2026-10-04 FINAL PRICE + NETWORK RANK LOCK
+
+This section is the current source of truth and supersedes older $0.10 / fixed-$0.37 price notes lower in this historical checkpoint.
+
+- ATH supply: **1,000,000,000 fixed**.
+- Mining allocation: **700,000,000 ATH**; Mining reward/booster/referral/vesting mechanics remain locked.
+- Staking ecosystem: **300,000,000 ATH**.
+- Unified pre-listing ATH price source: **ATH Presale**.
+- Presale: **$0.070 opening**, **+$0.001 after each complete 100,000 ATH sold**, **30,000,000 ATH allocation**, **$0.370 sold-out reference**.
+- Mining and Staking both read the same Presale-linked ATHPriceRegistry price.
+- Network Rank requires at least **5 direct sponsors**.
+- Dynamic small-leg rule: **total direct-leg turnover − the single largest direct leg**.
+- Rank thresholds / weekly salary: **R1 $1k/$25; R2 $5k/$75; R3 $15k/$200; R4 $50k/$500; R5 $100k/$1k; R6 $250k/$2k; R7 $500k/$5k; R8 $1M/$10k**.
+- Example 900 / 899 / 890 / 880 / 870: big leg $900; small-leg **$3,539**; 5 sponsors; **Rank 1**.
+- First Rank salary slot: **00:30 UTC after at least 7 full days from qualification**; then weekly.
+- Salary is converted to ATH using the current Presale-linked price at payout.
+- Rank salary uses **Staking reward reserve only**; principal is protected.
+- On-chain Rank member registry and permissionless batch salary processing are included.
+- Rank salary keeper is fail-closed by default and Testnet-only until production security gates pass.
+- Latest core validation before web/docs sync: **28 Solidity files compiled, 56/56 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Mainnet remains **CLOSED**; no blockchain deployment transaction was executed by this revision.
+
 ## 2026-10-03 ON-CHAIN PRESALE STOREFRONT — DONE IN SOURCE
 
 - Added a public **ATH On-chain Presale storefront** under `#buy-ath`.
