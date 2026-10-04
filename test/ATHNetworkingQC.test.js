@@ -64,6 +64,12 @@ async function deployNetworkingFixture() {
   return { signers, owner, treasury, token, stable, presale, registry, oracle, staking, sponsor, rest };
 }
 
+async function advanceToRewardSlot(staking, account, stakeId) {
+  const schedule = await staking.getRewardSchedule(account, stakeId);
+  await ethers.provider.send("evm_setNextBlockTimestamp", [Number(schedule.nextRewardAt)]);
+  await ethers.provider.send("evm_mine", []);
+}
+
 describe("ATH Networking Bonus QC Matrix", function () {
   it("pays all 10 network levels at the locked 8/5/3/2/1/0.5x5 rates", async function () {
     const { staking, rest } = await deployNetworkingFixture();
@@ -91,7 +97,7 @@ describe("ATH Networking Bonus QC Matrix", function () {
     const networkReserveBefore = await staking.networkReserveATH();
     const totalNetworkBefore = await staking.totalNetworkPaidATH();
 
-    await increase(DAY);
+    await advanceToRewardSlot(staking, source.address, 0);
     await staking.connect(source).claimReward(0);
 
     const rewardATH = athForUsd(ethers.parseEther("0.035"));
