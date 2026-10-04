@@ -89,13 +89,16 @@ async function main() {
   await token.waitForDeployment();
   const tokenAddress = await token.getAddress();
 
-  // Unified ATH price source: $0.37 official pre-listing reference, 15,000 holder gate.
+  // Presale is the official pre-listing ATH price source.
+  // It deploys paused/fail-closed and starts at $0.070.
+  // Unified ATH price registry follows Presale before official listing.
   const PriceRegistry = await hre.ethers.getContractFactory("ATHPriceRegistry");
-  const priceRegistry = await PriceRegistry.deploy(owner);
+  const priceRegistry = await PriceRegistry.deploy(presaleAddress, owner);
   await priceRegistry.waitForDeployment();
   const priceRegistryAddress = await priceRegistry.getAddress();
 
-  // Deploy ATH Mining v3.3 unchanged except for consuming the unified price registry.
+  // Deploy ATH Mining v3.3 without changing reward/booster/vesting mechanics.
+  // Only its compatibility price getter consumes the unified price registry.
   const MiningAirdrop = await hre.ethers.getContractFactory("MiningAirdrop");
   const mining = await MiningAirdrop.deploy(tokenAddress, treasury, priceRegistryAddress, owner);
   await mining.waitForDeployment();
@@ -253,8 +256,8 @@ async function main() {
   if ((await presale.STEP_SIZE_ATH()) !== hre.ethers.parseEther("100000")) {
     throw new Error("ATH Presale step size is not 100,000 ATH");
   }
-  if ((await priceRegistry.getPrice()) !== 37_000_000n) {
-    throw new Error("ATH pre-listing reference price is not $0.37");
+  if ((await priceRegistry.getPrice()) !== 7_000_000n) {
+    throw new Error("ATH unified price is not reading the $0.07 Presale opening price");
   }
   if ((await priceRegistry.HOLDER_TARGET()) !== 15_000n) {
     throw new Error("ATH official listing holder target is not 15,000");
@@ -262,8 +265,8 @@ async function main() {
   if ((await priceRegistry.officialListingActivated()) !== false) {
     throw new Error("ATH official listing must be inactive at deployment");
   }
-  if ((await oracle.getPrice()) !== 37_000_000n) {
-    throw new Error("ATH Staking oracle is not reading the $0.37 registry price");
+  if ((await oracle.getPrice()) !== 7_000_000n) {
+    throw new Error("ATH Staking oracle is not reading the Presale-linked registry price");
   }
 
   if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
@@ -309,9 +312,13 @@ async function main() {
       },
     },
     priceRules: {
-      preListingReferencePriceUSD: "0.37",
+      source: "ATH_PRESALE",
+      openingPriceUSD: "0.07",
+      priceStepUSD: "0.001",
+      stepSizeATH: "100000",
+      soldOutReferencePriceUSD: "0.37",
       holderTarget: 15000,
-      preListingMode: "PRE_LISTING_FIXED",
+      preListingMode: "PRESALE_LINKED",
       officialListingActivated: false,
       dexMarketPriceMayBeVisibleBeforeListing: true,
       officialPriceSwitch: "MARKET_AFTER_HOLDER_GATE_AND_OPERATOR_ACTIVATION",
@@ -327,7 +334,7 @@ async function main() {
       treasury: presaleWallet,
     },
     stakingRules: {
-      referencePriceUSD: "0.37",
+      referencePrice: "PRESALE_LINKED",
       minimumStakeUSDT: "10",
       directReferralPct: 10,
       networkLevels: 10,
@@ -337,6 +344,11 @@ async function main() {
       developmentVestingATH: "30000000",
       developmentCliffMonths: 2,
       developmentActiveMonths: 33,
+      rankMinimumDirectSponsors: 5,
+      rankSmallLegThresholdUSDT: [1000, 5000, 15000, 50000, 100000, 250000, 500000, 1000000],
+      rankWeeklySalaryUSDT: [25, 75, 200, 500, 1000, 2000, 5000, 10000],
+      rankPayoutUtc: "00:30",
+      rankFirstPayoutDelayDays: 7,
     },
     miningRules: {
       baseRewardATH: "10",
