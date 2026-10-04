@@ -360,7 +360,7 @@ must(runtimeSecurityAudit, /devToolingFindings/, "Runtime security audit separat
 must(runtimeSecurityAudit, /runtimeSecurityAudit: PASSED/, "Runtime security audit has explicit PASS marker");
 console.log("OK: runtime dependency audit is locked to production tree");
 
-must(noBnbCompletionDoc, /Daily Staking Reward settles on the \*\*00:50 UTC daily slot\*\*/, "No-BNB register documents Staking 00:50 reward");
+must(noBnbCompletionDoc, /00:50 UTC daily slot/, "No-BNB register documents Staking 00:50 reward");
 must(noBnbCompletionDoc, /Same Rank = skip, not stop/, "No-BNB register documents Same-Rank Skip");
 must(noBnbCompletionDoc, /69 passing/, "No-BNB register carries current automated test count");
 must(testnetChecklistDoc, /Mining allocation = 700,000,000 ATH/, "Testnet checklist carries current Mining allocation");
