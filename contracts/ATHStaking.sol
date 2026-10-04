@@ -168,7 +168,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 differentialBps,
         uint256 amountATH
     );
-    event RankSponsorSameRankBreak(
+    event RankSponsorSameRankSkipped(
         address indexed account,
         address indexed sourceUser,
         uint8 indexed rank
@@ -715,7 +715,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     function previewRankSponsorBonus(address sourceUser, uint256 principalATH)
         external
         view
-        returns (uint256 totalBonusATH, uint8 highestPaidRank, address sameRankBreakAt)
+        returns (uint256 totalBonusATH, uint8 highestPaidRank, address firstSameRankSkippedAt)
     {
         address current = userInfo[sourceUser].referrer;
         uint256 paidBps = REFERRAL_BPS;
@@ -724,8 +724,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             uint8 rank = rankInfo[current].highestRank;
             if (rank > 0) {
                 if (rank == highestPaidRank) {
-                    sameRankBreakAt = current;
-                    break;
+                    if (firstSameRankSkippedAt == address(0)) firstSameRankSkippedAt = current;
+                    current = userInfo[current].referrer;
+                    continue;
                 }
                 if (rank > highestPaidRank) {
                     uint256 currentBps = rankSponsorBonusBps[rank - 1];
@@ -749,7 +750,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             uint256 directSponsorATH,
             uint256 rankUpliftATH,
             uint8 highestPaidRank,
-            address sameRankBreakAt
+            address firstSameRankSkippedAt
         )
     {
         address directSponsor = userInfo[sourceUser].referrer;
@@ -771,8 +772,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             uint8 rank = rankInfo[current].highestRank;
             if (rank > 0) {
                 if (highestPaidRank > 0 && rank == highestPaidRank) {
-                    sameRankBreakAt = current;
-                    break;
+                    if (firstSameRankSkippedAt == address(0)) firstSameRankSkippedAt = current;
+                    current = userInfo[current].referrer;
+                    continue;
                 }
                 if (rank > highestPaidRank) {
                     uint256 currentBps = rankSponsorBonusBps[rank - 1];
@@ -824,8 +826,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             uint8 rank = rankInfo[current].highestRank;
             if (rank > 0) {
                 if (highestPaidRank > 0 && rank == highestPaidRank) {
-                    emit RankSponsorSameRankBreak(current, sourceUser, rank);
-                    break;
+                    emit RankSponsorSameRankSkipped(current, sourceUser, rank);
+                    current = userInfo[current].referrer;
+                    continue;
                 }
 
                 if (rank > highestPaidRank) {
