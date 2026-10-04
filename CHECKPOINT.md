@@ -1,6 +1,32 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 PUBLIC HOLDER WORKSPACE SEPARATION — CURRENT SOURCE OF TRUTH
+
+- Public holder portal now separates Mining and Staking into explicit operational workspaces.
+- Holder workspace selector exposes:
+  - **ATH Mining** — Power, Booster, Mining Reward 00:05 UTC, Mining Referral and Vesting.
+  - **ATH Staking** — Stake, Daily Reward 00:50 UTC, Direct Referral/Rank, Network Bonus and Rank Salary.
+- The same connected EVM wallet can be used across both modules, but only the selected holder workspace is displayed.
+- Inactive Mining/Staking operational zones are hidden to prevent holders from mixing actions between engines.
+- Main navigation to Mining/Staking automatically activates the matching holder workspace before scrolling.
+- The selected holder workspace is remembered locally.
+- Wallet connection status is mirrored into the holder workspace selector.
+- Mining referral is explicitly labeled **Mining Referral Program**.
+- Staking earnings are explicitly labeled **Staking Direct Referral Earned** and **Staking Network Earned**.
+- Mining area visibly states its reward window: **00:05–23:59:59 UTC**.
+- Staking area visibly states its daily reward slot: **00:50 UTC**.
+- Presale remains a separate neutral public area and is not merged into Mining or Staking controls.
+- Mobile layout collapses the Mining/Staking selector into one clear column.
+- Multilingual coverage expanded to **284 keys across 9 translated languages + English**.
+- Latest public web deployment `c53d796b-0f1b-4473-975f-bbfaa905fcf4`: **SUCCESS**, healthcheck PASS.
+- Latest validator deployment `5c1164ae-a240-4dff-8814-5a07c5c9bbac`: **SUCCESS**.
+- Validator evidence: holder-workspace source gates PASS, 28 Solidity files compile PASS, 69/69 tests PASS, ABI export PASS, local release rehearsal PASS.
+- No Mining/Staking contract business logic was changed by this public UI separation.
+- Runtime remains TESTNET / fail-closed; Mainnet CLOSED.
+
+
+
 ## 2026-10-04 ADMIN WALLET-GATED ACCESS — CURRENT SOURCE OF TRUTH
 
 - `pm.aether.boats` public surface is reduced to three wallet-authentication actions only:
