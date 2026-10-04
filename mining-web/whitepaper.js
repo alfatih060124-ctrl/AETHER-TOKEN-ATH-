@@ -82,8 +82,8 @@ function streamWhitepaper(res) {
   y = heading(doc, "01 / Token Model", "Fixed Supply and Allocation", 105);
   y = body(doc, "ATH uses a one-time fixed supply. The final ecosystem split is 700,000,000 ATH for Mining and 300,000,000 ATH for the Staking ecosystem.", y);
   card(doc, 50, y + 12, 239, 88, "Mining Reserve", "700,000,000 ATH", "70% - locked Mining reward allocation");
-  card(doc, 306, y + 12, 239, 88, "Staking Reward Pool", "160,000,000 ATH", "Daily, referral, network and Rank salary reserve");
-  card(doc, 50, y + 116, 239, 88, "Presale + Marketing", "80,000,000 ATH", "30M Presale + 50M ecosystem marketing");
+  card(doc, 306, y + 12, 239, 88, "Staking Reward Pool", "160,000,000 ATH", "Daily Staking reward reserve only");
+  card(doc, 50, y + 116, 239, 88, "Presale + Marketing/Network", "80,000,000 ATH", "30M Presale + 50M Referral, Lifestyle/Matching and Rank Salary");
   card(doc, 306, y + 116, 239, 88, "Dev + Liquidity + Reserve", "60,000,000 ATH", "30M development + 20M liquidity + 10M reserve");
 
   y = heading(doc, "Supply Controls", "Token Contract Properties", y + 240);
@@ -149,12 +149,14 @@ function streamWhitepaper(res) {
   y = body(doc, "ATH Staking uses USDT-denominated package values while payment and rewards settle in ATH at the current Presale-linked ATH price. Holder principal is accounted separately from the protected Staking reward reserve.", y);
 
   card(doc, 50, y + 12, 153, 84, "Staking Allocation", "300M ATH", "160M reward pool + ecosystem allocations");
-  card(doc, 221, y + 12, 153, 84, "Direct Referral", "10%", "Paid from reward reserve, not principal");
+  card(doc, 221, y + 12, 153, 84, "Direct Referral", "10%-35%", "Unified referral path; Rank totals include the 10% base");
   card(doc, 392, y + 12, 153, 84, "Rank Minimum", "5 sponsors", "Direct sponsors required for salary rank");
 
-  y = heading(doc, "Network Reward", "10-Level Daily Network", y + 126);
+  y = heading(doc, "Lifestyle Bonus / Matching Staking", "10-Level Real-Time Matching", y + 126);
   y = bulletList(doc, [
-    "Level 1: 8%; Level 2: 5%; Level 3: 3%; Level 4: 2%; Level 5: 1%; Levels 6-10: 0.5% each.",
+    "Lifestyle Bonus / Matching Staking: Level 1 8%; Level 2 5%; Level 3 3%; Level 4 2%; Level 5 1%; Levels 6-10 0.5% each.",
+    "Direct Referral is 10% total without Rank. Ranked sponsor totals are R1 13%, R2 16%, R3 19%, R4 22%, R5 25%, R6 28%, R7 31%, R8 35%, including the common 10% base.",
+    "Same Rank receives no duplicate uplift and is skipped; pass-up continues upward until a higher Rank is found.",
     "Each direct sponsor creates one direct network leg.",
     "The dynamic big leg is whichever direct leg currently has the largest cumulative USDT turnover.",
     "Small-leg turnover equals total direct-leg turnover minus the single largest dynamic leg."
@@ -166,7 +168,7 @@ function streamWhitepaper(res) {
     "Rank 5: $100,000 / $1,000; Rank 6: $250,000 / $2,000; Rank 7: $500,000 / $5,000; Rank 8: $1,000,000 / $10,000.",
     "First salary slot is 00:30 UTC after at least seven full days from qualification; subsequent slots advance weekly.",
     "Salary is denominated in USD accounting value and converted to ATH at the current Presale-linked price at payout.",
-    "Rank salary is paid only from the protected reward reserve. Principal is not used if the reward reserve is insufficient."
+    "Direct Referral, Rank uplift, Lifestyle Bonus / Matching Staking and lifetime Rank Salary are paid only from the protected 50M Marketing / Network Reserve. Principal and the 160M Daily Staking Reward Reserve are not used for these network payouts."
   ], y);
 
   doc.addPage();
