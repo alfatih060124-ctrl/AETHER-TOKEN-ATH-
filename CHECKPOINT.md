@@ -23,6 +23,32 @@ This section is the current source of truth and supersedes older $0.10 / fixed-$
 - Latest core validation before web/docs sync: **28 Solidity files compiled, 56/56 tests PASS, ABI export PASS, local release rehearsal PASS**.
 - Mainnet remains **CLOSED**; no blockchain deployment transaction was executed by this revision.
 
+### 2026-10-04 NETWORK BONUS AUDIT / QC
+
+- Full Networking QC matrix on current HEAD: **61/61 tests PASS**.
+- Dedicated QC verifies all **10 network levels** at **8% / 5% / 3% / 2% / 1% / 0.5% / 0.5% / 0.5% / 0.5% / 0.5%** of the claimed staking reward.
+- Direct Staking referral: **10%** of the ATH principal equivalent, paid at every stake to the bound direct referrer from the Staking reward reserve.
+- Rank qualification: **minimum 5 direct sponsors** plus cumulative small-leg turnover.
+- Dynamic big-leg rule verified: big leg is always the current largest direct leg; small-leg = total direct-leg turnover minus the largest direct leg.
+- All Rank thresholds and salaries verified end-to-end: **R1 $1k/$25; R2 $5k/$75; R3 $15k/$200; R4 $50k/$500; R5 $100k/$1k; R6 $250k/$2k; R7 $500k/$5k; R8 $1M/$10k weekly**.
+- Example 900 / 899 / 890 / 880 / 870 verified: big leg $900; small-leg **$3,539**; 5 direct sponsors; **Rank 1**.
+- First Rank salary slot verified at **00:30 UTC after at least 7 full days from qualification**; then weekly schedule continues.
+- Rank salary is denominated in USD and converted to ATH using the **current Presale-linked ATH price at payout**.
+- Rank salary cannot consume principal: principal liability remains unchanged by Rank salary payout.
+- Control Panel Staking pause/unpause is owner-wallet gated; public/admin web QC deployment passed.
+- Latest validator evidence: **28 Solidity files compiled, 61/61 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Latest web deployment after networking/admin QC: **SUCCESS**, multilingual QC **259 keys across 9 translated languages + English**, healthcheck PASS.
+- Rank salary keeper service is **cronReady** for daily 00:30 UTC polling, but remains fail-closed until verified Testnet deployment and explicit enablement.
+
+**QC findings requiring explicit business-policy confirmation before Mainnet:**
+
+- Rank is currently **monotonic/permanent once achieved**; withdrawing staking principal or later network inactivity does not reduce Rank.
+- Rank salary has **no end date** in the current contract; once qualified, weekly salary remains due indefinitely unless the contract is paused or reserve becomes insufficient.
+- Direct referral, daily Staking reward, 10-level Network reward and Rank salary all draw from the **same 160M ATH reward reserve**.
+- Therefore “fixed/guaranteed salary” is currently guaranteed only as a **fixed USD entitlement calculation**, not as an escrowed liquidity guarantee. If `rewardReserveATH` is insufficient, Rank salary settlement reverts with `insufficient rank reserve` and waits for sufficient reserve.
+- The 160M reward funding cap is cumulative. Once the full 160M has been funded, the current contract cannot top the reward pool above that ecosystem allocation.
+- Higher Rank upgrades require their own 7-day maturity, but payout remains aligned to the account's existing weekly 00:30 schedule; the upgraded salary may therefore begin on the next existing weekly slot after its 7-day maturity rather than resetting a new weekly calendar.
+
 ### 2026-10-04 LIVE IMPLEMENTATION EVIDENCE
 
 - Public ATH Mining/Staking portal Railway deployment `13984d58-91ec-46a0-98b5-f011c206e654`: **SUCCESS**.
