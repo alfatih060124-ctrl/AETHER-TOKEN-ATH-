@@ -1,6 +1,40 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 NETWORK BONUS / PAYMENT QC — AUDITED
+
+- Current audited HEAD: `199aa6597f6fcd24908f064fb44a3b329ac2a2c4`.
+- Full validator deployment `6de59716-7a1d-4752-9f84-f1d308894a36`: **SUCCESS**.
+- Solidity compile: **28 files PASS**.
+- Automated suite: **61/61 PASS**.
+- ABI export: **PASS**.
+- Local Mining + Presale + Staking release rehearsal: **PASS**.
+- Mainnet gates remain **CLOSED** and no public-chain contract deployment transaction was executed during this QC.
+- Staking direct referral: **10% of ATH principal on each successful stake**, paid from Staking reward reserve.
+- Staking daily network reward: **L1 8%, L2 5%, L3 3%, L4 2%, L5 1%, L6-L10 0.5% each**; full 10-level payout matrix now has end-to-end automated coverage.
+- Maximum full 10-level network payout = **21.5% of the downline's claimed Staking reward**, paid from reward reserve.
+- Rank requirement: **minimum 5 direct sponsors** plus dynamic small-leg turnover.
+- Small-leg rule: **total cumulative direct-leg turnover minus the single largest dynamic direct leg**.
+- Rank thresholds / weekly nominal salaries: **R1 $1k/$25; R2 $5k/$75; R3 $15k/$200; R4 $50k/$500; R5 $100k/$1k; R6 $250k/$2k; R7 $500k/$5k; R8 $1M/$10k**.
+- Example 900/899/890/880/870 remains verified: total $4,439; dynamic big leg $900; small-leg **$3,539**; 5 sponsors; Rank 1.
+- First Rank salary slot: first **00:30 UTC** occurring after at least **7 full days** from qualification; subsequent schedule advances every 7 days.
+- A newly achieved higher rank has its own 7-day maturity before the higher salary applies.
+- Rank salary is denominated in USD accounting value and converted to ATH using the **current Presale-linked price at actual payout time**.
+- Rank salary, direct referral and 10-level network reward all use the **160M Staking reward reserve**. Staking principal remains protected and is never consumed for these bonuses.
+- Emergency Staking pause also pauses holder reward/rank-salary transactions until unpaused.
+- Rank salary catch-up is capped at **12 weekly periods per processing transaction**; additional overdue periods can be processed by subsequent calls.
+- Dedicated Railway cron `ath-rank-salary-keeper`: **cronReady**, schedule **00:30 UTC daily**, build SUCCESS.
+- Rank keeper is intentionally **not armed yet**: no ATH Staking contract address / keeper key / enable variables are configured on that cron service while Testnet contracts remain undeployed.
+- Holder self-claim for due Rank salary exists as an on-chain fallback.
+- If automatic keeper payout is enabled later, the keeper transaction sender pays network gas; holder self-claim uses holder gas.
+- QC fixed one Control Panel defect: owner-gated Staking Pause/Unpause buttons now enable correctly, with a regression source gate.
+- Web deployment after the fix: `08d0d676-1df4-4287-b512-fb0c44eea656` — **SUCCESS**, healthcheck PASS.
+- Important wording/solvency caveat: current code guarantees the **nominal salary amount by rank**, but payment is not mathematically unconditional; it requires sufficient Staking reward reserve and an unpaused contract. If “gaji pasti” is intended to mean unconditional funding guarantee, a dedicated salary-reserve/solvency policy is still required.
+- Anti-abuse caveat: self-referral and referral cycles are blocked, but the smart contract cannot prove that 5 sponsor wallets belong to 5 distinct real people. Sybil/KYC policy is not implemented on-chain.
+- Turnover semantics currently use **cumulative staking turnover**. Withdrawal of principal does not reduce historical leg turnover or achieved Rank.
+
+
+
 ## 2026-10-04 FINAL PRICE + NETWORK RANK LOCK
 
 This section is the current source of truth and supersedes older $0.10 / fixed-$0.37 price notes lower in this historical checkpoint.
