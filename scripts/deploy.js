@@ -62,7 +62,6 @@ async function main() {
   const treasury = roleAddress("TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
   const presalePaymentToken = requiredAddress("PRESALE_PAYMENT_TOKEN");
-  const marketingWallet = roleAddress("MARKETING_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
   const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
@@ -79,7 +78,6 @@ async function main() {
   console.log("Mining treasury       :", treasury);
   console.log("Presale treasury      :", presaleWallet);
   console.log("Presale payment token :", presalePaymentToken);
-  console.log("Staking marketing     :", marketingWallet);
   console.log("Staking liquidity     :", liquidityWallet);
   console.log("Staking reserve       :", stakingReserveWallet);
   console.log("Development beneficiary:", developmentBeneficiary);
@@ -290,7 +288,6 @@ async function main() {
     treasury,
     presaleWallet,
     presalePaymentToken,
-    marketingWallet,
     liquidityWallet,
     stakingReserveWallet,
     developmentBeneficiary,
