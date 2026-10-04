@@ -1,6 +1,40 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 ADMIN WALLET-GATED ACCESS — CURRENT SOURCE OF TRUTH
+
+- `pm.aether.boats` public surface is reduced to three wallet-authentication actions only:
+  - Connect Wallet Mining
+  - Connect Wallet Staking
+  - Connect Wallet Presale
+- The full Control Panel is no longer intended to be publicly readable.
+- `/admin`, `/admin.html`, and `/admin.js` require an authenticated admin session; unauthenticated panel-page requests redirect to the wallet gate and unauthenticated admin-JS requests are rejected.
+- Wallet authentication is server-side challenge/response:
+  - one-time random nonce;
+  - 5-minute challenge expiry;
+  - wallet `signMessage`;
+  - server-side EVM signature recovery and exact role-wallet comparison.
+- Successful authentication creates a random 30-minute server session with an `HttpOnly; Secure; SameSite=Strict` cookie.
+- Full admin runtime configuration moved to authenticated `/api/admin/config`.
+- Public `/config` on the Control Panel host exposes only minimal chain/network information and no admin-role addresses or contract-operational configuration.
+- Control-panel `/health` is reduced to a minimal service-health response.
+- Session roles:
+  - Mining wallet -> Mining Control workspace.
+  - Staking wallet -> Staking Control workspace.
+  - Presale wallet -> Token & Presale workspace.
+- The workspace switcher is hidden after authentication; the server-authenticated role selects the workspace.
+- The connected signing wallet must continue to match the wallet that authenticated the session. Changing accounts immediately locks/logs out the panel.
+- A **Lock Panel** action explicitly invalidates the session.
+- On-chain owner checks remain the final transaction authorization layer; the wallet gate adds a separate web-access layer and does not replace smart-contract ownership security.
+- No private key or seed phrase is requested or stored by the web panel.
+- Latest Control Panel deployment `5ff217f5-5c10-48df-808d-1d774cc41f39`: **SUCCESS**, healthcheck PASS, multilingual QC PASS.
+- Latest validator deployment `feec9630-4f60-40e3-b11e-4ac7e5856f40`: **SUCCESS**.
+- Validator evidence: source wallet-gate checks PASS, syntax PASS, 28 Solidity files compile PASS, 69/69 tests PASS, ABI export PASS, local release rehearsal PASS.
+- No blockchain deployment transaction was executed by this access-control revision.
+- Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 MINING TREASURY OVERRIDE — CURRENT SOURCE OF TRUTH
 
 - Mining Admin and Mining Treasury are now separate roles.
