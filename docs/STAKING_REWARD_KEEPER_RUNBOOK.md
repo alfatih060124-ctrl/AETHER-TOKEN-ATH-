@@ -6,7 +6,7 @@ The Staking Reward Keeper settles due holder rewards at the fixed **00:50 UTC da
 
 When it settles a due reward:
 - holder Daily Staking Reward is paid from the protected **160M Daily Reward Reserve**;
-- L1–L10 Lifestyle Bonus / Matching Staking is paid in the same transaction from the protected **50M Marketing / Network Reserve**.
+- L1–L10 Lifestyle Bonus / Matching Staking is paid in the same transaction from the protected **50M Marketing / Lifestyle Matching Reserve**.
 
 Holder self-settlement remains available as a fallback.
 
@@ -61,9 +61,9 @@ With schedule guard enabled, transactional settlement outside the 00:50–00:59 
 9. Confirm:
    - holder reward received,
    - RewardClaimed event,
-   - L1–L10 NetworkRewardPaid events,
+   - L1–L10 LifestyleMatchingStakingPaid events,
    - 160M reserve decreased only by holder reward,
-   - 50M reserve decreased only by network payouts.
+   - 50M reserve decreased only by Lifestyle Matching payouts.
 10. Only then leave the Railway 00:50 cron enabled for Testnet evidence.
 
 ## Failure behavior
