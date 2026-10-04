@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#070502" />
+  <title>AETHER ATH Admin Access</title>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <link rel="stylesheet" href="/admin.css?v=wallet-gate-v1" />
+</head>
+<body class="admin-gate-body">
+  <main class="admin-gate">
+    <section class="admin-gate-card">
+      <div class="brand admin-gate-brand"><span class="brand-mark">A</span><span>AETHER</span></div>
+      <span class="eyebrow">ATH SECURE OPERATIONS</span>
+      <h1>Admin Wallet Access</h1>
+      <p class="admin-gate-copy">Choose the operational wallet you want to authenticate. The Control Panel remains hidden until the selected wallet signs a one-time AETHER authentication challenge.</p>
+
+      <div class="admin-role-buttons">
+        <button class="btn gold admin-role-btn" type="button" data-admin-role="mining">
+          <span>Connect Wallet Mining</span><small>Mining owner operations only</small>
+        </button>
+        <button class="btn gold admin-role-btn" type="button" data-admin-role="staking">
+          <span>Connect Wallet Staking</span><small>Staking, Rank and reserve operations only</small>
+        </button>
+        <button class="btn gold admin-role-btn" type="button" data-admin-role="presale">
+          <span>Connect Wallet Presale</span><small>Token, Presale and Price Registry only</small>
+        </button>
+      </div>
+
+      <div id="gateStatus" class="admin-gate-status" aria-live="polite">No admin session.</div>
+      <p class="admin-gate-security">No seed phrase or private key is requested or stored. Authentication uses a one-time wallet signature and an HttpOnly session cookie.</p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.min.js"></script>
+  <script src="/admin-login.js?v=wallet-gate-v1"></script>
+</body>
+</html>
