@@ -72,7 +72,7 @@
 - [x] Source self-check PASS.
 - [x] Syntax checks PASS.
 - [x] Solidity compile PASS.
-- [x] 69/69 automated tests PASS.
+- [x] 70/70 automated tests PASS.
 - [x] Deterministic ABI/release export PASS.
 - [x] Local release rehearsal PASS.
 - [x] EIP-170 bytecode checks PASS.
