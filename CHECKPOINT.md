@@ -1,6 +1,54 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 STAKING MEMBER / CONTRACT ADMIN DASHBOARD — CURRENT SOURCE OF TRUTH
+
+- The original six Staking products remain the base package definitions:
+  - Package 0 = Starter
+  - Package 1 = Basic
+  - Package 2 = Silver
+  - Package 3 = Gold
+  - Package 4 = Platinum
+  - Package 5 = Diamond
+- **Package ID** identifies the Staking product/configuration. Admin Package Manager loads and edits package availability, USD range, daily rate and lock period.
+- Existing member contracts retain their snapshotted economics when a package is edited; package edits affect future contracts only.
+- Every successful Staking position now receives a separate globally unique **1-based Contract ID**.
+- **Contract ID** is the member-position lookup key and is intentionally separate from Package ID.
+- Admin Contract ID lookup returns:
+  - owner wallet;
+  - member-local Stake ID;
+  - Package ID/name;
+  - Staked USD;
+  - principal ATH;
+  - snapshotted daily rate;
+  - lock period;
+  - start time / lock end;
+  - total reward claimed;
+  - pending reward;
+  - principal status;
+  - ACTIVE / N-ACTIVE status.
+- Operational status definition:
+  - **ACTIVE** = principal is still held by the Staking contract.
+  - **N-ACTIVE** = principal was withdrawn and the member contract is closed.
+- Exact on-chain counters now track:
+  - total unique Staking members;
+  - members with at least one ACTIVE contract;
+  - total Staking contracts;
+  - total ACTIVE contracts;
+  - total N-ACTIVE contracts;
+  - total / ACTIVE / N-ACTIVE contracts per Package ID.
+- Staking Member Directory is paginated and displays member wallet, total contracts, ACTIVE contracts, active staked USD, current Rank and bound referrer.
+- Package Manager rows show the human package name plus Package ID, ENABLED/DISABLED availability and current ACTIVE/N-ACTIVE member-contract counts.
+- Regression tests verify global Contract ID uniqueness and ACTIVE -> N-ACTIVE counter movement after principal withdrawal.
+- Latest validator deployment: `061a3fd2-786a-43df-a115-c5061967c68a` — **SUCCESS**.
+- Validator evidence: **28 Solidity files compiled, 72/72 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Latest Control Panel deployment: `b1399ab3-fd91-42d6-bbc7-5ca1351b43da` — **SUCCESS**, healthcheck PASS, admin vendor QC PASS, multilingual QC **288 keys across 9 translated languages + English**.
+- Runtime remains TESTNET / fail-closed with `contractConfigured=false`; dashboard values will populate from chain after the Staking Testnet contract is deployed.
+- This revision required no BNB and executed no blockchain deployment transaction.
+- Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 ADMIN LOGIN MOBILE-WALLET COMPATIBILITY — CURRENT SOURCE OF TRUTH
 
 - Resolved AETHER Wallet admin-login failure: `ethers is not defined`.
