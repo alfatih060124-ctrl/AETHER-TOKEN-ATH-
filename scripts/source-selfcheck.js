@@ -223,6 +223,16 @@ must(adminHtml, /data-control-zone="system"/, "Token and Presale controls are is
 must(adminWeb, /function setControlWorkspace\(/, "Control Panel has explicit workspace switching logic");
 must(adminWeb, /zone\.hidden=zone\.dataset\.controlZone!==safe/, "Inactive engine controls are hidden from the active workspace");
 must(adminWeb, /localStorage\.setItem\("athAdminWorkspace"/, "Control Panel remembers the operator's selected workspace");
+must(webServer, /expectedMiningAdmin: \(process\.env\.MINING_OWNER_ADDRESS/, "Web config exposes expected Mining Admin wallet");
+must(webServer, /expectedStakingAdmin: \(process\.env\.STAKING_OWNER_ADDRESS/, "Web config exposes expected Staking Admin wallet");
+must(webServer, /expectedPresaleAdmin: \(process\.env\.PRESALE_OWNER_ADDRESS/, "Web config exposes expected Token\/Presale Admin wallet");
+must(webServer, /expectedKeeperWallet: \(process\.env\.KEEPER_WALLET_ADDRESS/, "Web config exposes expected Keeper wallet");
+must(adminHtml, /id="requiredMiningAdmin"/, "Mining workspace displays its required Admin wallet");
+must(adminHtml, /id="requiredStakingAdmin"/, "Staking workspace displays its required Admin wallet");
+must(adminHtml, /id="requiredPresaleAdmin"/, "Token\/Presale workspace displays its required Admin wallet");
+must(adminWeb, /requiredMiningAdmin/, "Control Panel binds expected Mining Admin wallet");
+must(adminWeb, /requiredStakingAdmin/, "Control Panel binds expected Staking Admin wallet");
+must(adminWeb, /requiredPresaleAdmin/, "Control Panel binds expected Token\/Presale Admin wallet");
 must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Control Panel shows current 300M Staking ecosystem breakdown");
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
