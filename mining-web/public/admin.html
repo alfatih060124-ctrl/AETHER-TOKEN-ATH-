@@ -207,11 +207,14 @@
       <article class="panel">
         <div class="section-head"><div><span class="eyebrow">NETWORK LEGS</span><h2>Member leg detail</h2></div></div>
         <div class="row"><span>Selected Member</span><code id="selectedRankMember">—</code></div>
-        <div id="rankLegList" class="admin-list"><div class="empty">Select a Rank member to inspect direct legs and turnover.</div></div>
+        <div class="row"><span>Direct Legs</span><strong id="rankLegCount">0</strong></div>
+        <div class="button-row compact"><button id="legPrevBtn" class="btn">Previous Legs</button><button id="legNextBtn" class="btn">Next Legs</button></div>
+        <div id="rankLegList" class="admin-list"><div class="empty">Select a Rank member to inspect all direct legs and turnover.</div></div>
       </article>
       <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">RANK SALARY</span><h2>Payment history</h2></div></div>
-        <div id="rankHistory" class="admin-list"><div class="empty">No Rank Salary events available yet.</div></div>
+        <div class="section-head"><div><span class="eyebrow">RANK SALARY</span><h2>Complete payment history</h2></div><strong id="rankHistoryCount">0 payments</strong></div>
+        <div class="button-row compact"><button id="historyPrevBtn" class="btn">Previous</button><button id="historyNextBtn" class="btn">Next</button></div>
+        <div id="rankHistory" class="admin-list"><div class="empty">No Rank Salary payments yet.</div></div>
       </article>
     </section>
 
@@ -265,6 +268,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-  <script src="/admin.js?v=20261004-staking-admin-v2"></script>
+  <script src="/admin.js?v=20261004-staking-admin-v3"></script>
 </body>
 </html>
