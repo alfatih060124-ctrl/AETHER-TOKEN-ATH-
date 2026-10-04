@@ -167,7 +167,6 @@ async function main() {
   const ownerExpected = roleAddress("OWNER_ADDRESS");
   const treasuryExpected = roleAddress("TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
-  const marketingWallet = roleAddress("MARKETING_WALLET");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
   const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
