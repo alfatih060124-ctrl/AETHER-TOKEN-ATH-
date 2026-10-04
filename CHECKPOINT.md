@@ -1,6 +1,50 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 FINAL NO-BNB QC + LIFESTYLE MATCHING LOCK — CURRENT SOURCE OF TRUTH
+
+- **All internal work that does not require BNB/tBNB is complete.**
+- Official product name for the former L1-L10 technical network payout is **Lifestyle Bonus / Matching Staking**.
+- Locked Lifestyle Matching schedule:
+  - L1 8%
+  - L2 5%
+  - L3 3%
+  - L4 2%
+  - L5 1%
+  - L6-L10 0.5% each
+- Lifestyle Bonus / Matching Staking settles **real-time in the same Staking reward-settlement transaction**.
+- Technical storage/backward-compatibility names such as `networkRates`, `networkReserveATH`, and legacy `NetworkRewardPaid` remain available where needed; official public aliases are `lifestyleMatchingRateBps`, `totalLifestyleMatchingPaidATH`, and `LifestyleMatchingStakingPaid`.
+- Marketing allocation/operator naming is standardized as **50M Marketing / Lifestyle Matching Reserve**.
+- Public holder portal keeps Mining and Staking in separate operational workspaces.
+- Control Panel remains wallet-gated and role-isolated for Mining, Staking, and Token/Presale.
+- Unified Direct Referral / Rank uplift remains 10%-35% total with Same Rank Skip and higher-Rank continuation.
+- Staking Daily Reward remains 00:50 UTC; Rank Salary remains lifetime and weekly at 00:30 UTC after qualification delay.
+- Runtime security audit: **PASS — 0 high/critical production-runtime vulnerabilities**.
+- Non-BNB Readiness: **PASS**.
+- BSC Testnet RPC/readiness: **PASS**.
+- Source self-check and syntax gates: **PASS**.
+- Solidity: **28 files compiled**.
+- Automated contract tests: **70/70 PASS**.
+- ABI/release export: **PASS**.
+- Local Mining + Presale + Staking release rehearsal: **PASS**.
+- Latest validator deployment: `ca58307d-5aa4-4dec-bdf7-c674a93564fe` — **SUCCESS**.
+- Latest public web deployment: `d9710bed-6801-4c0a-aa8d-dbd7458c9fa9` — **SUCCESS**, healthcheck PASS.
+- Public web dependency audit: **0 vulnerabilities**.
+- Multilingual QC: **288 keys across 9 translated languages + English**.
+- Runtime remains TESTNET, `contractConfigured=false`, `mainnetEnabled=false`.
+- Keeper transaction modes remain fail-closed / disabled until verified Testnet contracts are available.
+- Remaining items are **not internal coding gaps**:
+  - `PRESALE_PAYMENT_TOKEN`
+  - `LIQUIDITY_WALLET`
+  - `STAKING_RESERVE_WALLET`
+  - `DEVELOPMENT_BENEFICIARY`
+  - `BSCSCAN_API_KEY` only for explorer verification after deployment
+  - Testnet deployer/keeper tBNB gas
+  - public Testnet contract deployment, post-deploy evidence and real Testnet transaction QC
+- Mainnet remains **CLOSED** and no chain deployment transaction was executed during this no-BNB completion pass.
+
+
+
 ## 2026-10-04 LIFESTYLE BONUS / MATCHING STAKING — OFFICIAL NAME LOCK
 
 This section supersedes current-facing terminology that called the L1-L10 real-time Staking payout "Network Bonus" or "Network Reward".
