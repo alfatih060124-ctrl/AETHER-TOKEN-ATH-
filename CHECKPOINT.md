@@ -1,6 +1,25 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 MINING TREASURY OVERRIDE — CURRENT SOURCE OF TRUTH
+
+- Mining Admin and Mining Treasury are now separate roles.
+- MINING_TREASURY_ADDRESS is configured to the same public wallet currently used for the Presale Treasury.
+- Mining Admin remains unchanged and retains only Mining owner/control authority.
+- MiningAirdrop constructor now receives:
+  - owner = MINING_OWNER_ADDRESS
+  - treasury = MINING_TREASURY_ADDRESS
+- Preflight, readiness, verification, post-deploy checks and env template all require/verify the dedicated Mining Treasury role.
+- Control Panel Mining workspace displays Mining Admin and Mining Treasury as separate wallet roles.
+- Railway public role configuration was updated; no private key or seed phrase was added.
+- Latest Control Panel runtime: mining-treasury-split-v1 — SUCCESS, healthcheck PASS, multilingual QC PASS.
+- Latest validator deployment: 44ffcd69-ccf4-44a4-ab53-bfc9c3e1e290 — SUCCESS, 28 Solidity files compiled, 69/69 tests PASS, local release rehearsal PASS.
+- Testnet deployment remains blocked only by PRESALE_PAYMENT_TOKEN, LIQUIDITY_WALLET, STAKING_RESERVE_WALLET and DEVELOPMENT_BENEFICIARY.
+- No blockchain deployment transaction was executed by this change.
+- Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 SEPARATE ADMIN WALLET ROLES — CURRENT SOURCE OF TRUTH
 
 - Separate-wallet mode is now enforced for ATH operational ownership; TESTNET_USE_DEPLOYER_ROLES=false.
