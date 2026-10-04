@@ -617,6 +617,11 @@ async function boot(){
   initWorkspaceSwitcher();
   cfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());
   $("networkBadge").textContent=cfg.chainName;
+  $("requiredMiningAdmin").textContent=cfg.expectedMiningAdmin||"Pending configuration";
+  $("requiredStakingAdmin").textContent=cfg.expectedStakingAdmin||"Pending configuration";
+  $("requiredPresaleAdmin").textContent=cfg.expectedPresaleAdmin||"Pending configuration";
+  $("requiredKeeperWallet").textContent=cfg.expectedKeeperWallet||"Pending configuration";
+  $("requiredPresaleTreasury").textContent=cfg.expectedPresaleTreasury||"Pending configuration";
   $("connectBtn").addEventListener("click",connect);
   $("refreshBtn").addEventListener("click",refresh);
   $("pauseMiningBtn").addEventListener("click",()=>runTx("Pause Mining",()=>miningWrite.pause()));
