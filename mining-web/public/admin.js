@@ -77,6 +77,13 @@ const STAKING_ADMIN_ABI=[
   "function rankSalaryRunwayWeeks() view returns (uint256)",
   "function packageCount() view returns (uint256)",
   "function packages(uint256) view returns (uint256 minUSDT,uint256 maxUSDT,uint256 dailyRateBps,uint256 lockDays,bool active)",
+  "function totalStakingMembers() view returns (uint256)",
+  "function activeStakingMembers() view returns (uint256)",
+  "function totalStakingContracts() view returns (uint256)",
+  "function totalActiveStakingContracts() view returns (uint256)",
+  "function totalInactiveStakingContracts() view returns (uint256)",
+  "function getPackageContractStats(uint256) view returns (uint256 totalContracts,uint256 activeContracts,uint256 inactiveContracts)",
+  "function getStakingContract(uint256) view returns (address account,uint256 stakeId,uint256 packageId,uint256 amountUSDT,uint256 principalATH,uint256 dailyRateBps,uint256 lockDays,uint256 startTime,uint256 endTime,uint256 totalClaimedUSDT,uint256 pendingRewardUSDT,bool active,bool principalWithdrawn)",
   "function updatePackage(uint256,uint256,uint256,uint256,uint256,bool)",
   "function addPackage(uint256,uint256,uint256,uint256)",
   "function fundRewards(uint256)",
@@ -129,6 +136,9 @@ function short(v){return v?`${v.slice(0,6)}…${v.slice(-4)}`:"—"}
 function ath(v){try{return `${Number(ethers.formatEther(v)).toLocaleString(undefined,{maximumFractionDigits:3})} ATH`}catch{return "0 ATH"}}
 function usd(v){try{return "$"+Number(ethers.formatEther(v)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}catch{return "$0.00"}}
 function runway(v,unit){try{return v===ethers.MaxUint256?"∞":Number(v).toLocaleString()+" "+unit}catch{return "—"}}
+const STAKING_PACKAGE_NAMES=["Starter","Basic","Silver","Gold","Platinum","Diamond"];
+function stakingPackageName(id){return STAKING_PACKAGE_NAMES[Number(id)]||("Custom #"+Number(id))}
+function dateTime(v){try{return new Date(Number(v)*1000).toLocaleString()}catch{return "—"}}
 function addr(v){return Boolean(v&&ethers.isAddress(v))}
 function mainnetWriteAllowed(){return cfg?.networkMode!=="MAINNET"||cfg?.adminMainnetWritesEnabled===true}
 function miningAuthorized(){return account&&state.miningOwner&&account.toLowerCase()===state.miningOwner.toLowerCase()&&mainnetWriteAllowed()}
@@ -321,7 +331,7 @@ async function refreshUnifiedModules(){
       $("rankRunway").textContent=runway(rankRunway,"weeks");
       const rankSponsorRates=await Promise.all(Array.from({length:8},(_,i)=>stakingRead.rankSponsorBonusBps(i)));
       $("rankSponsorRates").textContent=rankSponsorRates.map(v=>(Number(v)/100).toFixed(0)+"%").join(" · ");
-      await Promise.all([loadPackageList(),loadRankDashboard(),loadRankHistory()]);
+      await Promise.all([loadPackageList(),loadStakingContractDashboard(),loadRankDashboard(),loadRankHistory()]);
     }catch(err){console.error("staking admin",err)}
   }
   if(addr(cfg?.presaleAddress)){
@@ -375,10 +385,13 @@ async function fundStakingReserve(kind){
 async function loadPackageList(){
   if(!stakingRead)return;
   const count=Number(await stakingRead.packageCount());
-  const rows=await Promise.all(Array.from({length:count},(_,i)=>stakingRead.packages(i).then(p=>({i,p}))));
-  $("packageList").innerHTML=rows.length?rows.map(({i,p})=>{
+  const rows=await Promise.all(Array.from({length:count},async(_,i)=>{
+    const [p,stats]=await Promise.all([stakingRead.packages(i),stakingRead.getPackageContractStats(i)]);
+    return {i,p,stats};
+  }));
+  $("packageList").innerHTML=rows.length?rows.map(({i,p,stats})=>{
     const max=p.maxUSDT===ethers.MaxUint256?"∞":usd(p.maxUSDT);
-    return '<div class="admin-list-row"><div><strong>#'+i+' · '+(p.active?"ACTIVE":"INACTIVE")+'</strong><small>'+usd(p.minUSDT)+' – '+max+' · '+(Number(p.dailyRateBps)/100).toFixed(2)+'%/day · '+Number(p.lockDays)+'d</small></div><button class="btn package-load" data-id="'+i+'">Load</button></div>';
+    return '<div class="admin-list-row"><div><strong>'+stakingPackageName(i)+' · Package #'+i+' · '+(p.active?"ENABLED":"DISABLED")+'</strong><small>'+usd(p.minUSDT)+' – '+max+' · '+(Number(p.dailyRateBps)/100).toFixed(2)+'%/day · '+Number(p.lockDays)+'d · ACTIVE contracts '+Number(stats.activeContracts).toLocaleString()+' · N-ACTIVE '+Number(stats.inactiveContracts).toLocaleString()+'</small></div><button class="btn package-load" data-id="'+i+'">Edit</button></div>';
   }).join(""):'<div class="empty">No Staking packages.</div>';
   document.querySelectorAll(".package-load").forEach(btn=>btn.addEventListener("click",()=>loadPackageEditor(Number(btn.dataset.id))));
 }
@@ -423,6 +436,74 @@ async function addPackage(){
   let v;try{v=packageForm()}catch(err){return toast(err.message,true)}
   if(!v.active)return toast("A new package is created ACTIVE. Add it first, then deactivate if required.",true);
   return runTx("Add Staking Package",()=>stakingWrite.addPackage(v.min,v.max,v.rate,v.lock));
+}
+
+async function loadStakingContractDashboard(){
+  if(!stakingRead)return;
+  const [members,activeMembers,totalContracts,activeContracts,inactiveContracts,pkgCount]=await Promise.all([
+    stakingRead.totalStakingMembers(),
+    stakingRead.activeStakingMembers(),
+    stakingRead.totalStakingContracts(),
+    stakingRead.totalActiveStakingContracts(),
+    stakingRead.totalInactiveStakingContracts(),
+    stakingRead.packageCount()
+  ]);
+
+  $("stakingMemberTotal").textContent=Number(members).toLocaleString();
+  $("stakingMemberActive").textContent=Number(activeMembers).toLocaleString();
+  $("stakingContractTotal").textContent=Number(totalContracts).toLocaleString();
+  $("stakingContractActive").textContent=Number(activeContracts).toLocaleString();
+  $("stakingContractInactive").textContent=Number(inactiveContracts).toLocaleString();
+  $("stakingPackageTotal").textContent=Number(pkgCount).toLocaleString();
+
+  const count=Number(pkgCount);
+  const rows=await Promise.all(Array.from({length:count},async(_,i)=>{
+    const [pkg,stats]=await Promise.all([stakingRead.packages(i),stakingRead.getPackageContractStats(i)]);
+    return {i,pkg,stats};
+  }));
+
+  if(!rows.length){
+    $("packageContractStats").innerHTML='<div class="empty">No packages configured.</div>';
+    return;
+  }
+
+  let html='<table class="admin-table package-stat-table"><thead><tr><th>Package</th><th>Availability</th><th>Total Contracts</th><th>ACTIVE</th><th>N-ACTIVE</th><th>Daily</th><th>Lock</th></tr></thead><tbody>';
+  for(const r of rows){
+    html+='<tr><td><strong>'+stakingPackageName(r.i)+'</strong><small>Package #'+r.i+'</small></td><td>'+(r.pkg.active?"ENABLED":"DISABLED")+'</td><td>'+Number(r.stats.totalContracts).toLocaleString()+'</td><td>'+Number(r.stats.activeContracts).toLocaleString()+'</td><td>'+Number(r.stats.inactiveContracts).toLocaleString()+'</td><td>'+(Number(r.pkg.dailyRateBps)/100).toFixed(2)+'%</td><td>'+Number(r.pkg.lockDays)+'d</td></tr>';
+  }
+  html+='</tbody></table>';
+  $("packageContractStats").innerHTML=html;
+}
+
+async function lookupStakingContract(){
+  if(!stakingRead)return toast("Staking contract is not configured.",true);
+  const id=Number($("stakingContractIdInput").value);
+  if(!Number.isInteger(id)||id<=0)return toast("Enter a valid Contract ID starting from 1.",true);
+  const box=$("stakingContractLookupResult");
+  box.innerHTML='<div class="empty">Loading Contract #'+id+'…</div>';
+  try{
+    const c=await stakingRead.getStakingContract(id);
+    const status=c.active?"ACTIVE":"N-ACTIVE";
+    box.innerHTML=
+      '<div class="contract-detail-head"><div><span class="eyebrow">CONTRACT #'+id+'</span><h3>'+stakingPackageName(c.packageId)+' · '+status+'</h3></div><span class="contract-status '+(c.active?"active":"inactive")+'">'+status+'</span></div>'+
+      '<div class="contract-detail-grid">'+
+        '<div><small>Owner Wallet</small><code>'+c.account+'</code></div>'+
+        '<div><small>Package</small><strong>'+stakingPackageName(c.packageId)+' (#'+Number(c.packageId)+')</strong></div>'+
+        '<div><small>Member Stake ID</small><strong>'+Number(c.stakeId)+'</strong></div>'+
+        '<div><small>Staked USD</small><strong>'+usd(c.amountUSDT)+'</strong></div>'+
+        '<div><small>Principal</small><strong>'+ath(c.principalATH)+'</strong></div>'+
+        '<div><small>Daily Reward</small><strong>'+(Number(c.dailyRateBps)/100).toFixed(2)+'%</strong></div>'+
+        '<div><small>Lock Period</small><strong>'+Number(c.lockDays)+' days</strong></div>'+
+        '<div><small>Started</small><strong>'+dateTime(c.startTime)+'</strong></div>'+
+        '<div><small>Lock End</small><strong>'+dateTime(c.endTime)+'</strong></div>'+
+        '<div><small>Total Reward Claimed</small><strong>'+usd(c.totalClaimedUSDT)+'</strong></div>'+
+        '<div><small>Pending Reward</small><strong>'+usd(c.pendingRewardUSDT)+'</strong></div>'+
+        '<div><small>Principal Status</small><strong>'+(c.principalWithdrawn?"WITHDRAWN":"HELD IN CONTRACT")+'</strong></div>'+
+      '</div>';
+  }catch(err){
+    box.innerHTML='<div class="empty">Contract ID not found.</div>';
+    toast(err?.shortMessage||err?.message||"Contract ID not found.",true);
+  }
 }
 
 async function loadRankDashboard(){
@@ -667,6 +748,9 @@ async function boot(){
   $("fundNetworkBtn").addEventListener("click",()=>fundStakingReserve("network"));
   $("loadPackageBtn").addEventListener("click",()=>loadPackageEditor());
   $("updatePackageBtn").addEventListener("click",updatePackage);
+  $("refreshContractStatsBtn").addEventListener("click",async()=>{await Promise.all([loadPackageList(),loadStakingContractDashboard()]);toast("Staking member and contract data refreshed.");});
+  $("lookupStakingContractBtn").addEventListener("click",lookupStakingContract);
+  $("stakingContractIdInput").addEventListener("keydown",event=>{if(event.key==="Enter")lookupStakingContract();});
   $("addPackageBtn").addEventListener("click",addPackage);
   $("refreshRankBtn").addEventListener("click",async()=>{await Promise.all([loadRankDashboard(),loadRankHistory()]);toast("Rank data refreshed.");});
   $("rankPrevBtn").addEventListener("click",async()=>{if(rankPage>0){rankPage--;await loadRankDashboard();}});
