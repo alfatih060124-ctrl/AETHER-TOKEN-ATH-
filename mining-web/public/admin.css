@@ -233,3 +233,65 @@ body[data-control-view="system"] .hero .eyebrow::after{content:" · TOKEN & PRES
 .admin-gate-status.error{border-color:#7c2929;color:#ffb5b5}
 .admin-gate-security{font-size:11px;margin:14px 0 0}
 .workspace-switcher[hidden]{display:none!important}
+
+
+/* Staking member + contract administration */
+.contract-lookup-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:end;
+  margin:12px 0;
+}
+.contract-lookup-row label{margin:0}
+.contract-lookup-row .btn{min-height:48px}
+.contract-detail-card{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  background:#0a0704;
+  min-height:70px;
+}
+.contract-detail-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:12px;
+}
+.contract-detail-head h3{margin:4px 0 0}
+.contract-status{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+.contract-status.active{color:#b8f4c2;border-color:#2f7040;background:rgba(47,112,64,.14)}
+.contract-status.inactive{color:#ffb5b5;border-color:#7c2929;background:rgba(124,41,41,.14)}
+.contract-detail-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.contract-detail-grid>div{
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+}
+.contract-detail-grid small{color:var(--muted)}
+.contract-detail-grid code{overflow-wrap:anywhere}
+.package-stat-table td:first-child{display:flex;flex-direction:column;gap:3px}
+.package-stat-table td:first-child small{color:var(--muted)}
+@media(max-width:760px){
+  .contract-detail-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){
+  .contract-lookup-row{grid-template-columns:1fr}
+  .contract-detail-grid{grid-template-columns:1fr}
+}
