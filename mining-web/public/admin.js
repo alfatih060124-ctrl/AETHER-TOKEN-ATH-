@@ -271,17 +271,21 @@ async function refreshUnifiedModules(){
   if(addr(cfg?.stakingAddress)){
     try{
       stakingRead=new ethers.Contract(cfg.stakingAddress,STAKING_ADMIN_ABI,readProvider);
-      const [owner,paused,principal,rewardReserve,networkReserve,referralPaid,networkPaid,rankPaidAth,rankPaidUsd]=await Promise.all([
+      const [owner,paused,principal,rewardReserve,networkReserve,rewardFunded,networkFunded,rewardCap,networkCap,referralPaid,networkPaid,rankPaidAth,rankPaidUsd,dailyRunRate,weeklyRankLiability,rewardRunway,rankRunway]=await Promise.all([
         stakingRead.owner(),stakingRead.paused(),stakingRead.principalLiabilityATH(),stakingRead.rewardReserveATH(),stakingRead.networkReserveATH(),
-        stakingRead.totalReferralPaidATH(),stakingRead.totalNetworkPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT()
+        stakingRead.totalRewardFundedATH(),stakingRead.totalNetworkFundedATH(),stakingRead.MAX_REWARD_POOL(),stakingRead.MAX_NETWORK_MARKETING_POOL(),
+        stakingRead.totalReferralPaidATH(),stakingRead.totalNetworkPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT(),
+        stakingRead.activeDailyRewardRunRateUSDT(),stakingRead.totalWeeklyRankSalaryUSDT(),stakingRead.rewardReserveRunwayDays(),stakingRead.rankSalaryRunwayWeeks()
       ]);
       state.stakingOwner=owner; state.stakingPaused=paused;
+      state.rewardFundingRemaining=rewardCap>rewardFunded?rewardCap-rewardFunded:0n;
+      state.networkFundingRemaining=networkCap>networkFunded?networkCap-networkFunded:0n;
       $("stakingState").textContent="Connected";
       $("stakingAddress").textContent=short(cfg.stakingAddress);
       $("stakingPrincipal").textContent=ath(principal);
       $("stakingRewardReserve").textContent=ath(rewardReserve);
       $("stakingNetworkReserve").textContent=ath(networkReserve);
-      $("rankSalaryPaid").textContent="$"+Number(ethers.formatEther(rankPaidUsd)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      $("rankSalaryPaid").textContent=usd(rankPaidUsd);
       $("rankSalaryPaidAth").textContent=ath(rankPaidAth);
       $("stakingOwner").textContent=owner;
       $("stakingPause").textContent=paused?"PAUSED":"ACTIVE";
@@ -289,7 +293,14 @@ async function refreshUnifiedModules(){
       $("stakingNetworkReserveDetail").textContent=ath(networkReserve);
       $("stakingReferralPaid").textContent=ath(referralPaid);
       $("stakingNetworkPaid").textContent=ath(networkPaid);
-      $("stakingRankPaidDetail").textContent="$"+Number(ethers.formatEther(rankPaidUsd)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" / "+ath(rankPaidAth);
+      $("stakingRankPaidDetail").textContent=usd(rankPaidUsd)+" / "+ath(rankPaidAth);
+      $("rewardFundingState").textContent=ath(rewardFunded)+" / 160,000,000 ATH";
+      $("networkFundingState").textContent=ath(networkFunded)+" / 50,000,000 ATH";
+      $("dailyRunRate").textContent=usd(dailyRunRate)+"/day";
+      $("rewardRunway").textContent=runway(rewardRunway,"days");
+      $("rankWeeklyLiability").textContent=usd(weeklyRankLiability)+"/week";
+      $("rankRunway").textContent=runway(rankRunway,"weeks");
+      await Promise.all([loadPackageList(),loadRankDashboard(),loadRankHistory()]);
     }catch(err){console.error("staking admin",err)}
   }
   if(addr(cfg?.presaleAddress)){
