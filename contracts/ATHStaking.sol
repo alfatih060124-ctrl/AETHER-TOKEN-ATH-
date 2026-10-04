@@ -464,7 +464,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     /// @dev Direct referral, L1-L10 Lifestyle Bonus / Matching Staking and lifetime Rank Salary use only this reserve.
     function fundNetworkReserve(uint256 amount) external onlyOwner nonReentrant {
         require(amount > 0, "zero amount");
-        require(totalNetworkFundedATH + amount <= MAX_NETWORK_MARKETING_POOL, "marketing/matching pool cap");
+        require(totalNetworkFundedATH + amount <= MAX_NETWORK_MARKETING_POOL, "network pool cap");
         athToken.safeTransferFrom(msg.sender, address(this), amount);
         totalNetworkFundedATH += amount;
         networkReserveATH += amount;
