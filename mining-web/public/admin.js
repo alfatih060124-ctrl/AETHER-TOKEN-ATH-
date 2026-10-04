@@ -326,6 +326,148 @@ async function refreshUnifiedModules(){
   paintAccess();
 }
 
+
+async function ensureStakingAllowance(amount){
+  if(!tokenRead||!tokenWrite||!account)throw new Error("Connect owner wallet first.");
+  const current=await tokenRead.allowance(account,cfg.stakingAddress);
+  if(current>=amount)return;
+  toast("ATH approval: confirm in your wallet.");
+  const tx=await tokenWrite.approve(cfg.stakingAddress,amount);
+  await tx.wait();
+}
+
+async function fundStakingReserve(kind){
+  if(!stakingAuthorized())return toast("Connect the Staking owner wallet.",true);
+  const input=kind==="reward"?$("rewardFundAmount"):$("networkFundAmount");
+  let amount;try{amount=ethers.parseEther(input.value.trim())}catch{return toast("Enter a valid ATH funding amount.",true)}
+  if(amount<=0n)return toast("Funding amount must be greater than zero.",true);
+  const remaining=kind==="reward"?state.rewardFundingRemaining:state.networkFundingRemaining;
+  if(amount>remaining)return toast("Amount exceeds the remaining fixed tokenomic allocation.",true);
+  try{
+    await ensureStakingAllowance(amount);
+    await runTx(kind==="reward"?"Fund Daily Reward Reserve":"Fund Marketing / Network Reserve",()=>kind==="reward"?stakingWrite.fundRewards(amount):stakingWrite.fundNetworkReserve(amount));
+    input.value="";
+  }catch(err){toast(err?.shortMessage||err?.reason||err?.message||"Funding failed.",true)}
+}
+
+async function loadPackageList(){
+  if(!stakingRead)return;
+  const count=Number(await stakingRead.packageCount());
+  const rows=await Promise.all(Array.from({length:count},(_,i)=>stakingRead.packages(i).then(p=>({i,p}))));
+  $("packageList").innerHTML=rows.length?rows.map(({i,p})=>{
+    const max=p.maxUSDT===ethers.MaxUint256?"∞":usd(p.maxUSDT);
+    return '<div class="admin-list-row"><div><strong>#'+i+' · '+(p.active?"ACTIVE":"INACTIVE")+'</strong><small>'+usd(p.minUSDT)+' – '+max+' · '+(Number(p.dailyRateBps)/100).toFixed(2)+'%/day · '+Number(p.lockDays)+'d</small></div><button class="btn package-load" data-id="'+i+'">Load</button></div>';
+  }).join(""):'<div class="empty">No Staking packages.</div>';
+  document.querySelectorAll(".package-load").forEach(btn=>btn.addEventListener("click",()=>loadPackageEditor(Number(btn.dataset.id))));
+}
+
+async function loadPackageEditor(idOverride){
+  if(!stakingRead)return toast("Staking contract is not configured.",true);
+  const id=Number.isInteger(idOverride)?idOverride:Number($("packageIdInput").value);
+  if(!Number.isInteger(id)||id<0)return toast("Enter a valid package ID.",true);
+  try{
+    const p=await stakingRead.packages(id);
+    $("packageIdInput").value=String(id);
+    $("packageMinInput").value=ethers.formatEther(p.minUSDT);
+    $("packageMaxInput").value=p.maxUSDT===ethers.MaxUint256?"":ethers.formatEther(p.maxUSDT);
+    $("packageMaxInput").placeholder=p.maxUSDT===ethers.MaxUint256?"MAX / unlimited":"Maximum USD";
+    $("packageRateInput").value=(Number(p.dailyRateBps)/100).toFixed(2);
+    $("packageLockInput").value=String(Number(p.lockDays));
+    $("packageActiveInput").checked=Boolean(p.active);
+  }catch(err){toast(err?.shortMessage||err?.message||"Package not found.",true)}
+}
+
+function packageForm(){
+  const min=ethers.parseEther($("packageMinInput").value.trim());
+  const maxRaw=$("packageMaxInput").value.trim();
+  const max=maxRaw?ethers.parseEther(maxRaw):ethers.MaxUint256;
+  const pct=Number($("packageRateInput").value);
+  const rate=BigInt(Math.round(pct*100));
+  const lock=BigInt(Number($("packageLockInput").value));
+  if(min<=0n||max<min||!Number.isFinite(pct)||pct<=0||rate>100n||lock<=0n)throw new Error("Invalid package values.");
+  return {min,max,rate,lock,active:$("packageActiveInput").checked};
+}
+
+async function updatePackage(){
+  if(!stakingAuthorized())return toast("Connect the Staking owner wallet.",true);
+  let v;try{v=packageForm()}catch(err){return toast(err.message,true)}
+  const id=Number($("packageIdInput").value);
+  if(!Number.isInteger(id)||id<0)return toast("Enter a valid package ID.",true);
+  return runTx("Update Staking Package",()=>stakingWrite.updatePackage(id,v.min,v.max,v.rate,v.lock,v.active));
+}
+
+async function addPackage(){
+  if(!stakingAuthorized())return toast("Connect the Staking owner wallet.",true);
+  let v;try{v=packageForm()}catch(err){return toast(err.message,true)}
+  if(!v.active)return toast("A new package is created ACTIVE. Add it first, then deactivate if required.",true);
+  return runTx("Add Staking Package",()=>stakingWrite.addPackage(v.min,v.max,v.rate,v.lock));
+}
+
+async function loadRankDashboard(){
+  if(!stakingRead)return;
+  const total=Number(await stakingRead.totalRankMembers());
+  const maxPage=Math.max(0,Math.ceil(total/rankPageSize)-1);
+  if(rankPage>maxPage)rankPage=maxPage;
+  const offset=rankPage*rankPageSize;
+  const members=total?await stakingRead.getRankMembers(offset,rankPageSize):[];
+  const rows=await Promise.all(members.map(async member=>{
+    const [info,preview,legs]=await Promise.all([stakingRead.rankInfo(member),stakingRead.rankSalaryPreview(member),stakingRead.totalDirectLegs(member)]);
+    return {member,info,preview,legs:Number(legs)};
+  }));
+  rows.sort((a,b)=>Number(b.preview[2])-Number(a.preview[2]));
+  $("rankMemberCount").textContent=total.toLocaleString();
+  $("rankPrevBtn").disabled=rankPage<=0;
+  $("rankNextBtn").disabled=rankPage>=maxPage;
+  if(!rows.length){
+    $("rankMemberTable").innerHTML='<div class="empty">No Rank members yet.</div>';
+    return;
+  }
+  let html='<table class="admin-table"><thead><tr><th>Member</th><th>Rank</th><th>Sponsors</th><th>Small-leg</th><th>Due</th><th>Next Slot</th><th>Actions</th></tr></thead><tbody>';
+  for(const r of rows){
+    const highest=Number(r.preview[0]),periods=Number(r.preview[2]),next=Number(r.preview[5]);
+    const due=periods>0?usd(r.preview[3])+" · "+periods+" wk":"Not due";
+    const nextText=next?new Date(next*1000).toLocaleString():"—";
+    const payDisabled=!stakingAuthorized()||periods===0?" disabled":"";
+    html+='<tr><td><code>'+short(r.member)+'</code></td><td>Rank '+highest+'</td><td>'+Number(r.preview[7])+'</td><td>'+usd(r.preview[6])+'</td><td>'+due+'</td><td>'+nextText+'</td><td><div class="table-actions"><button class="btn rank-legs" data-account="'+r.member+'">Legs ('+r.legs+')</button><button class="btn gold rank-pay" data-account="'+r.member+'"'+payDisabled+'>Pay Due</button></div></td></tr>';
+  }
+  html+='</tbody></table>';
+  $("rankMemberTable").innerHTML=html;
+  document.querySelectorAll(".rank-legs").forEach(btn=>btn.addEventListener("click",()=>loadRankLegs(btn.dataset.account)));
+  document.querySelectorAll(".rank-pay").forEach(btn=>btn.addEventListener("click",()=>runTx("Process Rank Salary",()=>stakingWrite.processRankSalary(btn.dataset.account))));
+}
+
+async function loadRankLegs(accountAddress){
+  if(!stakingRead||!ethers.isAddress(accountAddress))return;
+  $("selectedRankMember").textContent=accountAddress;
+  const total=Number(await stakingRead.totalDirectLegs(accountAddress));
+  const members=total?await stakingRead.getDirectLegMembers(accountAddress,0,Math.min(total,200)):[];
+  const rows=await Promise.all(members.map(async leg=>({leg,turnover:await stakingRead.legTurnoverUSDT(accountAddress,leg)})));
+  rows.sort((a,b)=>a.turnover===b.turnover?0:(a.turnover>b.turnover?-1:1));
+  if(!rows.length){
+    $("rankLegList").innerHTML='<div class="empty">No direct legs registered.</div>';
+    return;
+  }
+  let html="";
+  rows.forEach((r,i)=>{html+='<div class="admin-list-row"><div><strong>'+(i===0?"BIG LEG · ":"")+short(r.leg)+'</strong><small>'+usd(r.turnover)+' turnover</small></div><code>'+r.leg+'</code></div>';});
+  if(total>200)html+='<div class="empty">Showing first 200 of '+total.toLocaleString()+' direct legs.</div>';
+  $("rankLegList").innerHTML=html;
+}
+
+async function loadRankHistory(){
+  if(!stakingRead||!readProvider)return;
+  const box=$("rankHistory");
+  try{
+    const latest=await readProvider.getBlockNumber();
+    const from=Math.max(0,latest-2500);
+    const events=(await stakingRead.queryFilter(stakingRead.filters.RankSalaryPaid(),from,latest)).sort((a,b)=>b.blockNumber-a.blockNumber).slice(0,30);
+    if(!events.length){box.innerHTML='<div class="empty">No Rank Salary payments in the latest 2,500 blocks.</div>';return}
+    box.innerHTML=events.map(e=>{
+      const a=e.args;
+      return '<div class="admin-list-row"><div><strong>Rank '+Number(a.payableRank)+' · '+usd(a.salaryUSDT)+'</strong><small>'+short(a.account)+' · '+Number(a.periodsPaid)+' period(s) · '+ath(a.salaryATH)+'</small></div><small>Block '+e.blockNumber+'</small></div>';
+    }).join("");
+  }catch(err){console.error("rank history",err);box.innerHTML='<div class="empty">Rank Salary history temporarily unavailable.</div>'}
+}
+
 async function runTx(label,fn){
   try{
     toast(`${label}: confirm in your wallet.`);
