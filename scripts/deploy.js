@@ -64,8 +64,7 @@ async function main() {
   // ATH Token + Price Registry live in the shared Token & Presale workspace.
   const tokenOwner = presaleOwner;
   const priceRegistryOwner = presaleOwner;
-  // Five-wallet layout: Mining Admin is also the initial Mining revenue treasury.
-  const treasury = miningOwner;
+  const treasury = roleAddress("MINING_TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
   const keeperWallet = roleAddress("KEEPER_WALLET_ADDRESS");
   const presalePaymentToken = requiredAddress("PRESALE_PAYMENT_TOKEN");
