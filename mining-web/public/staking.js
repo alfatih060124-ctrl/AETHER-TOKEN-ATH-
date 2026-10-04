@@ -120,7 +120,7 @@ async function sExpandNetworkNode(btn){
   if(!sReady())return;
   const account=btn.dataset.treeExpand;
   const depth=Number(btn.dataset.treeDepth||0);
-  const box=document.querySelector('[data-tree-children="'+CSS.escape(account)+'"]');
+  const box=document.querySelector('[data-tree-children="'+account+'"]');
   if(!box)return;
   if(!box.hidden){
     box.hidden=true;
@@ -186,7 +186,7 @@ async function sLoadNetworkTree(){
       :"No direct Staking members under this wallet yet.";
     await sBindNetworkExpanders();
 
-    const rootButton=document.querySelector('[data-tree-expand="'+CSS.escape(saccount)+'"]');
+    const rootButton=document.querySelector('[data-tree-expand="'+saccount+'"]');
     if(rootButton&&totalDirect>0)await sExpandNetworkNode(rootButton);
     sI18nRefresh();
   }catch(err){
