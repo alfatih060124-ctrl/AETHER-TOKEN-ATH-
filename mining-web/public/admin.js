@@ -66,6 +66,7 @@ const STAKING_ADMIN_ABI=[
   "function DAILY_REWARD_UTC_OFFSET() view returns (uint256)",
   "function totalReferralPaidATH() view returns (uint256)",
   "function totalNetworkPaidATH() view returns (uint256)",
+  "function totalLifestyleMatchingPaidATH() view returns (uint256)",
   "function totalRankSponsorPaidATH() view returns (uint256)",
   "function rankSponsorBonusBps(uint256) view returns (uint256)",
   "function totalRankSalaryPaidATH() view returns (uint256)",
@@ -289,7 +290,7 @@ async function refreshUnifiedModules(){
       const [owner,paused,principal,rewardReserve,networkReserve,rewardFunded,networkFunded,rewardCap,networkCap,referralPaid,networkPaid,rankSponsorPaid,rankPaidAth,rankPaidUsd,dailyRunRate,weeklyRankLiability,rewardRunway,rankRunway]=await Promise.all([
         stakingRead.owner(),stakingRead.paused(),stakingRead.principalLiabilityATH(),stakingRead.rewardReserveATH(),stakingRead.networkReserveATH(),
         stakingRead.totalRewardFundedATH(),stakingRead.totalNetworkFundedATH(),stakingRead.MAX_REWARD_POOL(),stakingRead.MAX_NETWORK_MARKETING_POOL(),
-        stakingRead.totalReferralPaidATH(),stakingRead.totalNetworkPaidATH(),stakingRead.totalRankSponsorPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT(),
+        stakingRead.totalReferralPaidATH(),stakingRead.totalLifestyleMatchingPaidATH(),stakingRead.totalRankSponsorPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT(),
         stakingRead.activeDailyRewardRunRateUSDT(),stakingRead.totalWeeklyRankSalaryUSDT(),stakingRead.rewardReserveRunwayDays(),stakingRead.rankSalaryRunwayWeeks()
       ]);
       state.stakingOwner=owner; state.stakingPaused=paused;
