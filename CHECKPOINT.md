@@ -1,6 +1,23 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 ADMIN LOGIN NETWORK COMPATIBILITY FIX — CURRENT SOURCE OF TRUTH
+
+- Mobile AETHER Wallet screenshot exposed a login blocker: the public admin gate attempted to switch the wallet to the configured Testnet chain before requesting the authentication signature, producing "unsupported EVM network" and preventing the Control Panel from opening.
+- **Fixed:** admin authentication no longer calls `wallet_switchEthereumChain` or `wallet_addEthereumChain`.
+- Wallet authentication is chain-independent because it uses a one-time `signMessage` challenge bound to the exact configured admin address and role.
+- After a valid signature, the authenticated role opens its Control Panel workspace even if the wallet is currently connected to another EVM network.
+- The configured blockchain network is enforced only immediately before an actual on-chain admin write transaction.
+- Staking reserve funding also enforces the target chain before token approval / funding writes.
+- If the connected wallet account changes after authentication, the panel still logs out immediately.
+- Regression source checks explicitly forbid network-switch calls inside the admin-login flow.
+- Control Panel deployment containing the fix: `f7ffd3e3-907c-4356-9b87-a3b0b9ac5f1a` — **SUCCESS**.
+- Latest validator: `053fae35-6c85-4011-ab5a-24baa03bcb5e` — **SUCCESS**.
+- Validator evidence: **28 Solidity files compile PASS, 70/70 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- No blockchain deployment transaction was executed by this fix; Mainnet remains CLOSED.
+
+
+
 ## 2026-10-04 FINAL NO-BNB QC + LIFESTYLE MATCHING LOCK — CURRENT SOURCE OF TRUTH
 
 - **All internal work that does not require BNB/tBNB is complete.**
