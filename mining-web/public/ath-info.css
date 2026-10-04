@@ -39,3 +39,50 @@
 @media(max-width:1180px){.roadmap-grid{grid-template-columns:repeat(2,1fr)}.team-grid{grid-template-columns:repeat(2,1fr)}.ath-public-loaded .main-nav{gap:11px}.ath-public-loaded .main-nav a{font-size:10px}}
 @media(max-width:860px){.whitepaper-panel{grid-template-columns:1fr}.whitepaper-copy{text-align:center}.whitepaper-actions{justify-content:center}}
 @media(max-width:560px){.whitepaper-panel{padding:16px}.whitepaper-metrics{grid-template-columns:1fr}.doc-metric:first-child{grid-column:auto}.roadmap-grid,.team-grid{grid-template-columns:1fr}.team-portrait{height:170px}.content-section{margin-top:12px}}
+
+/* Clear boundary between holder operations and general documentation */
+.holder-docs-divider{
+  margin-top:22px;
+  margin-bottom:14px;
+  padding:16px 18px;
+  border:1px solid rgba(237,192,79,.26);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(20,16,9,.96),rgba(8,7,5,.98));
+  position:relative;
+  overflow:hidden;
+}
+.holder-docs-divider:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:#d8ad45;
+}
+.holder-docs-divider span,
+.holder-docs-divider strong,
+.holder-docs-divider small{display:block}
+.holder-docs-divider span{
+  color:#b99536;
+  font-size:8px;
+  letter-spacing:.2em;
+}
+.holder-docs-divider strong{
+  margin-top:5px;
+  color:#f0d276;
+  font:500 22px/1.15 Georgia,"Times New Roman",serif;
+}
+.holder-docs-divider small{
+  margin-top:7px;
+  color:#8c8376;
+  font-size:9px;
+  line-height:1.55;
+}
+.whitepaper-metrics{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+@media(max-width:760px){
+  .whitepaper-metrics{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .whitepaper-metrics{grid-template-columns:1fr}
+}
