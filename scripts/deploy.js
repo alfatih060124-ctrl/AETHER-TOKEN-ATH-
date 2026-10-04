@@ -58,9 +58,16 @@ async function main() {
   const singleWalletMode = isTestnet && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
   const roleAddress = (name) => singleWalletMode ? deployer.address : requiredAddress(name);
 
-  const owner = roleAddress("OWNER_ADDRESS");
-  const treasury = roleAddress("TREASURY_ADDRESS");
+  const miningOwner = roleAddress("MINING_OWNER_ADDRESS");
+  const stakingOwner = roleAddress("STAKING_OWNER_ADDRESS");
+  const presaleOwner = roleAddress("PRESALE_OWNER_ADDRESS");
+  // ATH Token + Price Registry live in the shared Token & Presale workspace.
+  const tokenOwner = presaleOwner;
+  const priceRegistryOwner = presaleOwner;
+  // Five-wallet layout: Mining Admin is also the initial Mining revenue treasury.
+  const treasury = miningOwner;
   const presaleWallet = roleAddress("PRESALE_WALLET");
+  const keeperWallet = roleAddress("KEEPER_WALLET_ADDRESS");
   const presalePaymentToken = requiredAddress("PRESALE_PAYMENT_TOKEN");
   const liquidityWallet = roleAddress("LIQUIDITY_WALLET");
   const stakingReserveWallet = roleAddress("STAKING_RESERVE_WALLET");
@@ -74,7 +81,11 @@ async function main() {
   console.log("Deployer              :", deployer.address);
   console.log("Deployer BNB          :", hre.ethers.formatEther(deployerBalance));
   console.log("Testnet role mode     :", singleWalletMode ? "DEPLOYER_FOR_ALL_ROLES" : "EXPLICIT_ADDRESSES");
-  console.log("Owner / multisig      :", owner);
+  console.log("Mining owner          :", miningOwner);
+  console.log("Staking owner         :", stakingOwner);
+  console.log("Presale/Token owner   :", presaleOwner);
+  console.log("Price Registry owner  :", priceRegistryOwner);
+  console.log("Keeper wallet         :", keeperWallet);
   console.log("Mining treasury       :", treasury);
   console.log("Presale treasury      :", presaleWallet);
   console.log("Presale payment token :", presalePaymentToken);
@@ -82,23 +93,33 @@ async function main() {
   console.log("Staking reserve       :", stakingReserveWallet);
   console.log("Development beneficiary:", developmentBeneficiary);
 
+  // Token is minted to the deployer only for deterministic allocation funding.
+  // Ownership is transferred to the dedicated Token/Presale Admin after all allocations are distributed.
   const ATHToken = await hre.ethers.getContractFactory("ATHToken");
   const token = await ATHToken.deploy(deployer.address);
   await token.waitForDeployment();
   const tokenAddress = await token.getAddress();
 
-  // Presale is the official pre-listing ATH price source.
-  // It deploys paused/fail-closed and starts at $0.070.
-  // Unified ATH price registry follows Presale before official listing.
+  // Presale must exist before ATHPriceRegistry because the registry reads its stepped price.
+  const Presale = await hre.ethers.getContractFactory("ATHPresale");
+  const presale = await Presale.deploy(
+    tokenAddress,
+    presalePaymentToken,
+    presaleWallet,
+    presaleOwner
+  );
+  await presale.waitForDeployment();
+  const presaleAddress = await presale.getAddress();
+
+  // Presale Admin also owns the shared ATH price/listing registry.
   const PriceRegistry = await hre.ethers.getContractFactory("ATHPriceRegistry");
-  const priceRegistry = await PriceRegistry.deploy(presaleAddress, owner);
+  const priceRegistry = await PriceRegistry.deploy(presaleAddress, priceRegistryOwner);
   await priceRegistry.waitForDeployment();
   const priceRegistryAddress = await priceRegistry.getAddress();
 
-  // Deploy ATH Mining v3.3 without changing reward/booster/vesting mechanics.
-  // Only its compatibility price getter consumes the unified price registry.
+  // Mining and Staking have separate owners.
   const MiningAirdrop = await hre.ethers.getContractFactory("MiningAirdrop");
-  const mining = await MiningAirdrop.deploy(tokenAddress, treasury, priceRegistryAddress, owner);
+  const mining = await MiningAirdrop.deploy(tokenAddress, treasury, priceRegistryAddress, miningOwner);
   await mining.waitForDeployment();
   const miningAddress = await mining.getAddress();
 
@@ -162,19 +183,9 @@ async function main() {
   const oracleAddress = await oracle.getAddress();
 
   const Staking = await hre.ethers.getContractFactory("ATHStaking");
-  const staking = await Staking.deploy(tokenAddress, oracleAddress, owner);
+  const staking = await Staking.deploy(tokenAddress, oracleAddress, stakingOwner);
   await staking.waitForDeployment();
   const stakingAddress = await staking.getAddress();
-
-  const Presale = await hre.ethers.getContractFactory("ATHPresale");
-  const presale = await Presale.deploy(
-    tokenAddress,
-    presalePaymentToken,
-    presaleWallet,
-    owner
-  );
-  await presale.waitForDeployment();
-  const presaleAddress = await presale.getAddress();
 
   const DevelopmentVesting = await hre.ethers.getContractFactory("ATHDevelopmentVesting");
   const developmentVesting = await DevelopmentVesting.deploy(tokenAddress, developmentBeneficiary);
@@ -272,8 +283,25 @@ async function main() {
     throw new Error("ATH Staking oracle is not reading the Presale-linked registry price");
   }
 
-  if (owner.toLowerCase() !== deployer.address.toLowerCase()) {
-    await (await token.transferOwnership(owner)).wait();
+  if (tokenOwner.toLowerCase() !== deployer.address.toLowerCase()) {
+    await (await token.transferOwnership(tokenOwner)).wait();
+  }
+
+  // Explicit ownership assertions: no shared-owner ambiguity is allowed.
+  if ((await mining.owner()).toLowerCase() !== miningOwner.toLowerCase()) {
+    throw new Error("Mining owner mismatch after deployment");
+  }
+  if ((await staking.owner()).toLowerCase() !== stakingOwner.toLowerCase()) {
+    throw new Error("Staking owner mismatch after deployment");
+  }
+  if ((await presale.owner()).toLowerCase() !== presaleOwner.toLowerCase()) {
+    throw new Error("Presale owner mismatch after deployment");
+  }
+  if ((await priceRegistry.owner()).toLowerCase() !== priceRegistryOwner.toLowerCase()) {
+    throw new Error("Price Registry owner mismatch after deployment");
+  }
+  if ((await token.owner()).toLowerCase() !== tokenOwner.toLowerCase()) {
+    throw new Error("ATH Token owner mismatch after deployment");
   }
 
   const manifest = {
@@ -284,7 +312,16 @@ async function main() {
     chainId,
     deployer: deployer.address,
     testnetSingleWalletMode: singleWalletMode,
-    owner,
+    roles: {
+      miningOwner,
+      stakingOwner,
+      presaleOwner,
+      tokenOwner,
+      priceRegistryOwner,
+      keeperWallet,
+      miningTreasury: treasury,
+      presaleTreasury: presaleWallet,
+    },
     treasury,
     presaleWallet,
     presalePaymentToken,
