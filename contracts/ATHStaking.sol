@@ -38,6 +38,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant MAX_RANK_MEMBER_PAGE = 200;
     uint256 public constant MAX_DIRECT_LEG_PAGE = 200;
     uint256 public constant MAX_STAKING_MEMBER_PAGE = 200;
+    uint256 public constant MAX_STAKING_CONTRACT_PAGE = 200;
     uint256 public constant MAX_RANK_HISTORY_PAGE = 200;
     uint256 public constant MAX_RANK_CATCHUP_WEEKS = 12;
 
@@ -63,6 +64,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 rewardDaysClaimed;
         uint256 totalClaimedUSDT;
         bool principalWithdrawn;
+    }
+
+    struct StakeContractRef {
+        address account;
+        uint64 stakeId;
     }
 
     struct UserInfo {
@@ -96,6 +102,18 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     mapping(address => StakeInfo[]) public userStakes;
     address[] private stakingMembers;
     mapping(address => bool) public isStakingMember;
+
+    // Global 1-based Staking Contract IDs for admin/member lookup.
+    mapping(uint256 => StakeContractRef) private stakingContractRefs;
+    mapping(address => mapping(uint256 => uint256)) public stakingContractId;
+    uint256 public totalStakingContracts;
+    uint256 public totalActiveStakingContracts;
+    uint256 public totalInactiveStakingContracts;
+    uint256 public activeStakingMembers;
+    mapping(address => uint256) public activeContractCountByMember;
+    mapping(uint256 => uint256) public packageTotalContracts;
+    mapping(uint256 => uint256) public packageActiveContracts;
+    mapping(uint256 => uint256) public packageInactiveContracts;
 
     // Dynamic direct-leg accounting used by the small-leg rank rule.
     mapping(address => uint256) public directSponsorCount;
@@ -184,6 +202,20 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 priceUSD8,
         uint256 nextPayoutAt
     );
+    event StakingContractRegistered(
+        uint256 indexed contractId,
+        address indexed account,
+        uint256 indexed stakeId,
+        uint256 packageId,
+        uint256 amountUSDT,
+        uint256 principalATH
+    );
+    event StakingContractClosed(
+        uint256 indexed contractId,
+        address indexed account,
+        uint256 indexed stakeId,
+        uint256 packageId
+    );
     event Staked(
         address indexed user,
         uint256 indexed stakeId,
@@ -271,6 +303,55 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         for (uint256 i = offset; i < end; i++) {
             result[i - offset] = stakingMembers[i];
         }
+    }
+
+    function getStakingContract(uint256 contractId)
+        external
+        view
+        returns (
+            address account,
+            uint256 stakeId,
+            uint256 packageId,
+            uint256 amountUSDT,
+            uint256 principalATH,
+            uint256 dailyRateBps,
+            uint256 lockDays,
+            uint256 startTime,
+            uint256 endTime,
+            uint256 totalClaimedUSDT,
+            uint256 pendingRewardUSDT,
+            bool active,
+            bool principalWithdrawn
+        )
+    {
+        require(contractId > 0 && contractId <= totalStakingContracts, "invalid contract id");
+        StakeContractRef storage ref = stakingContractRefs[contractId];
+        StakeInfo storage position = userStakes[ref.account][ref.stakeId];
+
+        account = ref.account;
+        stakeId = ref.stakeId;
+        packageId = position.packageId;
+        amountUSDT = position.amountUSDT;
+        principalATH = position.principalATH;
+        dailyRateBps = position.dailyRateBps;
+        lockDays = position.lockDays;
+        startTime = position.startTime;
+        endTime = position.startTime + (position.lockDays * 1 days);
+        totalClaimedUSDT = position.totalClaimedUSDT;
+        pendingRewardUSDT = getPendingRewardUSDT(ref.account, ref.stakeId);
+        principalWithdrawn = position.principalWithdrawn;
+        active = !principalWithdrawn;
+    }
+
+    function getPackageContractStats(uint256 packageId)
+        external
+        view
+        returns (uint256 totalContracts, uint256 activeContracts, uint256 inactiveContracts)
+    {
+        require(packageId < packages.length, "invalid package");
+        totalContracts = packageTotalContracts[packageId];
+        activeContracts = packageActiveContracts[packageId];
+        inactiveContracts = packageInactiveContracts[packageId];
     }
 
     function getATHAmount(uint256 amountUSDT) public view returns (uint256) {
@@ -522,6 +603,31 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         }));
 
         uint256 stakeId = userStakes[msg.sender].length - 1;
+
+        uint256 contractId = ++totalStakingContracts;
+        stakingContractRefs[contractId] = StakeContractRef({
+            account: msg.sender,
+            stakeId: uint64(stakeId)
+        });
+        stakingContractId[msg.sender][stakeId] = contractId;
+
+        totalActiveStakingContracts += 1;
+        packageTotalContracts[packageId] += 1;
+        packageActiveContracts[packageId] += 1;
+        if (activeContractCountByMember[msg.sender] == 0) {
+            activeStakingMembers += 1;
+        }
+        activeContractCountByMember[msg.sender] += 1;
+
+        emit StakingContractRegistered(
+            contractId,
+            msg.sender,
+            stakeId,
+            packageId,
+            amountUSDT,
+            principalATH
+        );
+
         address boundReferrer = user.referrer;
         if (boundReferrer != address(0)) {
             // One unified referral path:
@@ -661,6 +767,20 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         require(block.timestamp >= position.startTime + (position.lockDays * 1 days), "still locked");
 
         position.principalWithdrawn = true;
+
+        uint256 contractId = stakingContractId[msg.sender][stakeId];
+        if (contractId != 0) {
+            totalActiveStakingContracts -= 1;
+            totalInactiveStakingContracts += 1;
+            packageActiveContracts[position.packageId] -= 1;
+            packageInactiveContracts[position.packageId] += 1;
+            activeContractCountByMember[msg.sender] -= 1;
+            if (activeContractCountByMember[msg.sender] == 0) {
+                activeStakingMembers -= 1;
+            }
+            emit StakingContractClosed(contractId, msg.sender, stakeId, position.packageId);
+        }
+
         principalLiabilityATH -= position.principalATH;
         userInfo[msg.sender].activeStakedUSDT -= position.amountUSDT;
         totalActiveStakedUSDT -= position.amountUSDT;
