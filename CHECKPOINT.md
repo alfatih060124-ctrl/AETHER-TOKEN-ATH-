@@ -1,6 +1,41 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 PUBLIC TOKENOMICS + STAKING MEMBER NETWORK — CURRENT SOURCE OF TRUTH
+
+- Public ATH tokenomics is now shown in two primary layers:
+  - Mining allocation: **70% = 700,000,000 ATH**.
+  - Staking ecosystem: **30% = 300,000,000 ATH**.
+- Staking ecosystem breakdown is explicitly displayed as:
+  - **160,000,000 ATH Staking Reward Pool**.
+  - **50,000,000 ATH Marketing / Network**.
+  - **30,000,000 ATH Presale**.
+  - **30,000,000 ATH Team / Developer**.
+  - **20,000,000 ATH Liquidity**.
+  - **10,000,000 ATH Ecosystem Reserve**.
+- Old public presentation that visually implied 70% Mining + 20% Liquidity + 5% Team + 5% Marketing is superseded.
+- Mining and Staking holder operations are separated by the existing Holder Workspace selector and distinct area banners.
+- Staking Member Area now includes an on-chain Sponsor Network Hierarchy rooted at the connected holder wallet.
+- Network tree reads:
+  - direct member count;
+  - per-leg turnover;
+  - active stake value;
+  - member Rank;
+  - direct-member count under each node;
+  - Lifestyle Bonus / Matching Staking earned;
+  - dynamic big-leg marker.
+- Tree nodes can expand upward/downline hierarchy up to 5 levels and load up to 50 direct children per branch to protect mobile performance.
+- Staking summary shows Total Network Turnover, Small-leg Turnover, Current Rank, Lifestyle/Matching earnings and Dynamic Big Leg.
+- L1-L10 is publicly named **Lifestyle Bonus / Matching Staking** while the technical contract storage remains backward-compatible.
+- Public multilingual dictionary now contains **309 keys across 9 translated languages + English**.
+- Latest public web deployment: `a53a2196-4243-4f70-a004-4bc16f071581` — **SUCCESS**, healthcheck PASS.
+- Latest validator deployment: `d0faca41-efcf-4317-a8d6-d478b1f975a8` — **SUCCESS**.
+- Validator evidence: **28 Solidity files compiled, 72/72 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Runtime remains TESTNET / fail-closed; `contractConfigured=false`, `mainnetEnabled=false`.
+- No BNB-dependent blockchain deployment was performed by this UI/member-network revision.
+
+
+
 ## 2026-10-04 STAKING MEMBER / CONTRACT ADMIN DASHBOARD — CURRENT SOURCE OF TRUTH
 
 - The original six Staking products remain the base package definitions:
