@@ -10,7 +10,7 @@ This register defines everything that can and must be completed before any BSC T
 - Staking ecosystem allocation = **300,000,000 ATH**:
   - 160M Daily Staking Reward Reserve.
   - 30M Presale.
-  - 50M Marketing / Network Reserve.
+  - 50M Marketing / Lifestyle Matching Reserve.
   - 30M Development Vesting.
   - 20M Liquidity.
   - 10M Ecosystem Reserve.
@@ -31,7 +31,7 @@ This register defines everything that can and must be completed before any BSC T
 ### Staking
 - Package ladder and fixed lock/rate snapshots are implemented.
 - Staking Daily Reward settles on the **00:50 UTC daily slot**.
-- Principal liability is isolated from both the 160M Daily Reward Reserve and 50M Marketing/Network Reserve.
+- Principal liability is isolated from both the 160M Daily Reward Reserve and 50M Marketing / Lifestyle Matching Reserve.
 - Unified Direct Referral is implemented:
   - unranked direct sponsor = 10% total,
   - Rank 1–8 total referral rates = 13%, 16%, 19%, 22%, 25%, 28%, 31%, 35%.
