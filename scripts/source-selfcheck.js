@@ -16,6 +16,7 @@ const presale = read("contracts/ATHPresale.sol");
 const staking = read("contracts/ATHStaking.sol");
 const stakingOracle = read("contracts/ATHStakingPriceOracle.sol");
 const developmentVesting = read("contracts/ATHDevelopmentVesting.sol");
+const rankKeeper = read("scripts/rank-salary-keeper.js");
 const deploy = read("scripts/deploy.js");
 const preflight = read("scripts/preflight.js");
 const env = read(".env.example");
@@ -109,6 +110,13 @@ must(staking, /RANK_PAYOUT_UTC_OFFSET\s*=\s*30 minutes/, "Rank salary schedule i
 must(staking, /RANK_FIRST_DELAY\s*=\s*7 days/, "Rank salary first payout waits at least 7 days");
 must(staking, /smallLegTurnover = totalTurnover > largestTurnover \? totalTurnover - largestTurnover : 0/, "Small-leg turnover excludes the dynamic largest leg");
 must(staking, /processRankSalaryBatch/, "Rank salary supports permissionless batch processing");
+must(staking, /MAX_RANK_MEMBER_PAGE\s*=\s*200/, "Rank member registry page is capped at 200");
+must(staking, /function totalRankMembers\(\)/, "Rank member registry count getter is present");
+must(staking, /function getRankMembers\(/, "Rank member registry pagination getter is present");
+must(rankKeeper, /RANK_KEEPER_ENABLED/, "Rank keeper is fail-closed behind an explicit enable flag");
+must(rankKeeper, /RANK_KEEPER_DRY_RUN/, "Rank keeper defaults to dry-run support");
+must(rankKeeper, /00:30-00:59 UTC/, "Rank keeper enforces the 00:30 UTC schedule window");
+must(rankKeeper, /totalRankMembers/, "Rank keeper reads the on-chain Rank registry");
 must(staking, /rewardReserveATH -= salaryATH/, "Rank salary is paid from reward reserve, not principal");
 
 must(priceRegistry, /PRESALE_START_PRICE\s*=\s*7_000_000/, "ATH unified price starts from Presale at $0.07");
