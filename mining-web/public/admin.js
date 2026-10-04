@@ -86,6 +86,10 @@ const STAKING_ADMIN_ABI=[
   "function totalDirectLegs(address) view returns (uint256)",
   "function getDirectLegMembers(address,uint256,uint256) view returns (address[] result)",
   "function legTurnoverUSDT(address,address) view returns (uint256)",
+  "function getSmallLegTurnoverUSDT(address) view returns (uint256 totalTurnover,uint256 largestTurnover,uint256 smallLegTurnover,address bigLeg)",
+  "function totalRankSalaryPayments() view returns (uint256)",
+  "function getRankSalaryPayments(uint256,uint256) view returns ((address account,uint8 payableRank,uint64 paidAt,uint16 periodsPaid,uint256 salaryUSDT,uint256 salaryATH,uint256 priceUSD8,uint256 nextPayoutAt)[] result)",
+  "function MAX_RANK_HISTORY_PAGE() view returns (uint256)",
   "event RankSalaryPaid(address indexed account,uint8 indexed payableRank,uint256 periodsPaid,uint256 salaryUSDT,uint256 salaryATH,uint256 priceUSD8,uint256 nextPayoutAt)",
   "function pause()",
   "function unpause()"
@@ -108,6 +112,11 @@ let state={miningOwner:"",tokenOwner:"",stakingOwner:"",presaleOwner:"",miningPa
 let toastTimer;
 let rankPage=0;
 const rankPageSize=25;
+let selectedLegAccount="";
+let legPage=0;
+const legPageSize=50;
+let rankHistoryPage=0;
+const rankHistoryPageSize=25;
 
 function toast(message,isError=false){
   const el=$("toast"); el.textContent=message; el.classList.toggle("error",isError); el.classList.add("show");
@@ -436,36 +445,68 @@ async function loadRankDashboard(){
   document.querySelectorAll(".rank-pay").forEach(btn=>btn.addEventListener("click",()=>runTx("Process Rank Salary",()=>stakingWrite.processRankSalary(btn.dataset.account))));
 }
 
-async function loadRankLegs(accountAddress){
+async function loadRankLegs(accountAddress,resetPage=true){
   if(!stakingRead||!ethers.isAddress(accountAddress))return;
+  if(resetPage||selectedLegAccount.toLowerCase()!==accountAddress.toLowerCase())legPage=0;
+  selectedLegAccount=accountAddress;
   $("selectedRankMember").textContent=accountAddress;
-  const total=Number(await stakingRead.totalDirectLegs(accountAddress));
-  const members=total?await stakingRead.getDirectLegMembers(accountAddress,0,Math.min(total,200)):[];
+
+  const [totalRaw,snapshot]=await Promise.all([
+    stakingRead.totalDirectLegs(accountAddress),
+    stakingRead.getSmallLegTurnoverUSDT(accountAddress)
+  ]);
+  const total=Number(totalRaw);
+  const maxPage=Math.max(0,Math.ceil(total/legPageSize)-1);
+  if(legPage>maxPage)legPage=maxPage;
+  const offset=legPage*legPageSize;
+  const members=total?await stakingRead.getDirectLegMembers(accountAddress,offset,Math.min(legPageSize,total-offset)):[];
   const rows=await Promise.all(members.map(async leg=>({leg,turnover:await stakingRead.legTurnoverUSDT(accountAddress,leg)})));
   rows.sort((a,b)=>a.turnover===b.turnover?0:(a.turnover>b.turnover?-1:1));
+
+  $("rankLegCount").textContent=total.toLocaleString()+" · page "+(legPage+1)+"/"+(maxPage+1);
+  $("legPrevBtn").disabled=legPage<=0;
+  $("legNextBtn").disabled=legPage>=maxPage;
+
   if(!rows.length){
     $("rankLegList").innerHTML='<div class="empty">No direct legs registered.</div>';
     return;
   }
+  const bigLeg=String(snapshot.bigLeg||snapshot[3]||"").toLowerCase();
   let html="";
-  rows.forEach((r,i)=>{html+='<div class="admin-list-row"><div><strong>'+(i===0?"BIG LEG · ":"")+short(r.leg)+'</strong><small>'+usd(r.turnover)+' turnover</small></div><code>'+r.leg+'</code></div>';});
-  if(total>200)html+='<div class="empty">Showing first 200 of '+total.toLocaleString()+' direct legs.</div>';
+  rows.forEach(r=>{
+    const isBig=r.leg.toLowerCase()===bigLeg;
+    html+='<div class="admin-list-row"><div><strong>'+(isBig?"BIG LEG · ":"")+short(r.leg)+'</strong><small>'+usd(r.turnover)+' turnover</small></div><code>'+r.leg+'</code></div>';
+  });
   $("rankLegList").innerHTML=html;
 }
 
 async function loadRankHistory(){
-  if(!stakingRead||!readProvider)return;
+  if(!stakingRead)return;
   const box=$("rankHistory");
   try{
-    const latest=await readProvider.getBlockNumber();
-    const from=Math.max(0,latest-2500);
-    const events=(await stakingRead.queryFilter(stakingRead.filters.RankSalaryPaid(),from,latest)).sort((a,b)=>b.blockNumber-a.blockNumber).slice(0,30);
-    if(!events.length){box.innerHTML='<div class="empty">No Rank Salary payments in the latest 2,500 blocks.</div>';return}
-    box.innerHTML=events.map(e=>{
-      const a=e.args;
-      return '<div class="admin-list-row"><div><strong>Rank '+Number(a.payableRank)+' · '+usd(a.salaryUSDT)+'</strong><small>'+short(a.account)+' · '+Number(a.periodsPaid)+' period(s) · '+ath(a.salaryATH)+'</small></div><small>Block '+e.blockNumber+'</small></div>';
+    const total=Number(await stakingRead.totalRankSalaryPayments());
+    const maxPage=Math.max(0,Math.ceil(total/rankHistoryPageSize)-1);
+    if(rankHistoryPage>maxPage)rankHistoryPage=maxPage;
+    $("rankHistoryCount").textContent=total.toLocaleString()+" payments";
+    $("historyPrevBtn").disabled=rankHistoryPage<=0;
+    $("historyNextBtn").disabled=rankHistoryPage>=maxPage;
+
+    if(!total){
+      box.innerHTML='<div class="empty">No Rank Salary payments yet.</div>';
+      return;
+    }
+
+    const endExclusive=Math.max(0,total-(rankHistoryPage*rankHistoryPageSize));
+    const start=Math.max(0,endExclusive-rankHistoryPageSize);
+    const records=await stakingRead.getRankSalaryPayments(start,endExclusive-start);
+    const newest=[...records].reverse();
+
+    box.innerHTML=newest.map(r=>{
+      const paidAt=new Date(Number(r.paidAt)*1000).toLocaleString();
+      const price="$"+(Number(r.priceUSD8)/1e8).toFixed(3);
+      return '<div class="admin-list-row"><div><strong>Rank '+Number(r.payableRank)+' · '+usd(r.salaryUSDT)+'</strong><small>'+short(r.account)+' · '+Number(r.periodsPaid)+' period(s) · '+ath(r.salaryATH)+' · ATH '+price+'</small></div><small>'+paidAt+'</small></div>';
     }).join("");
-  }catch(err){console.error("rank history",err);box.innerHTML='<div class="empty">Rank Salary history temporarily unavailable.</div>'}
+  }catch(err){console.error("rank history",err);box.innerHTML='<div class="empty">Complete Rank Salary history temporarily unavailable.</div>'}
 }
 
 async function runTx(label,fn){
@@ -523,6 +564,10 @@ async function boot(){
   $("refreshRankBtn").addEventListener("click",async()=>{await Promise.all([loadRankDashboard(),loadRankHistory()]);toast("Rank data refreshed.");});
   $("rankPrevBtn").addEventListener("click",async()=>{if(rankPage>0){rankPage--;await loadRankDashboard();}});
   $("rankNextBtn").addEventListener("click",async()=>{rankPage++;await loadRankDashboard();});
+  $("legPrevBtn").addEventListener("click",async()=>{if(selectedLegAccount&&legPage>0){legPage--;await loadRankLegs(selectedLegAccount,false);}});
+  $("legNextBtn").addEventListener("click",async()=>{if(selectedLegAccount){legPage++;await loadRankLegs(selectedLegAccount,false);}});
+  $("historyPrevBtn").addEventListener("click",async()=>{if(rankHistoryPage>0){rankHistoryPage--;await loadRankHistory();}});
+  $("historyNextBtn").addEventListener("click",async()=>{rankHistoryPage++;await loadRankHistory();});
   $("openPresaleBtn").addEventListener("click",()=>runTx("Open Presale",()=>presaleWrite.unpause()));
   $("pausePresaleBtn").addEventListener("click",()=>runTx("Pause Presale",()=>presaleWrite.pause()));
   $("setTreasuryBtn").addEventListener("click",()=>{
