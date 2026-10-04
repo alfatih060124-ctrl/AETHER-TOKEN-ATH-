@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#070502" />
   <title>AETHER ATH Control Panel</title>
   <meta name="robots" content="noindex,nofollow" />
-  <link rel="stylesheet" href="/admin.css?v=mobile-v2" />
+  <link rel="stylesheet" href="/admin.css?v=workspace-v1" />
 </head>
 <body>
   <header class="topbar">
@@ -35,7 +35,24 @@
       <span id="guardrailText">Mainnet admin writes are disabled by default. Blockchain deployment is not triggered from this page.</span>
     </section>
 
-    <section class="grid metrics">
+    <section class="workspace-switcher" aria-label="Control Panel workspace">
+      <div class="workspace-switcher-head">
+        <div>
+          <span class="eyebrow">CONTROL WORKSPACE</span>
+          <h2>Choose one operational area</h2>
+        </div>
+        <span id="workspaceBadge" class="workspace-badge">OVERVIEW</span>
+      </div>
+      <div class="workspace-tabs" role="tablist" aria-label="ATH admin workspaces">
+        <button class="workspace-tab active" type="button" data-control-view="overview" role="tab" aria-selected="true">Overview</button>
+        <button class="workspace-tab mining-tab" type="button" data-control-view="mining" role="tab" aria-selected="false">Mining Control</button>
+        <button class="workspace-tab staking-tab" type="button" data-control-view="staking" role="tab" aria-selected="false">Staking Control</button>
+        <button class="workspace-tab system-tab" type="button" data-control-view="system" role="tab" aria-selected="false">Token &amp; Presale</button>
+      </div>
+      <p id="workspaceNote" class="workspace-note">Overview is read-only monitoring. Select Mining Control or Staking Control before operating an engine.</p>
+    </section>
+
+    <section class="grid metrics control-zone" data-control-zone="overview">
       <article><small>Mining Contract</small><strong id="miningState">Pending</strong><span id="miningAddress">—</span></article>
       <article><small>Mining Status</small><strong id="miningPause">—</strong><span>Owner emergency switch</span></article>
       <article><small>Token Status</small><strong id="tokenPause">—</strong><span>ATH transfer emergency switch</span></article>
@@ -57,7 +74,7 @@
       <article><small>Presale Price</small><strong id="presalePrice">$0.070</strong><span id="presaleProgress">0 / 30,000,000 ATH</span></article>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="overview">
       <div class="section-head">
         <div><span class="eyebrow">TOKENOMICS</span><h2>Locked allocation policy</h2></div>
         <span class="policy">1,000,000,000 ATH FIXED</span>
@@ -74,32 +91,46 @@
       <div class="listing-rule"><span>Listing policy</span><strong>15,000 holder target</strong><small>ATH Price Registry records the gate; official market mode still requires explicit activation.</small></div>
     </section>
 
-    <section class="two-col">
-      <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">MINING ENGINE</span><h2>Emergency control</h2></div></div>
-        <div class="row"><span>Owner</span><code id="miningOwner">—</code></div>
-        <div class="row"><span>Treasury</span><code id="treasury">—</code></div>
-        <div class="button-row">
-          <button id="pauseMiningBtn" class="btn danger" disabled>Pause Mining</button>
-          <button id="unpauseMiningBtn" class="btn" disabled>Unpause Mining</button>
-        </div>
-        <label>New treasury address<input id="treasuryInput" autocomplete="off" placeholder="0x..." /></label>
-        <button id="setTreasuryBtn" class="btn gold full" disabled>Update Treasury</button>
-      </article>
-
-      <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">ATH TOKEN</span><h2>Transfer safety</h2></div></div>
-        <div class="row"><span>Token Owner</span><code id="tokenOwner">—</code></div>
-        <div class="row"><span>Total Supply</span><strong id="totalSupply">1,000,000,000 ATH</strong></div>
-        <p class="muted">Token pause stops ATH transfers globally. Use only for a verified security incident.</p>
-        <div class="button-row">
-          <button id="pauseTokenBtn" class="btn danger" disabled>Pause ATH</button>
-          <button id="unpauseTokenBtn" class="btn" disabled>Unpause ATH</button>
-        </div>
-      </article>
+    <section class="panel control-zone engine-zone mining-zone" data-control-zone="mining" hidden>
+      <div class="workspace-zone-head">
+        <div><span class="eyebrow">MINING CONTROL</span><h2>ATH Mining Operations</h2></div>
+        <span class="workspace-zone-tag">MINING ONLY</span>
+      </div>
+      <p class="workspace-zone-note">Only ATH Mining controls are shown in this workspace. Staking operations are isolated in the Staking Control workspace.</p>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="mining" hidden>
+      <div class="section-head"><div><span class="eyebrow">MINING ENGINE</span><h2>Emergency control</h2></div></div>
+      <div class="row"><span>Owner</span><code id="miningOwner">—</code></div>
+      <div class="row"><span>Treasury</span><code id="treasury">—</code></div>
+      <div class="button-row">
+        <button id="pauseMiningBtn" class="btn danger" disabled>Pause Mining</button>
+        <button id="unpauseMiningBtn" class="btn" disabled>Unpause Mining</button>
+      </div>
+      <label>New treasury address<input id="treasuryInput" autocomplete="off" placeholder="0x..." /></label>
+      <button id="setTreasuryBtn" class="btn gold full" disabled>Update Treasury</button>
+    </section>
+
+    <section class="panel control-zone engine-zone system-zone" data-control-zone="system" hidden>
+      <div class="workspace-zone-head">
+        <div><span class="eyebrow">TOKEN &amp; PRESALE</span><h2>Shared ATH System Controls</h2></div>
+        <span class="workspace-zone-tag">SHARED SYSTEM</span>
+      </div>
+      <p class="workspace-zone-note">Token and Presale controls are separated from both Mining and Staking to prevent accidental cross-engine operations.</p>
+    </section>
+
+    <section class="panel control-zone" data-control-zone="system" hidden>
+      <div class="section-head"><div><span class="eyebrow">ATH TOKEN</span><h2>Transfer safety</h2></div></div>
+      <div class="row"><span>Token Owner</span><code id="tokenOwner">—</code></div>
+      <div class="row"><span>Total Supply</span><strong id="totalSupply">1,000,000,000 ATH</strong></div>
+      <p class="muted">Token pause stops ATH transfers globally. Use only for a verified security incident.</p>
+      <div class="button-row">
+        <button id="pauseTokenBtn" class="btn danger" disabled>Pause ATH</button>
+        <button id="unpauseTokenBtn" class="btn" disabled>Unpause ATH</button>
+      </div>
+    </section>
+
+    <section class="panel control-zone" data-control-zone="system" hidden>
       <div class="section-head">
         <div><span class="eyebrow">ATH PRESALE</span><h2>Sale control & monitoring</h2></div>
         <span class="policy">OWNER-GATED · FAIL-CLOSED</span>
@@ -123,7 +154,15 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone engine-zone staking-zone" data-control-zone="staking" hidden>
+      <div class="workspace-zone-head">
+        <div><span class="eyebrow">STAKING CONTROL</span><h2>ATH Staking Operations</h2></div>
+        <span class="workspace-zone-tag">STAKING ONLY</span>
+      </div>
+      <p class="workspace-zone-note">Only ATH Staking, referral, Rank, reserve and payout controls are shown in this workspace. Mining operations are isolated in Mining Control.</p>
+    </section>
+
+    <section class="panel control-zone" data-control-zone="staking" hidden>
       <div class="section-head">
         <div><span class="eyebrow">STAKING NETWORK</span><h2>Rank salary & reserve safety</h2></div>
         <span class="policy">FINAL RULES · OWNER-GATED PAUSE</span>
@@ -149,7 +188,7 @@
       <p class="muted">Direct Referral is ONE unified payout: unranked sponsor receives 10% total; ranked sponsor receives R1 13%, R2 16%, R3 19%, R4 22%, R5 25%, R6 28%, R7 31%, or R8 35% total. These Rank percentages already include the common 10% Direct Referral. Only the incremental Rank portion passes up to a higher Rank, and same Rank receives no uplift, but pass-up continues upward to the next higher Rank. Rank thresholds / weekly salary remain: R1 $1k/$25, R2 $5k/$75, R3 $15k/$200, R4 $50k/$500, R5 $100k/$1k, R6 $250k/$2k, R7 $500k/$5k, R8 $1M/$10k. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Rank Salary remains weekly at 00:30 UTC and lifetime after qualification. All networking bonuses use only the protected 50M Marketing / Network Reserve.</p>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="staking" hidden>
       <div class="section-head">
         <div><span class="eyebrow">DIRECT REFERRAL BY RANK</span><h2>10% base included · differential pass-up</h2></div>
         <span class="policy">CONTRACT-LOCKED</span>
@@ -168,7 +207,7 @@
       <p class="muted">The common Direct Referral is 10%. Rank 1 does not receive 10% + 13%; Rank 1 receives 13% TOTAL, so only +3% is the Rank uplift. Example: Rank 1 direct sponsor receives 13% total; the next eligible Rank 2 receives only +3%, making the cumulative referral path 16%. Pass-up continues only to a higher Rank and skips the same Rank and continues upward until a higher Rank is found. The entire referral path is capped at the Rank 8 total of 35%.</p>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="staking" hidden>
       <div class="section-head">
         <div><span class="eyebrow">STAKING ADMIN</span><h2>Reserve funding & package manager</h2></div>
         <span class="policy">OWNER WALLET · ON-CHAIN</span>
@@ -205,7 +244,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="staking" hidden>
       <div class="section-head">
         <div><span class="eyebrow">STAKING ANALYTICS</span><h2>Reserve runway & Rank payout queue</h2></div>
         <button id="refreshRankBtn" class="btn">Refresh Rank Data</button>
@@ -224,7 +263,7 @@
       <div id="rankMemberTable" class="admin-table-wrap"><div class="empty">No Rank members yet.</div></div>
     </section>
 
-    <section class="two-col">
+    <section class="two-col control-zone" data-control-zone="staking" hidden>
       <article class="panel">
         <div class="section-head"><div><span class="eyebrow">NETWORK LEGS</span><h2>Member leg detail</h2></div></div>
         <div class="row"><span>Selected Member</span><code id="selectedRankMember">—</code></div>
@@ -239,7 +278,7 @@
       </article>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="mining" hidden>
       <div class="section-head">
         <div><span class="eyebrow">REWARD ENGINE</span><h2>Booster pricing</h2></div>
         <span class="policy">OWNER-GATED</span>
@@ -258,26 +297,24 @@
       <button id="setBoosterPricesBtn" class="btn gold full" disabled>Update Booster Prices On-chain</button>
     </section>
 
-    <section class="two-col">
-      <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">RESERVE SAFETY</span><h2>Excess recovery</h2></div></div>
-        <p class="muted">Only ATH above outstanding vesting liability can be recovered, and only while Mining is paused.</p>
-        <label>Recipient<input id="excessRecipient" autocomplete="off" placeholder="0x..." /></label>
-        <label>Amount ATH<input id="excessAmount" inputmode="decimal" placeholder="0.0" /></label>
-        <label class="check"><input id="excessAck" type="checkbox" /> I verified the recipient, reserve and liability.</label>
-        <button id="withdrawExcessBtn" class="btn danger full" disabled>Recover Excess ATH</button>
-      </article>
-
-      <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">TEAM LOCK</span><h2>365-day vesting lock</h2></div></div>
-        <div class="row"><span>Lock Contract</span><code id="lockAddress">—</code></div>
-        <div class="row"><span>Beneficiary</span><code id="beneficiary">—</code></div>
-        <div class="row"><span>Locked Balance</span><strong id="teamBalance">50,000,000 ATH policy</strong></div>
-        <div class="row"><span>Release</span><strong id="releaseTime">Pending deployment</strong></div>
-      </article>
+    <section class="panel control-zone" data-control-zone="mining" hidden>
+      <div class="section-head"><div><span class="eyebrow">RESERVE SAFETY</span><h2>Mining excess recovery</h2></div></div>
+      <p class="muted">Only ATH above outstanding Mining vesting liability can be recovered, and only while Mining is paused.</p>
+      <label>Recipient<input id="excessRecipient" autocomplete="off" placeholder="0x..." /></label>
+      <label>Amount ATH<input id="excessAmount" inputmode="decimal" placeholder="0.0" /></label>
+      <label class="check"><input id="excessAck" type="checkbox" /> I verified the recipient, Mining reserve and Mining liability.</label>
+      <button id="withdrawExcessBtn" class="btn danger full" disabled>Recover Mining Excess ATH</button>
     </section>
 
-    <section class="panel">
+    <section class="panel control-zone" data-control-zone="system" hidden>
+      <div class="section-head"><div><span class="eyebrow">TEAM LOCK</span><h2>365-day vesting lock</h2></div></div>
+      <div class="row"><span>Lock Contract</span><code id="lockAddress">—</code></div>
+      <div class="row"><span>Beneficiary</span><code id="beneficiary">—</code></div>
+      <div class="row"><span>Locked Balance</span><strong id="teamBalance">50,000,000 ATH policy</strong></div>
+      <div class="row"><span>Release</span><strong id="releaseTime">Pending deployment</strong></div>
+    </section>
+
+    <section class="panel control-zone" data-control-zone="mining" hidden>
       <div class="section-head">
         <div><span class="eyebrow">ON-CHAIN ACTIVITY</span><h2>Recent Mining events</h2></div>
         <button id="refreshBtn" class="btn">Refresh</button>
@@ -289,6 +326,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-  <script src="/admin.js?v=20261004-direct-referral-unified-v2"></script>
+  <script src="/admin.js?v=workspace-v1"></script>
 </body>
 </html>
