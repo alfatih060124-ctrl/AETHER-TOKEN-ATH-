@@ -49,7 +49,7 @@ async function main() {
   const miningOwner = roleAddress("MINING_OWNER_ADDRESS");
   const stakingOwner = roleAddress("STAKING_OWNER_ADDRESS");
   const presaleOwner = roleAddress("PRESALE_OWNER_ADDRESS");
-  const treasury = miningOwner;
+  const treasury = roleAddress("MINING_TREASURY_ADDRESS");
   const presaleTreasury = roleAddress("PRESALE_WALLET");
   const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
