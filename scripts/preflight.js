@@ -81,7 +81,7 @@ async function main() {
   const presaleOwner = roleAddress("PRESALE_OWNER_ADDRESS");
   const tokenOwner = presaleOwner;
   const priceRegistryOwner = presaleOwner;
-  const treasury = miningOwner;
+  const treasury = roleAddress("MINING_TREASURY_ADDRESS");
   const presaleWallet = roleAddress("PRESALE_WALLET");
   const keeperWallet = roleAddress("KEEPER_WALLET_ADDRESS");
   const presalePaymentToken = address("PRESALE_PAYMENT_TOKEN");
