@@ -20,6 +20,7 @@ const rankKeeper = read("scripts/rank-salary-keeper.js");
 const stakingRewardKeeper = read("scripts/staking-reward-keeper.js");
 const deploy = read("scripts/deploy.js");
 const preflight = read("scripts/preflight.js");
+const nonBnbReadiness = read("scripts/nonbnb-readiness.js");
 const env = read(".env.example");
 const miningWeb = read("mining-web/public/app.js");
 const holderWorkspaceWeb = read("mining-web/public/holder-workspace.js");
@@ -336,6 +337,17 @@ for (const name of [
 ]) {
   if (!env.includes(name + "=")) throw new Error("SELF-CHECK FAILED: missing env template " + name);
 }
+
+must(nonBnbReadiness, /internalCodeAndRoleConfig: PASS/, "Non-BNB readiness reports internal completion");
+must(nonBnbReadiness, /PRESALE_PAYMENT_TOKEN/, "Non-BNB readiness separates Presale payment-token user input");
+must(nonBnbReadiness, /LIQUIDITY_WALLET/, "Non-BNB readiness separates liquidity-wallet user input");
+must(nonBnbReadiness, /STAKING_RESERVE_WALLET/, "Non-BNB readiness separates Staking reserve wallet user input");
+must(nonBnbReadiness, /DEVELOPMENT_BENEFICIARY/, "Non-BNB readiness separates Development beneficiary user input");
+must(nonBnbReadiness, /Testnet deployer still requires sufficient tBNB/, "Non-BNB readiness separates chain-gas dependency");
+must(nonBnbReadiness, /Mining, Staking and Presale owners must remain separate wallets/, "Separate admin wallet policy is enforced");
+must(nonBnbReadiness, /Current policy requires Mining Treasury = Presale Treasury/, "Mining Treasury override is enforced");
+must(nonBnbReadiness, /Keeper wallet must remain separate/, "Keeper role isolation is enforced");
+console.log("OK: explicit non-BNB readiness classification");
 
 for (const gate of [
   "ALLOW_MAINNET_DEPLOY",
