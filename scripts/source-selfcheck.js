@@ -215,6 +215,14 @@ must(adminHtml, /Complete payment history/, "Control Panel labels Rank Salary hi
 must(adminWeb, /processRankSalary/, "Control Panel exposes due Rank payout processing");
 must(adminHtml, /Reserve runway & Rank payout queue/, "Control Panel exposes reserve runway and Rank payout queue");
 must(adminHtml, /00:50 UTC/, "Control Panel shows the Staking daily reward time");
+must(adminHtml, /data-control-view="mining"/, "Control Panel exposes a dedicated Mining workspace");
+must(adminHtml, /data-control-view="staking"/, "Control Panel exposes a dedicated Staking workspace");
+must(adminHtml, /data-control-zone="mining"/, "Mining controls are isolated in Mining-only zones");
+must(adminHtml, /data-control-zone="staking"/, "Staking controls are isolated in Staking-only zones");
+must(adminHtml, /data-control-zone="system"/, "Token and Presale controls are isolated from both engines");
+must(adminWeb, /function setControlWorkspace\(/, "Control Panel has explicit workspace switching logic");
+must(adminWeb, /zone\.hidden=zone\.dataset\.controlZone!==safe/, "Inactive engine controls are hidden from the active workspace");
+must(adminWeb, /localStorage\.setItem\("athAdminWorkspace"/, "Control Panel remembers the operator's selected workspace");
 must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Control Panel shows current 300M Staking ecosystem breakdown");
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
