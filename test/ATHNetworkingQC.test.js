@@ -53,6 +53,7 @@ async function deployNetworkingFixture() {
 
   await token.approve(await staking.getAddress(), ethers.MaxUint256);
   await staking.fundRewards(ethers.parseEther("160000000"));
+  await staking.fundNetworkReserve(ethers.parseEther("50000000"));
 
   const participants = [sponsor, ...rest];
   for (const signer of participants) {
@@ -86,6 +87,8 @@ describe("ATH Networking Bonus QC Matrix", function () {
         return token.balanceOf(upline.address);
       }));
     }
+    const rewardReserveBefore = await staking.rewardReserveATH();
+    const networkReserveBefore = await staking.networkReserveATH();
     const totalNetworkBefore = await staking.totalNetworkPaidATH();
 
     await increase(DAY);
@@ -105,6 +108,8 @@ describe("ATH Networking Bonus QC Matrix", function () {
 
     expect((await staking.totalNetworkPaidATH()) - totalNetworkBefore).to.equal(expectedTotal);
     expect(expectedTotal).to.equal((rewardATH * 2_150n) / 10_000n);
+    expect(rewardReserveBefore - (await staking.rewardReserveATH())).to.equal(rewardATH);
+    expect(networkReserveBefore - (await staking.networkReserveATH())).to.equal(expectedTotal);
   });
 
   it("qualifies Rank 1 through Rank 8 exactly at each locked small-leg threshold", async function () {
@@ -177,7 +182,8 @@ describe("ATH Networking Bonus QC Matrix", function () {
 
     const info = await staking.rankInfo(sponsor.address);
     const principalBefore = await staking.principalLiabilityATH();
-    const reserveBefore = await staking.rewardReserveATH();
+    const rewardBefore = await staking.rewardReserveATH();
+    const reserveBefore = await staking.networkReserveATH();
 
     await ethers.provider.send("evm_setNextBlockTimestamp", [Number(info.nextPayoutAt)]);
     await ethers.provider.send("evm_mine", []);
@@ -188,6 +194,7 @@ describe("ATH Networking Bonus QC Matrix", function () {
     await staking.processRankSalary(sponsor.address);
 
     expect(await staking.principalLiabilityATH()).to.equal(principalBefore);
-    expect(reserveBefore - (await staking.rewardReserveATH())).to.equal(preview.salaryATH);
+    expect(await staking.rewardReserveATH()).to.equal(rewardBefore);
+    expect(reserveBefore - (await staking.networkReserveATH())).to.equal(preview.salaryATH);
   });
 });
