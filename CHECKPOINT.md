@@ -1,6 +1,30 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 ADMIN LOGIN MOBILE-WALLET COMPATIBILITY — CURRENT SOURCE OF TRUTH
+
+- Resolved AETHER Wallet admin-login failure: `ethers is not defined`.
+- Public admin login no longer depends on ethers or any external CDN.
+- Login now uses the injected EVM provider directly:
+  - `eth_requestAccounts`
+  - one-time server challenge
+  - native `personal_sign`
+  - server-side signature recovery / role validation
+- Admin authentication does not force a network switch. Network enforcement happens only when an on-chain write transaction is submitted.
+- Authenticated Control Panel still uses ethers for contract interaction, but the browser bundle is now served from the same AETHER origin at `/vendor/ethers.umd.min.js`.
+- Control Panel CSP now allows same-origin scripts only; jsDelivr dependency was removed from admin login and authenticated panel.
+- Web build explicitly verifies the local ethers browser bundle exists before deployment.
+- Latest web deployment: `46cff51f-101e-421d-8a45-3a37ff1ccf99` — SUCCESS.
+- Runtime evidence:
+  - multilingual QC PASS: 288 keys across 9 translated languages + English
+  - Admin vendor QC PASS: local same-origin ethers bundle available (526551 bytes)
+  - healthcheck PASS
+  - runtime rev: admin-native-sign-local-ethers-v2
+- Latest corresponding core validator: `5bd15c95-6761-4f82-be56-c01fbf283e66` — SUCCESS.
+- Mainnet remains CLOSED and no blockchain deployment transaction was executed.
+
+
+
 ## 2026-10-04 ADMIN LOGIN NETWORK COMPATIBILITY FIX — CURRENT SOURCE OF TRUTH
 
 - Mobile AETHER Wallet screenshot exposed a login blocker: the public admin gate attempted to switch the wallet to the configured Testnet chain before requesting the authentication signature, producing "unsupported EVM network" and preventing the Control Panel from opening.
