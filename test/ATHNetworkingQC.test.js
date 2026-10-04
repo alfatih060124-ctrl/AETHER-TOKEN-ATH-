@@ -109,7 +109,7 @@ describe("ATH Networking Bonus QC Matrix", function () {
       const expected = (rewardATH * rates[i]) / 10_000n;
       expectedTotal += expected;
       const after = await token.balanceOf(uplines[i].address);
-      expect(after - balancesBefore[i], `network L${i + 1}`).to.equal(expected);
+      expect(after - balancesBefore[i], `Lifestyle Matching L${i + 1}`).to.equal(expected);
     }
 
     expect((await staking.totalNetworkPaidATH()) - totalNetworkBefore).to.equal(expectedTotal);
