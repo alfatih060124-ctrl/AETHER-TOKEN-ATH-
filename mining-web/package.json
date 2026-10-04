@@ -5,7 +5,8 @@
   "description": "AETHER ATH mining web application",
   "scripts": {
     "start": "node bootstrap.js",
-    "check": "node --check bootstrap.js && node --check server.js && node --check assistant.js && node --check whitepaper.js && node --check public/app.js && node --check public/presale.js && node --check public/presale-i18n.js && node --check public/staking.js && node --check public/staking-i18n.js && node --check public/i18n.js && node --check public/i18n-runtime.js && node --check public/aether-ai.js && node --check public/ath-info.js && node --check public/holder-workspace.js && node --check public/admin-login.js && node --check public/admin.js && node --check public/i18n-static-complete.js && node --check public/i18n-bridge.js && node --check public/i18n-icons.js && node check-i18n-qc.js"
+    "check": "node --check bootstrap.js && node --check server.js && node --check assistant.js && node --check whitepaper.js && node --check public/app.js && node --check public/presale.js && node --check public/presale-i18n.js && node --check public/staking.js && node --check public/staking-i18n.js && node --check public/i18n.js && node --check public/i18n-runtime.js && node --check public/aether-ai.js && node --check public/ath-info.js && node --check public/holder-workspace.js && node --check public/admin-login.js && node --check public/admin.js && node --check public/i18n-static-complete.js && node --check public/i18n-bridge.js && node --check public/i18n-icons.js && node check-i18n-qc.js",
+    "security:audit:runtime": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "pdfkit": "^0.20.2",
