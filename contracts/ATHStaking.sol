@@ -32,6 +32,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant RANK_FIRST_DELAY = 7 days;
     uint256 public constant RANK_PAYOUT_UTC_OFFSET = 30 minutes; // 00:30 UTC
     uint256 public constant MAX_RANK_BATCH = 50;
+    uint256 public constant MAX_RANK_MEMBER_PAGE = 200;
     uint256 public constant MAX_RANK_CATCHUP_WEEKS = 12;
 
     IERC20 public immutable athToken;
@@ -86,6 +87,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     // Rank 1..8 qualification timestamp. A higher rank never erases lower-rank history.
     mapping(address => mapping(uint8 => uint64)) public rankQualifiedAt;
     mapping(address => RankInfo) public rankInfo;
+    address[] private rankMembers;
+    mapping(address => bool) public isRankMember;
 
     uint256 public totalActiveStakedUSDT;
     uint256 public principalLiabilityATH;
@@ -242,6 +245,21 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         largestTurnover = largestLegTurnoverUSDT[account];
         smallLegTurnover = totalTurnover > largestTurnover ? totalTurnover - largestTurnover : 0;
         bigLeg = largestLegAddress[account];
+    }
+
+    function totalRankMembers() external view returns (uint256) {
+        return rankMembers.length;
+    }
+
+    function getRankMembers(uint256 offset, uint256 limit) external view returns (address[] memory result) {
+        require(limit > 0 && limit <= MAX_RANK_MEMBER_PAGE, "invalid page");
+        if (offset >= rankMembers.length) return new address[](0);
+        uint256 end = offset + limit;
+        if (end > rankMembers.length) end = rankMembers.length;
+        result = new address[](end - offset);
+        for (uint256 i = offset; i < end; i++) {
+            result[i - offset] = rankMembers[i];
+        }
     }
 
     function getEligibleRank(address account) public view returns (uint8 rank) {
@@ -562,6 +580,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
 
         uint8 previous = info.highestRank;
         uint64 nowTs = uint64(block.timestamp);
+
+        if (!isRankMember[account]) {
+            isRankMember[account] = true;
+            rankMembers.push(account);
+        }
         for (uint8 r = previous + 1; r <= eligible; r++) {
             if (rankQualifiedAt[account][r] == 0) {
                 rankQualifiedAt[account][r] = nowTs;
