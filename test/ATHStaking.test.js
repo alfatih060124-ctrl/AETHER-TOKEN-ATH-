@@ -490,15 +490,18 @@ describe("AETHER ATH Staking v1", function () {
 
     const userBefore = await token.balanceOf(user.address);
     const refBefore = await token.balanceOf(referrer.address);
+    const userRankEarnedBefore = await staking.rankSponsorEarnedATH(user.address);
+    const refRankEarnedBefore = await staking.rankSponsorEarnedATH(referrer.address);
+    const totalRankSponsorBefore = await staking.totalRankSponsorPaidATH();
     const reserveBefore = await staking.networkReserveATH();
 
     await staking.connect(extraB).stake(1, ethers.parseEther("100"), user.address);
 
     expect((await token.balanceOf(user.address)) - userBefore).to.equal(directReferral + rank1Full);
     expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(rank2Diff);
-    expect(await staking.rankSponsorEarnedATH(user.address)).to.equal(rank1Full);
-    expect(await staking.rankSponsorEarnedATH(referrer.address)).to.equal(rank2Diff);
-    expect(await staking.totalRankSponsorPaidATH()).to.equal(rank1Full + rank2Diff);
+    expect((await staking.rankSponsorEarnedATH(user.address)) - userRankEarnedBefore).to.equal(rank1Full);
+    expect((await staking.rankSponsorEarnedATH(referrer.address)) - refRankEarnedBefore).to.equal(rank2Diff);
+    expect((await staking.totalRankSponsorPaidATH()) - totalRankSponsorBefore).to.equal(rank1Full + rank2Diff);
     expect(reserveBefore - (await staking.networkReserveATH())).to.equal(
       directReferral + rank1Full + rank2Diff
     );
@@ -524,9 +527,9 @@ describe("AETHER ATH Staking v1", function () {
       await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
     }
     const r1Legs = [second, presaleBuyer, keeper, treasury, extraA];
-    const r1Values = ["900","300","300","300","300"];
+    const r1Values = ["500","500","500","500","500"];
     for (let i = 0; i < r1Legs.length; i++) {
-      await staking.connect(r1Legs[i]).stake(1, ethers.parseEther(r1Values[i]), referrer.address);
+      await staking.connect(r1Legs[i]).stake(2, ethers.parseEther(r1Values[i]), referrer.address);
     }
     expect((await staking.rankInfo(referrer.address)).highestRank).to.equal(1n);
 
@@ -537,6 +540,8 @@ describe("AETHER ATH Staking v1", function () {
     const expectedRankBonus = (principal * 1300n) / 10_000n;
 
     const refBefore = await token.balanceOf(referrer.address);
+    const refRankBefore = await staking.rankSponsorEarnedATH(referrer.address);
+    const totalRankBefore = await staking.totalRankSponsorPaidATH();
     const preview = await staking.previewRankSponsorBonus(extraB.address, principal);
     // Before binding the new source there is no sponsor path yet.
     expect(preview.totalBonusATH).to.equal(0n);
@@ -546,9 +551,9 @@ describe("AETHER ATH Staking v1", function () {
       .withArgs(referrer.address, extraB.address, 1n);
 
     expect(await staking.rankSponsorEarnedATH(user.address)).to.equal(expectedRankBonus);
-    expect(await staking.rankSponsorEarnedATH(referrer.address)).to.equal(0n);
+    expect((await staking.rankSponsorEarnedATH(referrer.address)) - refRankBefore).to.equal(0n);
     expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(0n);
-    expect(await staking.totalRankSponsorPaidATH()).to.equal(expectedRankBonus);
+    expect((await staking.totalRankSponsorPaidATH()) - totalRankBefore).to.equal(expectedRankBonus);
   });
 
   it("qualifies Rank 8 at $1,000,000 small-leg turnover with five direct sponsors", async function () {
