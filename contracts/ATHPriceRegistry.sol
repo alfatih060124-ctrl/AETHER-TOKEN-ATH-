@@ -7,21 +7,31 @@ interface IATHMarketPriceOracle {
     function getPrice() external view returns (uint256 priceUSD8);
 }
 
+interface IATHPresalePriceSource {
+    function currentPriceUSD8() external view returns (uint256 priceUSD8);
+    function totalSoldATH() external view returns (uint256);
+    function remainingATH() external view returns (uint256);
+}
+
 /// @title AETHER ATH Unified Price Registry
-/// @notice Keeps the official ATH reference price fixed at $0.37 before listing,
-///         while optionally exposing a separate live market price for DEX visibility.
-/// @dev The switch to MARKET is one-way and requires a recorded holder count >= 15,000.
+/// @notice Before official listing, the ATH reference price follows the Presale curve:
+///         $0.070 opening and +$0.001 after each complete 100,000 ATH sold.
+///         Mining and Staking both consume this same reference price.
+/// @dev After the holder gate and explicit owner activation, the registry may switch
+///      one-way to a live market oracle.
 contract ATHPriceRegistry is Ownable {
     uint256 public constant PRICE_DECIMALS = 8;
-    uint256 public constant PRE_LISTING_PRICE = 37_000_000; // $0.37, 8 decimals
+    uint256 public constant PRESALE_START_PRICE = 7_000_000; // $0.070
+    uint256 public constant PRESALE_FINAL_PRICE = 37_000_000; // $0.370
     uint256 public constant HOLDER_TARGET = 15_000;
 
     enum PriceMode {
-        PRE_LISTING_FIXED,
+        PRESALE,
         MARKET
     }
 
     PriceMode public priceMode;
+    IATHPresalePriceSource public immutable presalePriceSource;
     IATHMarketPriceOracle public marketPriceOracle;
     uint256 public recordedHolderCount;
     bool public officialListingActivated;
@@ -30,18 +40,36 @@ contract ATHPriceRegistry is Ownable {
     event HolderCountRecorded(uint256 previousCount, uint256 newCount);
     event OfficialListingActivated(uint256 holderCount, address indexed marketOracle, uint256 marketPriceUSD8);
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address presalePriceSource_, address initialOwner) Ownable(initialOwner) {
+        require(presalePriceSource_ != address(0), "zero presale source");
+        require(initialOwner != address(0), "zero owner");
+        presalePriceSource = IATHPresalePriceSource(presalePriceSource_);
+    }
 
     function getPrice() external view returns (uint256) {
-        if (!officialListingActivated) return PRE_LISTING_PRICE;
+        if (!officialListingActivated) return _readPresalePrice();
         return _readMarketPrice();
     }
 
-    function getReferencePrice() external pure returns (uint256) {
-        return PRE_LISTING_PRICE;
+    function getReferencePrice() external view returns (uint256) {
+        if (!officialListingActivated) return _readPresalePrice();
+        return _readMarketPrice();
     }
 
-    /// @notice Live market price can be viewed before listing without changing the official $0.37 reference.
+    function getPresalePrice() external view returns (uint256) {
+        return _readPresalePrice();
+    }
+
+    function getPresaleSoldATH() external view returns (uint256) {
+        return presalePriceSource.totalSoldATH();
+    }
+
+    function getPresaleRemainingATH() external view returns (uint256) {
+        return presalePriceSource.remainingATH();
+    }
+
+    /// @notice Live market price may be exposed before official listing without changing
+    ///         the official Presale-linked reference price.
     function getMarketPrice() external view returns (uint256) {
         return _readMarketPrice();
     }
@@ -73,6 +101,11 @@ contract ATHPriceRegistry is Ownable {
         priceMode = PriceMode.MARKET;
 
         emit OfficialListingActivated(recordedHolderCount, address(marketPriceOracle), marketPrice);
+    }
+
+    function _readPresalePrice() internal view returns (uint256 price) {
+        price = presalePriceSource.currentPriceUSD8();
+        require(price >= PRESALE_START_PRICE && price <= PRESALE_FINAL_PRICE, "invalid presale price");
     }
 
     function _readMarketPrice() internal view returns (uint256 price) {
