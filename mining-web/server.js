@@ -1,12 +1,121 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+const { verifyMessage, isAddress, getAddress } = require("ethers");
 const { streamWhitepaper } = require("./whitepaper");
 const { answerQuestion, cleanQuestion } = require("./assistant");
 
 const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = path.join(__dirname, "public");
 const aiRate = new Map();
+const adminAuthRate = new Map();
+const adminChallenges = new Map();
+const adminSessions = new Map();
+const ADMIN_CHALLENGE_TTL_MS = 5 * 60 * 1000;
+const ADMIN_SESSION_TTL_MS = 30 * 60 * 1000;
+const ADMIN_SESSION_COOKIE = "ath_admin_session";
+
+function adminRoleAddress(role) {
+  const envByRole = {
+    mining: "MINING_OWNER_ADDRESS",
+    staking: "STAKING_OWNER_ADDRESS",
+    presale: "PRESALE_OWNER_ADDRESS",
+  };
+  const envName = envByRole[role];
+  return envName ? String(process.env[envName] || "").trim() : "";
+}
+
+function adminRoleLabel(role) {
+  return {
+    mining: "Mining Control",
+    staking: "Staking Control",
+    presale: "Token & Presale Control",
+  }[role] || "Admin Control";
+}
+
+function authAllowed(req) {
+  const key = clientIp(req);
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const max = 12;
+  const state = adminAuthRate.get(key) || { start: now, count: 0 };
+  if (now - state.start >= windowMs) {
+    state.start = now;
+    state.count = 0;
+  }
+  state.count += 1;
+  adminAuthRate.set(key, state);
+  return state.count <= max;
+}
+
+function parseCookies(req) {
+  const out = {};
+  String(req.headers.cookie || "").split(";").forEach((part) => {
+    const i = part.indexOf("=");
+    if (i <= 0) return;
+    out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  });
+  return out;
+}
+
+function pruneAdminAuth() {
+  const now = Date.now();
+  for (const [key, value] of adminChallenges) if (value.expiresAt <= now) adminChallenges.delete(key);
+  for (const [key, value] of adminSessions) if (value.expiresAt <= now) adminSessions.delete(key);
+}
+
+function getAdminSession(req) {
+  pruneAdminAuth();
+  const id = parseCookies(req)[ADMIN_SESSION_COOKIE];
+  if (!id) return null;
+  const session = adminSessions.get(id);
+  if (!session || session.expiresAt <= Date.now()) {
+    if (id) adminSessions.delete(id);
+    return null;
+  }
+  return { id, ...session };
+}
+
+function adminPublicConfig() {
+  const cfg = configPayload();
+  return {
+    appName: cfg.appName,
+    networkMode: cfg.networkMode,
+    chainId: cfg.chainId,
+    chainName: cfg.chainName,
+    rpcUrl: cfg.rpcUrl,
+    explorerUrl: cfg.explorerUrl,
+    walletGate: true,
+  };
+}
+
+function adminConfigForSession(session) {
+  const cfg = configPayload();
+  return {
+    ...cfg,
+    adminRole: session.role,
+    adminRoleLabel: adminRoleLabel(session.role),
+    authenticatedAddress: session.address,
+    expectedMiningAdmin: session.role === "mining" ? cfg.expectedMiningAdmin : "",
+    expectedMiningTreasury: session.role === "mining" ? cfg.expectedMiningTreasury : "",
+    expectedStakingAdmin: session.role === "staking" ? cfg.expectedStakingAdmin : "",
+    expectedKeeperWallet: session.role === "staking" ? cfg.expectedKeeperWallet : "",
+    expectedPresaleAdmin: session.role === "presale" ? cfg.expectedPresaleAdmin : "",
+    expectedPresaleTreasury: session.role === "presale" ? cfg.expectedPresaleTreasury : "",
+  };
+}
+
+function sameOriginAdmin(req) {
+  const origin = String(req.headers.origin || "");
+  if (!origin) return true;
+  try {
+    const u = new URL(origin);
+    return u.hostname.toLowerCase() === "pm.aether.boats";
+  } catch {
+    return false;
+  }
+}
 
 function clientIp(req) {
   return String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown")
@@ -131,13 +240,14 @@ function baseSecurityHeaders(controlPanelHost = false) {
   return headers;
 }
 
-function send(res, status, body, type, controlPanelHost = false) {
+function send(res, status, body, type, controlPanelHost = false, extraHeaders = {}) {
   res.writeHead(status, {
     "content-type": type,
     "cache-control": type.includes("html") || type.includes("json")
       ? "no-store"
       : "public, max-age=300",
     ...baseSecurityHeaders(controlPanelHost),
+    ...extraHeaders,
   });
   res.end(body);
 }
@@ -147,8 +257,11 @@ function isControlPanelHost(req) {
   return host === "pm.aether.boats";
 }
 
-const ADMIN_PUBLIC_FILES = new Set(["/admin", "/admin/", "/admin.html", "/admin.js", "/admin.css"]);
-const CONTROL_PANEL_ALLOWED_FILES = new Set(["/", "/admin", "/admin/", "/admin.html", "/admin.js", "/admin.css", "/favicon.ico"]);
+const ADMIN_PUBLIC_FILES = new Set(["/admin", "/admin/", "/admin.html", "/admin.js", "/admin-login.html", "/admin-login.js", "/admin.css"]);
+const CONTROL_PANEL_ALLOWED_FILES = new Set([
+  "/", "/admin", "/admin/", "/admin.html", "/admin.js",
+  "/admin-login.html", "/admin-login.js", "/admin.css", "/favicon.ico"
+]);
 
 function safePublicPath(urlPath, controlPanelHost = false) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
@@ -157,9 +270,16 @@ function safePublicPath(urlPath, controlPanelHost = false) {
   if (!controlPanelHost && ADMIN_PUBLIC_FILES.has(normalized)) return null;
   if (controlPanelHost && !CONTROL_PANEL_ALLOWED_FILES.has(normalized)) return null;
 
-  const relative = normalized === "/" || normalized === "/admin" || normalized === "/admin/"
-    ? (controlPanelHost ? "admin.html" : "index.html")
-    : normalized.replace(/^\//, "");
+  let relative;
+  if (controlPanelHost && normalized === "/") {
+    relative = "admin-login.html";
+  } else if (controlPanelHost && (normalized === "/admin" || normalized === "/admin/")) {
+    relative = "admin.html";
+  } else if (!controlPanelHost && (normalized === "/" || normalized === "/admin" || normalized === "/admin/")) {
+    relative = "index.html";
+  } else {
+    relative = normalized.replace(/^\//, "");
+  }
   const full = path.join(PUBLIC_DIR, relative);
   if (!full.startsWith(PUBLIC_DIR)) return null;
   return full;
@@ -169,15 +289,152 @@ const server = http.createServer((req, res) => {
   const controlPanelHost = isControlPanelHost(req);
   const requestPath = String(req.url || "/").split("?")[0];
   const controlPanelAllowedRequest = new Set([
-    "/", "/admin", "/admin/", "/admin.html", "/admin.js", "/admin.css",
+    "/", "/admin", "/admin/", "/admin.html", "/admin.js",
+    "/admin-login.html", "/admin-login.js", "/admin.css",
     "/config", "/health", "/favicon.ico",
+    "/api/admin/challenge", "/api/admin/verify", "/api/admin/session",
+    "/api/admin/config", "/api/admin/logout",
   ]);
 
   if (controlPanelHost && !controlPanelAllowedRequest.has(requestPath)) {
     return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
   }
 
+  if (controlPanelHost && requestPath === "/api/admin/challenge" && req.method === "GET") {
+    if (!authAllowed(req)) {
+      return send(res, 429, JSON.stringify({ ok: false, error: "Too many authentication attempts." }), MIME[".json"], true);
+    }
+    const url = new URL(req.url, "https://pm.aether.boats");
+    const role = String(url.searchParams.get("role") || "").toLowerCase();
+    const rawAddress = String(url.searchParams.get("address") || "");
+    const expected = adminRoleAddress(role);
+    if (!expected || !isAddress(expected) || !isAddress(rawAddress) || getAddress(rawAddress) !== getAddress(expected)) {
+      return send(res, 403, JSON.stringify({ ok: false, error: "Wallet not authorized for the selected admin role." }), MIME[".json"], true);
+    }
+    pruneAdminAuth();
+    const nonce = crypto.randomBytes(24).toString("hex");
+    const expiresAt = Date.now() + ADMIN_CHALLENGE_TTL_MS;
+    const address = getAddress(rawAddress);
+    const message = [
+      "AETHER ATH Admin Authentication",
+      "Domain: pm.aether.boats",
+      "Role: " + adminRoleLabel(role),
+      "Address: " + address,
+      "Chain ID: " + configPayload().chainId,
+      "Nonce: " + nonce,
+      "Expires: " + new Date(expiresAt).toISOString(),
+      "",
+      "Sign this message only to authenticate to the AETHER Control Panel.",
+      "This signature does not authorize a blockchain transaction.",
+    ].join("\n");
+    adminChallenges.set(nonce, { role, address, message, expiresAt });
+    return send(res, 200, JSON.stringify({ ok: true, nonce, message, expiresAt }), MIME[".json"], true);
+  }
+
+  if (controlPanelHost && requestPath === "/api/admin/verify" && req.method === "POST") {
+    if (!sameOriginAdmin(req)) {
+      return send(res, 403, JSON.stringify({ ok: false, error: "Invalid request origin." }), MIME[".json"], true);
+    }
+    if (!authAllowed(req)) {
+      return send(res, 429, JSON.stringify({ ok: false, error: "Too many authentication attempts." }), MIME[".json"], true);
+    }
+    return readJson(req, 12 * 1024)
+      .then((body) => {
+        pruneAdminAuth();
+        const role = String(body?.role || "").toLowerCase();
+        const nonce = String(body?.nonce || "");
+        const signature = String(body?.signature || "");
+        const rawAddress = String(body?.address || "");
+        const challenge = adminChallenges.get(nonce);
+        adminChallenges.delete(nonce);
+        if (!challenge || challenge.expiresAt <= Date.now() || challenge.role !== role || !isAddress(rawAddress)) {
+          throw new Error("Invalid or expired authentication challenge.");
+        }
+        const address = getAddress(rawAddress);
+        const expected = adminRoleAddress(role);
+        if (!expected || getAddress(expected) !== address || challenge.address !== address) {
+          throw new Error("Wallet not authorized for the selected admin role.");
+        }
+        const recovered = getAddress(verifyMessage(challenge.message, signature));
+        if (recovered !== address) throw new Error("Wallet signature verification failed.");
+
+        const sessionId = crypto.randomBytes(32).toString("hex");
+        const expiresAt = Date.now() + ADMIN_SESSION_TTL_MS;
+        adminSessions.set(sessionId, { role, address, expiresAt });
+        const cookie = [
+          ADMIN_SESSION_COOKIE + "=" + sessionId,
+          "HttpOnly",
+          "Secure",
+          "SameSite=Strict",
+          "Path=/",
+          "Max-Age=" + Math.floor(ADMIN_SESSION_TTL_MS / 1000),
+        ].join("; ");
+        return send(
+          res,
+          200,
+          JSON.stringify({ ok: true, role, roleLabel: adminRoleLabel(role), expiresAt }),
+          MIME[".json"],
+          true,
+          { "set-cookie": cookie }
+        );
+      })
+      .catch((error) =>
+        send(res, 403, JSON.stringify({ ok: false, error: error.message || "Authentication failed." }), MIME[".json"], true)
+      );
+  }
+
+  if (controlPanelHost && requestPath === "/api/admin/session" && req.method === "GET") {
+    const session = getAdminSession(req);
+    return send(
+      res,
+      session ? 200 : 401,
+      JSON.stringify(session
+        ? { ok: true, role: session.role, roleLabel: adminRoleLabel(session.role), address: session.address, expiresAt: session.expiresAt }
+        : { ok: false, error: "No active admin session." }),
+      MIME[".json"],
+      true
+    );
+  }
+
+  if (controlPanelHost && requestPath === "/api/admin/config" && req.method === "GET") {
+    const session = getAdminSession(req);
+    if (!session) {
+      return send(res, 401, JSON.stringify({ ok: false, error: "Admin wallet authentication required." }), MIME[".json"], true);
+    }
+    return send(res, 200, JSON.stringify(adminConfigForSession(session)), MIME[".json"], true);
+  }
+
+  if (controlPanelHost && requestPath === "/api/admin/logout" && req.method === "POST") {
+    if (!sameOriginAdmin(req)) {
+      return send(res, 403, JSON.stringify({ ok: false, error: "Invalid request origin." }), MIME[".json"], true);
+    }
+    const session = getAdminSession(req);
+    if (session) adminSessions.delete(session.id);
+    return send(
+      res,
+      200,
+      JSON.stringify({ ok: true }),
+      MIME[".json"],
+      true,
+      { "set-cookie": ADMIN_SESSION_COOKIE + "=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0" }
+    );
+  }
+
+  if (controlPanelHost && ["/admin", "/admin/", "/admin.html", "/admin.js"].includes(requestPath)) {
+    const session = getAdminSession(req);
+    if (!session) {
+      if (requestPath === "/admin.js") {
+        return send(res, 401, "Authentication required", "text/plain; charset=utf-8", true);
+      }
+      res.writeHead(302, { location: "/", "cache-control": "no-store", ...baseSecurityHeaders(true) });
+      return res.end();
+    }
+  }
+
   if (req.url === "/health") {
+    if (controlPanelHost) {
+      return send(res, 200, JSON.stringify({ ok: true, service: "aether-ath-control-gate" }), MIME[".json"], true);
+    }
     const cfg = configPayload();
     return send(
       res,
@@ -255,7 +512,13 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === "/config") {
-    return send(res, 200, JSON.stringify(configPayload()), MIME[".json"], controlPanelHost);
+    return send(
+      res,
+      200,
+      JSON.stringify(controlPanelHost ? adminPublicConfig() : configPayload()),
+      MIME[".json"],
+      controlPanelHost
+    );
   }
 
   const full = safePublicPath(req.url || "/", controlPanelHost);
