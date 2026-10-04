@@ -489,6 +489,17 @@ describe("AETHER ATH Staking v1", function () {
     expect(afterInfo.totalSalaryPaidUSDT).to.equal(ethers.parseEther("25"));
     expect(afterInfo.totalSalaryPaidATH).to.equal(expectedSalaryATH);
     expect(afterInfo.nextPayoutAt).to.equal(info.nextPayoutAt + BigInt(7 * DAY));
+
+    expect(await staking.totalRankSalaryPayments()).to.equal(1n);
+    const history = await staking.getRankSalaryPayments(0, 200);
+    expect(history.length).to.equal(1);
+    expect(history[0].account).to.equal(user.address);
+    expect(history[0].payableRank).to.equal(1n);
+    expect(history[0].periodsPaid).to.equal(1n);
+    expect(history[0].salaryUSDT).to.equal(ethers.parseEther("25"));
+    expect(history[0].salaryATH).to.equal(expectedSalaryATH);
+    expect(history[0].priceUSD8).to.equal(PRICE_007);
+    expect(history[0].nextPayoutAt).to.equal(afterInfo.nextPayoutAt);
   });
 
   it("keeps Rank Salary lifetime after staking principal is withdrawn", async function () {
