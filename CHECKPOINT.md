@@ -42,7 +42,7 @@ This section supersedes every older note that treated the 10% Direct Referral an
 
 
 
-## 2026-10-04 RANK SPONSOR BONUS PASS-UP LOCK — CURRENT SOURCE OF TRUTH
+## 2026-10-04 RANK REFERRAL PASS-UP — HISTORICAL / SUPERSEDED
 
 This section supersedes older Rank/network notes where Rank Sponsor Bonus was not yet present.
 
@@ -55,20 +55,20 @@ This section supersedes older Rank/network notes where Rank Sponsor Bonus was no
   - Rank 6: $250,000 · $2,000/week · **28%**
   - Rank 7: $500,000 · $5,000/week · **31%**
   - Rank 8: $1,000,000 · $10,000/week · **35%**
-- Rank Sponsor Bonus is an **additional sponsor incentive** on a personally sponsored Staking principal transaction. The existing **10% Direct Referral remains separate**.
-- Rank Sponsor Bonus uses **differential pass-up**, not additive full-rate stacking. Example: R1 gets 13%; the next eligible R2 receives only +3%; R3 receives only +3%; ... R8 receives only the remaining differential up to the 35% ceiling.
-- The total Rank Sponsor Bonus for one sponsored stake therefore can never exceed the **Rank 8 ceiling of 35%**.
+- **SUPERSEDED:** Direct Referral and Rank Referral are one unified payout path. Unranked direct sponsor receives 10% total; ranked sponsor receives the locked total for its Rank (13%–35%), already including the common 10% base.
+- The Rank component uses **differential pass-up** within the same Direct Referral path. Example: R1 direct sponsor receives 13% total; a higher R2 upline receives only the +3% differential needed to bring the cumulative path to 16%.
+- The **entire Direct Referral path**, including the common 10% base and every Rank differential, can never exceed the **Rank 8 total ceiling of 35%**.
 - Only a Rank that existed **before the sponsored stake** is eligible for that transaction. A Rank achieved because of that same stake is not retroactively entitled to Rank Sponsor Bonus on that stake.
 - Unranked or lower-Rank uplines are skipped; pass-up continues until a higher Rank is found.
 - **Same Rank Break:** when the pass-up path encounters the same Rank as the highest Rank already paid in that path, Rank Sponsor pass-up stops immediately and no higher upline receives further Rank Sponsor Bonus for that stake.
-- Rank Sponsor Bonus is paid from the protected **50M ATH Marketing / Network Reserve**, together with Direct Referral, L1-L10 Network Bonus and lifetime Rank Salary. It never consumes principal or the 160M Daily Reward Reserve.
+- Unified Direct Referral / Rank uplift is paid from the protected **50M ATH Marketing / Network Reserve**, together with L1-L10 Network Bonus and lifetime Rank Salary. It never consumes principal or the 160M Daily Reward Reserve.
 - On-chain evidence:
   - `RankSponsorBonusPaid`
   - `RankSponsorSameRankBreak`
   - `rankSponsorEarnedATH(account)`
   - `totalRankSponsorPaidATH`
   - `previewRankSponsorBonus(sourceUser, principalATH)`
-- Control Panel now shows the complete 13/16/19/22/25/28/31/35% ladder and cumulative Rank Sponsor Bonus paid.
+- Control Panel shows the complete **Direct Referral total-rate ladder** 13/16/19/22/25/28/31/35%, the total paid to direct sponsors, and the Rank uplift component for audit.
 - Core validator deployment `429d43e7-37ee-4888-b321-ba2589c2dca5`: **SUCCESS**.
 - Validator evidence: **28 Solidity files compiled, 68/68 tests PASS, ABI export PASS, local release rehearsal PASS**.
 - Control Panel deployment `d35e796e-51f3-480b-b7e3-1a0a4e1c2f4f`: **SUCCESS**, healthcheck PASS, multilingual QC PASS.
@@ -86,10 +86,10 @@ This section supersedes older Staking timing / reserve-source / Control Panel no
 - On-chain daily reward accounting is aligned to discrete 00:50 UTC slots; holder self-claim remains available.
 - Permissionless `processDailyReward` and bounded `processDailyRewardBatch` allow the dedicated keeper to settle due holder rewards at 00:50 UTC.
 - **L1-L10 Network Bonus is real-time on the reward-settlement transaction**; it is transferred to each upline in the same transaction that pays the downline's due Staking reward.
-- **Direct Referral 10% remains real-time at stake creation.**
+- **Unified Direct Referral remains real-time at stake creation:** 10% total when unranked, or the applicable 13%–35% total when the direct sponsor already has a Rank.
 - Rank Salary remains the separately locked **weekly 00:30 UTC** schedule, first eligible after at least 7 full days from qualification, and is **lifetime** after Rank qualification.
 - Daily Staking reward uses only the protected **160M ATH Reward Reserve**.
-- Direct Referral + L1-L10 Network Bonus + Rank Salary use only the protected **50M ATH Marketing / Network Reserve**.
+- Unified Direct Referral / Rank uplift + L1-L10 Network Bonus + Rank Salary use only the protected **50M ATH Marketing / Network Reserve**.
 - Principal liability remains separate and cannot be used to pay rewards or bonuses.
 - Dedicated Railway cron service `ath-staking-reward-keeper`: schedule **`50 0 * * *`**, current state **cronReady**, latest deployment **SUCCESS** (`a94cd90d-fc4e-4c9c-b577-e2d7f62b11bc`).
 - The Staking reward keeper remains **fail-closed** while Testnet contracts are undeployed: `STAKING_REWARD_KEEPER_ENABLED=false`, dry-run support enabled, no keeper private key / deployed Staking address required until Testnet activation.
@@ -126,7 +126,7 @@ This section supersedes older Staking timing / reserve-source / Control Panel no
 - ABI export: **PASS**.
 - Local Mining + Presale + Staking release rehearsal: **PASS**.
 - Mainnet gates remain **CLOSED** and no public-chain contract deployment transaction was executed during this QC.
-- Staking direct referral: **10% of ATH principal on each successful stake**, paid from Staking reward reserve.
+- Historical baseline note: unranked Direct Referral is **10% total**. Current ranked Direct Referral uses the unified 10%–35% total-rate path and is paid from the protected 50M Marketing / Network Reserve.
 - Staking daily network reward: **L1 8%, L2 5%, L3 3%, L4 2%, L5 1%, L6-L10 0.5% each**; full 10-level payout matrix now has end-to-end automated coverage.
 - Maximum full 10-level network payout = **21.5% of the downline's claimed Staking reward**, paid from reward reserve.
 - Rank requirement: **minimum 5 direct sponsors** plus dynamic small-leg turnover.
@@ -256,7 +256,7 @@ This section is the current source of truth and supersedes older $0.10 / fixed-$
 - `ATHStakingPriceOracle` now reads `ATHPriceRegistry`, while Mining also reads the same registry so both modules share one price source.
 - Added contracts: `ATHStaking.sol`, `ATHStakingPriceOracle.sol`, `ATHDevelopmentVesting.sol`.
 - Staking packages: Starter 0.35%/180d, Basic 0.45%/180d, Silver 0.55%/365d, Gold 0.65%/365d, Platinum 0.75%/730d, Diamond 0.85%/730d.
-- Direct referral: 10%; network reward: 10 levels (8%, 5%, 3%, 2%, 1%, then 0.5% for Levels 6–10).
+- Direct Referral baseline: 10% total when unranked; ranked Direct Referral uses the current unified 13%–35% total-rate ladder. Network reward remains 10 levels (8%, 5%, 3%, 2%, 1%, then 0.5% for Levels 6–10).
 - Staking principal liability is separated from the 160M reward reserve; referral/network rewards cannot consume protected principal.
 - Existing stake economics are snapshotted; later package edits cannot rewrite existing rate/lock terms.
 - Development Vesting: 30M ATH, 2-month cliff, 33 active vesting months; final month settles exactly 100% with no stranded 1% residual.
