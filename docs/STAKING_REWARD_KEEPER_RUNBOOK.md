@@ -6,7 +6,7 @@ The Staking Reward Keeper settles due holder rewards at the fixed **00:50 UTC da
 
 When it settles a due reward:
 - holder Daily Staking Reward is paid from the protected **160M Daily Reward Reserve**;
-- L1–L10 Network Bonus is paid in the same transaction from the protected **50M Marketing / Network Reserve**.
+- L1–L10 Lifestyle Bonus / Matching Staking is paid in the same transaction from the protected **50M Marketing / Network Reserve**.
 
 Holder self-settlement remains available as a fallback.
 
