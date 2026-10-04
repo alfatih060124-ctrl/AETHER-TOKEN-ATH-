@@ -367,7 +367,10 @@ console.log("OK: runtime dependency audit is locked to production tree");
 
 must(noBnbCompletionDoc, /00:50 UTC daily slot/, "No-BNB register documents Staking 00:50 reward");
 must(noBnbCompletionDoc, /Same Rank = skip, not stop/, "No-BNB register documents Same-Rank Skip");
-must(noBnbCompletionDoc, /69 passing/, "No-BNB register carries current automated test count");
+must(noBnbCompletionDoc, /70 passing/, "No-BNB register carries current automated test count");
+must(noBnbCompletionDoc, /Lifestyle Bonus \/ Matching Staking/, "No-BNB register uses the official Lifestyle Bonus / Matching Staking name");
+must(testnetChecklistDoc, /Lifestyle Bonus \/ Matching Staking/, "Testnet checklist uses the official Lifestyle Bonus / Matching Staking name");
+must(stakingKeeperRunbookDoc, /Lifestyle Bonus \/ Matching Staking/, "Staking keeper runbook uses the official Lifestyle Bonus / Matching Staking name");
 must(testnetChecklistDoc, /Mining allocation = 700,000,000 ATH/, "Testnet checklist carries current Mining allocation");
 must(testnetChecklistDoc, /Staking ecosystem allocation = 300,000,000 ATH/, "Testnet checklist carries current Staking ecosystem allocation");
 must(testnetChecklistDoc, /Daily base reward = 10 ATH/, "Testnet checklist carries current Mining reward");
