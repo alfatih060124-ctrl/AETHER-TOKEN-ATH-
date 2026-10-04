@@ -262,10 +262,12 @@ must(deploy, /parseEther\("20000000"\)/, "Deployment contains 20M Staking liquid
 must(deploy, /parseEther\("10000000"\)/, "Deployment contains 10M Staking reserve allocation");
 must(deploy, /stakingBreakdown\s*!==\s*stakingEcosystem/, "Deployment asserts 300M Staking conservation");
 must(preflight, /MINING_OWNER_ADDRESS/, "Preflight requires dedicated Mining owner");
+must(preflight, /MINING_TREASURY_ADDRESS/, "Preflight requires dedicated Mining treasury");
 must(preflight, /STAKING_OWNER_ADDRESS/, "Preflight requires dedicated Staking owner");
 must(preflight, /PRESALE_OWNER_ADDRESS/, "Preflight requires dedicated Presale\/Token owner");
 must(preflight, /KEEPER_WALLET_ADDRESS/, "Preflight requires dedicated Keeper wallet");
-must(deploy, /MiningAirdrop\.deploy\(tokenAddress, treasury, priceRegistryAddress, miningOwner\)/, "Deployment assigns Mining to Mining Admin");
+must(deploy, /const treasury = roleAddress\("MINING_TREASURY_ADDRESS"\)/, "Deployment reads dedicated Mining Treasury");
+must(deploy, /MiningAirdrop\.deploy\(tokenAddress, treasury, priceRegistryAddress, miningOwner\)/, "Deployment assigns Mining owner and treasury separately");
 must(deploy, /ATHStaking[\s\S]*Staking\.deploy\(tokenAddress, oracleAddress, stakingOwner\)/, "Deployment assigns Staking to Staking Admin");
 must(deploy, /presaleWallet,\s*presaleOwner/, "Deployment assigns Presale to Presale Admin");
 must(deploy, /token\.transferOwnership\(tokenOwner\)/, "ATH Token ownership is transferred to Token\/Presale Admin");
@@ -284,6 +286,7 @@ must(preflight, /DEVELOPMENT_BENEFICIARY/, "Preflight requires Development benef
 
 for (const name of [
   "MINING_OWNER_ADDRESS",
+  "MINING_TREASURY_ADDRESS",
   "STAKING_OWNER_ADDRESS",
   "PRESALE_OWNER_ADDRESS",
   "KEEPER_WALLET_ADDRESS",
