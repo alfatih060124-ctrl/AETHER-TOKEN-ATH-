@@ -1,6 +1,29 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 CONTROL PANEL WORKSPACE SEPARATION — CURRENT SOURCE OF TRUTH
+
+- Control Panel is now separated into four explicit operator workspaces:
+  - **Overview** — read-only global metrics + tokenomics.
+  - **Mining Control** — Mining emergency control, treasury, Booster pricing, Mining reserve safety and Mining event history only.
+  - **Staking Control** — Staking reserve, packages, Direct Referral / Rank rules, Rank payout queue, network legs, Rank Salary history and Staking analytics only.
+  - **Token & Presale** — ATH Token transfer safety, Presale controls and Team Lock only.
+- Selecting one workspace hides every control zone belonging to the other engines.
+- Mining controls and Staking controls are never displayed in the same operational workspace.
+- The operator's last selected workspace is stored locally and restored on the next Control Panel visit.
+- Keyboard left/right/home/end navigation is supported for the workspace tabs.
+- Mobile layout collapses the workspace switcher from 4 columns -> 2 columns -> 1 column.
+- Static QC: **114 unique DOM IDs, 0 duplicate IDs**.
+- Zone inventory: Overview 2 zones, Mining 5 zones, Staking 6 zones, Token/Presale/System 4 zones.
+- Source gate now fails if dedicated Mining/Staking/system workspace markers or hide/show switching logic disappear.
+- Control Panel deployment `2a8b938d-9261-41a0-bf2a-264dbe540a32`: **SUCCESS**, healthcheck PASS, multilingual QC **259 keys across 9 translated languages + English**.
+- Core validator deployment `c418b11e-693f-424c-8bb5-c2e234c38fc5`: **SUCCESS**.
+- Validator evidence remains **28 Solidity files compiled, 69/69 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- No Mining or Staking smart-contract business logic was changed by this UI separation.
+- Runtime remains TESTNET / fail-closed; Mainnet CLOSED.
+
+
+
 ## 2026-10-04 SAME-RANK SKIP CLARIFICATION — CURRENT SOURCE OF TRUTH
 
 This section supersedes every older note that said Same Rank stops the entire pass-up path.
