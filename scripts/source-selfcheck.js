@@ -165,6 +165,11 @@ must(adminHtml, /Find contract owner by Contract ID/, "Control Panel separates C
 must(adminWeb, /function stakingPackageName\(/, "Control Panel names Starter through Diamond packages");
 must(adminWeb, /getPackageContractStats/, "Control Panel reads per-package ACTIVE and N-ACTIVE statistics");
 must(adminWeb, /getStakingContract\(id\)/, "Control Panel looks up member contracts by Contract ID");
+must(adminHtml, /STAKING MEMBERS/, "Control Panel exposes the Staking member directory");
+must(adminWeb, /getStakingMembers/, "Control Panel pages the on-chain Staking member registry");
+must(adminWeb, /activeContractCountByMember/, "Control Panel shows ACTIVE contract count per member");
+must(adminWeb, /stakeCount\(member\)/, "Control Panel shows total contracts per member");
+must(adminWeb, /userInfo\(member\)/, "Control Panel shows active stake and referrer detail per member");
 must(stakingRewardKeeper, /STAKING_REWARD_KEEPER_ENABLED/, "Staking reward keeper is fail-closed");
 must(stakingRewardKeeper, /00:50 UTC daily/, "Staking reward keeper targets the 00:50 UTC schedule");
 must(stakingRewardKeeper, /processDailyRewardBatch/, "Staking reward keeper uses on-chain batch settlement");
