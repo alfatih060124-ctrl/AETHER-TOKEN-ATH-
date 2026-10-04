@@ -206,12 +206,12 @@ async function main() {
 
   await (await token.transfer(miningAddress, miningAllocation)).wait();
 
-  await (await token.approve(stakingAddress, stakingRewardPool)).wait();
+  await (await token.approve(stakingAddress, stakingRewardPool + stakingMarketing)).wait();
   await (await staking.fundRewards(stakingRewardPool)).wait();
+  await (await staking.fundNetworkReserve(stakingMarketing)).wait();
 
   await (await token.transfer(developmentVestingAddress, stakingDevelopment)).wait();
   await (await token.transfer(presaleAddress, stakingPresale)).wait();
-  await (await token.transfer(marketingWallet, stakingMarketing)).wait();
   await (await token.transfer(liquidityWallet, stakingLiquidity)).wait();
   await (await token.transfer(stakingReserveWallet, stakingReserve)).wait();
 
@@ -220,7 +220,6 @@ async function main() {
     const key = address.toLowerCase();
     expectedByAddress.set(key, (expectedByAddress.get(key) || 0n) + amount);
   }
-  addExpected(marketingWallet, stakingMarketing);
   addExpected(liquidityWallet, stakingLiquidity);
   addExpected(stakingReserveWallet, stakingReserve);
 
@@ -237,6 +236,12 @@ async function main() {
   }
   if ((await staking.rewardReserveATH()) !== stakingRewardPool) {
     throw new Error("Staking reward reserve is not exactly 160M ATH");
+  }
+  if ((await staking.networkReserveATH()) !== stakingMarketing) {
+    throw new Error("Staking network/marketing reserve is not exactly 50M ATH");
+  }
+  if ((await staking.totalNetworkFundedATH()) !== stakingMarketing) {
+    throw new Error("Staking network funding ledger is not exactly 50M ATH");
   }
   if ((await token.balanceOf(developmentVestingAddress)) !== stakingDevelopment) {
     throw new Error("Development vesting is not exactly 30M ATH");
@@ -305,7 +310,7 @@ async function main() {
       stakingBreakdown: {
         rewardPool: "160000000",
         presale: "30000000",
-        marketing: "50000000",
+        marketingNetworkReserve: "50000000",
         developmentVesting: "30000000",
         liquidity: "20000000",
         reserve: "10000000",
@@ -349,6 +354,8 @@ async function main() {
       rankWeeklySalaryUSDT: [25, 75, 200, 500, 1000, 2000, 5000, 10000],
       rankPayoutUtc: "00:30",
       rankFirstPayoutDelayDays: 7,
+      rankSalaryDuration: "LIFETIME",
+      networkingBonusSource: "50M_MARKETING_NETWORK_RESERVE",
     },
     miningRules: {
       baseRewardATH: "10",
