@@ -57,6 +57,23 @@ This section is the current source of truth and supersedes older $0.10 / fixed-$
 - Latest core validation before web/docs sync: **28 Solidity files compiled, 56/56 tests PASS, ABI export PASS, local release rehearsal PASS**.
 - Mainnet remains **CLOSED**; no blockchain deployment transaction was executed by this revision.
 
+### 2026-10-04 FINAL NETWORK FUNDING LOCK
+
+- **All Staking networking bonuses are funded from the existing 50,000,000 ATH Marketing allocation.**
+- The 50M Marketing allocation is no longer transferred to a standalone marketing wallet; it is funded directly into the protected on-chain `networkReserveATH`.
+- `rewardReserveATH` remains capped at **160,000,000 ATH** and is used only for the daily Staking reward.
+- `networkReserveATH` is capped at **50,000,000 ATH** and funds:
+  - Direct Referral Bonus 10%.
+  - Network Bonus Levels 1–10.
+  - Rank Salary.
+- Principal liability, 160M daily reward reserve, and 50M network reserve are protected separately from excess recovery.
+- Rank Salary is **LIFETIME after qualification**. Rank does not expire and withdrawing Staking principal does not cancel an already achieved Rank.
+- Unpaid Rank Salary periods do not expire. If the network reserve is temporarily insufficient, `nextPayoutAt` is not advanced; the unpaid salary remains due and can be processed later.
+- Rank Salary remains USD-denominated and is converted to ATH at the Presale-linked ATH price at the time of settlement.
+- Mining referral mechanics remain part of the locked 700M Mining engine and are not changed by this Staking-network funding revision.
+- Latest automated gate after this revision: **63/63 tests PASS**, Solidity compile PASS, ABI export PASS, local release rehearsal PASS.
+- Mainnet remains **CLOSED** and no blockchain deployment transaction was executed by this revision.
+
 ### 2026-10-04 NETWORK BONUS AUDIT / QC
 
 - Full Networking QC matrix on current HEAD: **61/61 tests PASS**.
@@ -78,8 +95,8 @@ This section is the current source of truth and supersedes older $0.10 / fixed-$
 
 - Rank is currently **monotonic/permanent once achieved**; withdrawing staking principal or later network inactivity does not reduce Rank.
 - Rank salary has **no end date** in the current contract; once qualified, weekly salary remains due indefinitely unless the contract is paused or reserve becomes insufficient.
-- Direct referral, daily Staking reward, 10-level Network reward and Rank salary all draw from the **same 160M ATH reward reserve**.
-- Therefore “fixed/guaranteed salary” is currently guaranteed only as a **fixed USD entitlement calculation**, not as an escrowed liquidity guarantee. If `rewardReserveATH` is insufficient, Rank salary settlement reverts with `insufficient rank reserve` and waits for sufficient reserve.
+- **SUPERSEDED:** Daily Staking reward uses the 160M Reward Reserve, while Direct Referral, 10-level Network Bonus and Rank Salary use the separate 50M Marketing / Network Reserve.
+- Rank Salary is a **lifetime USD-denominated entitlement calculation** and is settled only from the 50M Marketing / Network Reserve. If that reserve is temporarily insufficient, unpaid periods remain due rather than being cancelled.
 - The 160M reward funding cap is cumulative. Once the full 160M has been funded, the current contract cannot top the reward pool above that ecosystem allocation.
 - Higher Rank upgrades require their own 7-day maturity, but payout remains aligned to the account's existing weekly 00:30 schedule; the upgraded salary may therefore begin on the next existing weekly slot after its 7-day maturity rather than resetting a new weekly calendar.
 
