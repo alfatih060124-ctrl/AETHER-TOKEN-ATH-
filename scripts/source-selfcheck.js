@@ -272,9 +272,17 @@ must(adminWeb, /requiredPresaleAdmin/, "Control Panel binds expected Token\/Pres
 must(adminLoginHtml, /Connect Wallet Mining/, "Public admin gate exposes only Mining wallet login");
 must(adminLoginHtml, /Connect Wallet Staking/, "Public admin gate exposes only Staking wallet login");
 must(adminLoginHtml, /Connect Wallet Presale/, "Public admin gate exposes only Presale wallet login");
-must(adminLoginWeb, /signMessage\(challenge\.message\)/, "Admin login requires wallet signature");
+must(adminLoginWeb, /method:"personal_sign"/, "Admin login requires native wallet personal_sign");
+must(adminLoginWeb, /utf8ToHex\(message\)/, "Admin login signs the exact UTF-8 authentication challenge");
+mustNot(adminLoginWeb, /\bethers\b/, "Admin login must not depend on the ethers browser library");
 mustNot(adminLoginWeb, /wallet_switchEthereumChain/, "Admin authentication must not force a blockchain network switch");
 mustNot(adminLoginWeb, /wallet_addEthereumChain/, "Admin authentication must not require adding a blockchain network");
+mustNot(adminLoginHtml, /cdn\.jsdelivr\.net/, "Admin login must not depend on an external ethers CDN");
+must(adminHtml, /\/vendor\/ethers\.umd\.min\.js/, "Authenticated Control Panel loads ethers from same-origin");
+mustNot(adminHtml, /cdn\.jsdelivr\.net/, "Authenticated Control Panel must not depend on an external ethers CDN");
+must(webServer, /ETHERS_BROWSER_BUNDLE/, "Web server resolves the installed local ethers browser bundle");
+must(webServer, /requestPath === "\/vendor\/ethers\.umd\.min\.js"/, "Control Panel serves the local ethers browser bundle");
+must(webServer, /"script-src 'self'"/, "Control Panel CSP restricts scripts to same-origin");
 must(adminWeb, /async function runTx\(label,fn\)\{[\s\S]*await ensureChain\(\)/, "Admin write transactions enforce the configured blockchain network");
 must(adminWeb, /async function connect\(\)[\s\S]*BrowserProvider\(window\.ethereum\)[\s\S]*eth_requestAccounts/, "Authenticated Control Panel connects the signing wallet without forcing a network first");
 must(adminLoginWeb, /\/api\/admin\/challenge/, "Admin login requests a one-time challenge");
