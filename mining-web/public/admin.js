@@ -618,6 +618,7 @@ async function boot(){
   cfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());
   $("networkBadge").textContent=cfg.chainName;
   $("requiredMiningAdmin").textContent=cfg.expectedMiningAdmin||"Pending configuration";
+  $("requiredMiningTreasury").textContent=cfg.expectedMiningTreasury||"Pending configuration";
   $("requiredStakingAdmin").textContent=cfg.expectedStakingAdmin||"Pending configuration";
   $("requiredPresaleAdmin").textContent=cfg.expectedPresaleAdmin||"Pending configuration";
   $("requiredKeeperWallet").textContent=cfg.expectedKeeperWallet||"Pending configuration";
