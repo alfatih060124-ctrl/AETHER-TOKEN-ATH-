@@ -107,6 +107,8 @@ const STAKING_ABI = [
   "function rankWeeklySalaryUSDT(uint256) view returns (uint256)",
   "function totalRankSalaryPaidATH() view returns (uint256)",
   "function totalRankSalaryPaidUSDT() view returns (uint256)",
+  "function MAX_RANK_HISTORY_PAGE() view returns (uint256)",
+  "function totalRankSalaryPayments() view returns (uint256)",
 ];
 
 const ORACLE_ABI = [
@@ -304,6 +306,8 @@ async function main() {
     rank8Salary,
     totalRankSalaryPaidATH,
     totalRankSalaryPaidUSDT,
+    maxRankHistoryPage,
+    totalRankSalaryPayments,
     oraclePrice,
     oracleDecimals,
     oraclePriceRegistry,
@@ -406,6 +410,8 @@ async function main() {
     staking.rankWeeklySalaryUSDT(7),
     staking.totalRankSalaryPaidATH(),
     staking.totalRankSalaryPaidUSDT(),
+    staking.MAX_RANK_HISTORY_PAGE(),
+    staking.totalRankSalaryPayments(),
     oracle.getPrice(),
     oracle.PRICE_DECIMALS(),
     oracle.priceRegistry(),
@@ -532,6 +538,8 @@ async function main() {
   assertEq(rank8Salary, ethers.parseEther("10000"), "Rank 8 weekly salary");
   assertEq(totalRankSalaryPaidATH, 0n, "Rank salary ATH initial state");
   assertEq(totalRankSalaryPaidUSDT, 0n, "Rank salary USDT initial state");
+  assertEq(maxRankHistoryPage, 200n, "Rank Salary history page cap");
+  assertEq(totalRankSalaryPayments, 0n, "Rank Salary history initial count");
   assertEq(oraclePrice, 7_000_000n, "ATH Staking Presale-linked opening price $0.07");
   if (!eqAddr(oraclePriceRegistry, priceRegistryAddress)) throw new Error("Staking oracle price registry mismatch");
   assertEq(oracleDecimals, 8n, "ATH staking oracle decimals");
