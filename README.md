@@ -9,7 +9,7 @@ Development package for the AETHER TOKEN (ATH) ecosystem on BNB Smart Chain.
 - No post-deployment mint function.
 - **Mining: 700,000,000 ATH**.
 - **Staking ecosystem: 300,000,000 ATH**.
-- Unified ATH official pre-listing reference price is **1 ATH = $0.37** across Mining, Staking, P2P and AETHER Wallet. A live DEX price may be visible separately, but the official price remains fixed until the **15,000-holder listing gate** and explicit listing activation.
+- Before official listing, the unified ATH reference price follows **ATH Presale**: opens at **$0.070**, rises **$0.001 after every complete 100,000 ATH sold**, and reaches the **$0.370 sold-out reference**. Mining and Staking read the same Presale-linked registry price.
 
 ### Staking 300M breakdown
 
@@ -39,14 +39,17 @@ See `docs/BLUEPRINT_DECISIONS.md`.
 
 Staking is a separate smart-contract module that uses the same ATH token.
 
-- ATH price source: **ATHPriceRegistry** with a fixed **$0.37 pre-listing reference**, a **15,000-holder target**, and a one-way switch to live market pricing only after official listing activation.
+- ATH price source: **ATHPresale → ATHPriceRegistry → Mining/Staking**, with a **15,000-holder target** and a one-way switch to live market pricing only after official listing activation.
 - Minimum stake: **$10 USDT-equivalent**.
 - Six packages: Starter, Basic, Silver, Gold, Platinum, Diamond.
 - Daily rates: **0.35%–0.85%**.
 - Locks: **180 / 365 / 730 days**.
 - Direct referral: **10%**.
 - Network reward: **10 levels**.
-- Principal liability is separated from the reward reserve.
+- Network Rank salary: **8 ranks**, requires at least **5 direct sponsors**; small-leg turnover is total direct-leg turnover minus the single largest dynamic leg.
+- Rank thresholds / weekly salary: **$1k/$25, $5k/$75, $15k/$200, $50k/$500, $100k/$1k, $250k/$2k, $500k/$5k, $1M/$10k**.
+- First salary slot: **00:30 UTC after at least 7 full days of qualification**, then weekly. USD salary converts to ATH at the current Presale-linked price.
+- Principal liability is separated from the reward reserve; Rank salary also uses reward reserve and cannot consume principal.
 - Existing stake terms are snapshotted and cannot be rewritten by later package changes.
 - Reward Pool hard cap: **160M ATH**.
 - Development Vesting: **30M ATH**, 2-month cliff, 33 active months, exact 100% final settlement.
@@ -77,6 +80,8 @@ npm run deploy:once:testnet
 The one-shot deployment deploys and validates:
 
 - ATHToken
+- ATHPresale
+- ATHPriceRegistry
 - MiningAirdrop v3.3
 - ATHStakingPriceOracle v1
 - ATHStaking v1
