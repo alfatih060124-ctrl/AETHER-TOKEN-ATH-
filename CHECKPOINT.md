@@ -1,6 +1,42 @@
 # AETHER TOKEN (ATH) Engine — Checkpoint
 
 
+## 2026-10-04 RANK SPONSOR BONUS PASS-UP LOCK — CURRENT SOURCE OF TRUTH
+
+This section supersedes older Rank/network notes where Rank Sponsor Bonus was not yet present.
+
+- Existing Rank thresholds and weekly lifetime salaries remain unchanged:
+  - Rank 1: small-leg $1,000 · $25/week · **Rank Sponsor Bonus 13%**
+  - Rank 2: $5,000 · $75/week · **16%**
+  - Rank 3: $15,000 · $200/week · **19%**
+  - Rank 4: $50,000 · $500/week · **22%**
+  - Rank 5: $100,000 · $1,000/week · **25%**
+  - Rank 6: $250,000 · $2,000/week · **28%**
+  - Rank 7: $500,000 · $5,000/week · **31%**
+  - Rank 8: $1,000,000 · $10,000/week · **35%**
+- Rank Sponsor Bonus is an **additional sponsor incentive** on a personally sponsored Staking principal transaction. The existing **10% Direct Referral remains separate**.
+- Rank Sponsor Bonus uses **differential pass-up**, not additive full-rate stacking. Example: R1 gets 13%; the next eligible R2 receives only +3%; R3 receives only +3%; ... R8 receives only the remaining differential up to the 35% ceiling.
+- The total Rank Sponsor Bonus for one sponsored stake therefore can never exceed the **Rank 8 ceiling of 35%**.
+- Only a Rank that existed **before the sponsored stake** is eligible for that transaction. A Rank achieved because of that same stake is not retroactively entitled to Rank Sponsor Bonus on that stake.
+- Unranked or lower-Rank uplines are skipped; pass-up continues until a higher Rank is found.
+- **Same Rank Break:** when the pass-up path encounters the same Rank as the highest Rank already paid in that path, Rank Sponsor pass-up stops immediately and no higher upline receives further Rank Sponsor Bonus for that stake.
+- Rank Sponsor Bonus is paid from the protected **50M ATH Marketing / Network Reserve**, together with Direct Referral, L1-L10 Network Bonus and lifetime Rank Salary. It never consumes principal or the 160M Daily Reward Reserve.
+- On-chain evidence:
+  - `RankSponsorBonusPaid`
+  - `RankSponsorSameRankBreak`
+  - `rankSponsorEarnedATH(account)`
+  - `totalRankSponsorPaidATH`
+  - `previewRankSponsorBonus(sourceUser, principalATH)`
+- Control Panel now shows the complete 13/16/19/22/25/28/31/35% ladder and cumulative Rank Sponsor Bonus paid.
+- Core validator deployment `429d43e7-37ee-4888-b321-ba2589c2dca5`: **SUCCESS**.
+- Validator evidence: **28 Solidity files compiled, 68/68 tests PASS, ABI export PASS, local release rehearsal PASS**.
+- Control Panel deployment `d35e796e-51f3-480b-b7e3-1a0a4e1c2f4f`: **SUCCESS**, healthcheck PASS, multilingual QC PASS.
+- Runtime remains **TESTNET / fail-closed**, `contractConfigured=false`, `mainnetEnabled=false`.
+- Mining remains **LOCKED and unchanged** by this Rank Sponsor revision.
+- No Testnet/Mainnet contract deployment transaction was executed by this revision.
+
+
+
 ## 2026-10-04 STAKING CONTROL PANEL + 00:50 PAYMENT LOCK — CURRENT SOURCE OF TRUTH
 
 This section supersedes older Staking timing / reserve-source / Control Panel notes below.
