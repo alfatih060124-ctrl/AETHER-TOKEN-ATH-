@@ -111,6 +111,13 @@ must(staking, /rankSmallLegThresholdUSDT\[0\]\s*=\s*1_000 ether/, "Rank 1 small-
 must(staking, /rankSmallLegThresholdUSDT\[7\]\s*=\s*1_000_000 ether/, "Rank 8 small-leg threshold is $1,000,000");
 must(staking, /rankWeeklySalaryUSDT\[0\]\s*=\s*25 ether/, "Rank 1 salary is $25 weekly");
 must(staking, /rankWeeklySalaryUSDT\[7\]\s*=\s*10_000 ether/, "Rank 8 salary is $10,000 weekly");
+must(staking, /rankSponsorBonusBps\s*=\s*\[1300, 1600, 1900, 2200, 2500, 2800, 3100, 3500\]/, "Rank Sponsor Bonus ladder is 13/16/19/22/25/28/31/35%");
+must(staking, /function _payRankSponsorBonus\(/, "Rank Sponsor Bonus pass-up settlement exists");
+must(staking, /if \(rank == highestPaidRank\)/, "Rank Sponsor Bonus breaks on same paid Rank");
+must(staking, /currentBps - previousBps/, "Rank Sponsor Bonus uses differential pass-up");
+must(staking, /totalRankSponsorPaidATH/, "Rank Sponsor Bonus total is auditable");
+must(staking, /rankSponsorEarnedATH/, "Rank Sponsor Bonus per-member earnings are auditable");
+must(staking, /RankSponsorSameRankBreak/, "Same-Rank break emits on-chain evidence");
 must(staking, /RANK_PAYOUT_UTC_OFFSET\s*=\s*30 minutes/, "Rank salary schedule is 00:30 UTC");
 must(staking, /DAILY_REWARD_UTC_OFFSET\s*=\s*50 minutes/, "Staking daily reward schedule is 00:50 UTC");
 must(staking, /function getRewardSchedule\(/, "Staking exposes the 00:50 daily reward schedule");
