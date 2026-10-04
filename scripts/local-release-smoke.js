@@ -32,10 +32,13 @@ async function main() {
   await token.waitForDeployment();
 
   const PriceRegistry = await hre.ethers.getContractFactory("ATHPriceRegistry");
-  const priceRegistry = await PriceRegistry.deploy(deployer.address);
+  const priceRegistry = await PriceRegistry.deploy(
+    await presaleContract.getAddress(),
+    deployer.address
+  );
   await priceRegistry.waitForDeployment();
 
-  // Deploy Mining with current reward rules and the unified ATH price registry.
+  // Deploy Mining with current reward rules and the Presale-linked ATH price registry.
   const Mining = await hre.ethers.getContractFactory("MiningAirdrop");
   const mining = await Mining.deploy(
     await token.getAddress(),
@@ -109,10 +112,10 @@ async function main() {
   assertEq(await token.balanceOf(liquidity.address), liquidityAllocation, "Staking liquidity allocation");
   assertEq(await token.balanceOf(stakingReserveWallet.address), reserveAllocation, "Staking reserve allocation");
   assertEq(await token.balanceOf(deployer.address), 0n, "deployer residual ATH");
-  assertEq(await priceRegistry.getPrice(), 37_000_000n, "ATH pre-listing price $0.37");
+  assertEq(await priceRegistry.getPrice(), 7_000_000n, "ATH unified Presale opening price $0.07");
   assertEq(await priceRegistry.HOLDER_TARGET(), 15_000n, "ATH holder listing target");
-  assertEq(await oracle.getPrice(), 37_000_000n, "Unified ATH Staking price $0.37");
-  assertEq(await mining.getCurrentPrice(), 370_000n, "Unified ATH Mining price $0.37");
+  assertEq(await oracle.getPrice(), 7_000_000n, "Unified ATH Staking Presale-linked price $0.07");
+  assertEq(await mining.getCurrentPrice(), 70_000n, "Unified ATH Mining Presale-linked price $0.07");
   assertEq(await mining.MINING_POOL_ALLOCATION(), miningAllocation, "Mining allocation constant");
   assertEq(await mining.MAX_VESTING_CYCLES(), 12n, "Mining vesting cycles");
   assertEq(await mining.CYCLE_BURN_PCT(), 10n, "Mining cycle burn");
@@ -120,6 +123,12 @@ async function main() {
   assertEq(await mining.CLAIM_OPEN_OFFSET(), 300n, "Mining claim open offset");
   assertEq(await mining.MAX_KEEPER_BATCH(), 50n, "Mining keeper batch cap");
   assertEq(await mining.MAX_MINER_PAGE(), 200n, "Mining miner registry page cap");
+  assertEq(await staking.MIN_DIRECT_SPONSORS_FOR_RANK(), 5n, "Rank minimum direct sponsors");
+  assertEq(await staking.rankSmallLegThresholdUSDT(0), hre.ethers.parseEther("1000"), "Rank 1 small-leg threshold");
+  assertEq(await staking.rankSmallLegThresholdUSDT(7), hre.ethers.parseEther("1000000"), "Rank 8 small-leg threshold");
+  assertEq(await staking.rankWeeklySalaryUSDT(0), hre.ethers.parseEther("25"), "Rank 1 weekly salary");
+  assertEq(await staking.rankWeeklySalaryUSDT(7), hre.ethers.parseEther("10000"), "Rank 8 weekly salary");
+  assertEq(await staking.RANK_PAYOUT_UTC_OFFSET(), 1800n, "Rank salary payout UTC offset");
 
   // ---------------- Mining smoke flow ----------------
   const block = await hre.ethers.provider.getBlock("latest");
@@ -178,7 +187,7 @@ async function main() {
   assertEq(await presaleContract.paused(), true, "Presale deploys paused");
   await (await presaleContract.unpause()).wait();
   assertEq(await presaleContract.paused(), false, "Presale explicitly opened");
-  // Staking user buys 100 ATH from Presale at opening price $0.07 = $7.00.
+  // Staking user buys 200 ATH from Presale at opening price $0.07 = $14.00.
   const presalePaymentUnit = 1_000_000n;
   await (await presalePaymentToken.mint(stakingUser.address, 1_000n * presalePaymentUnit)).wait();
   await (await presalePaymentToken.connect(stakingUser).approve(
@@ -186,9 +195,9 @@ async function main() {
     hre.ethers.MaxUint256
   )).wait();
 
-  const presaleBuyATH = hre.ethers.parseEther("100");
+  const presaleBuyATH = hre.ethers.parseEther("200");
   const presaleQuote = await presaleContract.quotePaymentForATH(presaleBuyATH);
-  assertEq(presaleQuote, 7n * presalePaymentUnit, "Presale 100 ATH opening quote");
+  assertEq(presaleQuote, 14n * presalePaymentUnit, "Presale 200 ATH opening quote");
 
   const presaleTreasuryBefore = await presalePaymentToken.balanceOf(presale.address);
   await (await presaleContract.connect(stakingUser).buyATH(presaleBuyATH, presaleQuote)).wait();
@@ -200,7 +209,7 @@ async function main() {
   assertEq(await presaleContract.totalSoldATH(), presaleBuyATH, "Presale sold amount");
   assertEq(await presaleContract.currentPriceUSD8(), 7_000_000n, "Presale remains in first 100k tranche");
 
-  await (await token.connect(stakingUser).approve(await staking.getAddress(), hre.ethers.parseEther("100"))).wait();
+  await (await token.connect(stakingUser).approve(await staking.getAddress(), hre.ethers.parseEther("200"))).wait();
 
   const refBefore = await token.balanceOf(stakingReferrer.address);
   await (await staking.connect(stakingUser).stake(
@@ -209,8 +218,8 @@ async function main() {
     stakingReferrer.address
   )).wait();
 
-  const stakingPrincipalATH = 27027027027027027027n;
-  const stakingDirectReferralATH = 2702702702702702702n;
+  const stakingPrincipalATH = 142857142857142857142n;
+  const stakingDirectReferralATH = 14285714285714285714n;
   assertEq(await staking.principalLiabilityATH(), stakingPrincipalATH, "Staking principal liability");
   assertEq(
     (await token.balanceOf(stakingReferrer.address)) - refBefore,
@@ -228,13 +237,13 @@ async function main() {
 
   assertEq(
     (await token.balanceOf(stakingUser.address)) - stakeUserBefore,
-    94594594594594594n,
-    "Staking $0.035 reward converts at $0.37"
+    500000000000000000n,
+    "Staking $0.035 reward converts at the $0.07 Presale price"
   );
   assertEq(
     (await token.balanceOf(stakingReferrer.address)) - stakingRefNetworkBefore,
-    7567567567567567n,
-    "Staking level-1 network reward at $0.37"
+    40000000000000000n,
+    "Staking level-1 network reward at the $0.07 Presale price"
   );
 
   const evidence = {
@@ -262,7 +271,7 @@ async function main() {
         reserve: "10000000",
       },
     },
-    preListingReferencePriceUSD: "0.37",
+    preListingReferencePrice: "PRESALE_LINKED",
     listingHolderTarget: "15000",
     presaleFlow: {
       allocationATH: "30000000",
@@ -270,8 +279,8 @@ async function main() {
       priceStepUSD: "0.001",
       stepSizeATH: "100000",
       soldOutPriceUSD: "0.37",
-      purchasedATH: "100",
-      paymentUSD: "7.00",
+      purchasedATH: "200",
+      paymentUSD: "14.00",
     },
     miningHolderFlow: {
       referralCount: "1",
@@ -286,11 +295,13 @@ async function main() {
     stakingHolderFlow: {
       package: "Starter",
       stakeUSDT: "10",
-      principalATH: "27.027027027027027027",
-      directReferralATH: "2.702702702702702702",
+      principalATH: "142.857142857142857142",
+      directReferralATH: "14.285714285714285714",
       dailyRewardUSDT: "0.035",
-      dailyRewardATH: "0.094594594594594594",
-      level1NetworkATH: "0.007567567567567567",
+      dailyRewardATH: "0.5",
+      level1NetworkATH: "0.04",
+      rankRule: "5 direct sponsors; small-leg = total direct-leg turnover - largest direct leg",
+      rankPayoutUtc: "00:30 weekly after 7-day qualification",
     },
   };
 
