@@ -99,13 +99,13 @@ Latest validator evidence:
 - Syntax checks: **PASS**.
 - BSC Testnet RPC: **PASS**.
 - Solidity compiled: **28 files**.
-- Automated tests: **69 passing**.
+- Automated tests: **70 passing**.
 - ABI export: **PASS**.
 - Local release rehearsal: **PASS**.
 
 Latest public web evidence:
 - Production dependency audit: **0 vulnerabilities**.
-- Multilingual QC: **284 keys across 9 translated languages + English**.
+- Multilingual QC: **288 keys across 9 translated languages + English**.
 - Healthcheck: **PASS**.
 - Runtime: TESTNET, contractConfigured=false, mainnetEnabled=false.
 
