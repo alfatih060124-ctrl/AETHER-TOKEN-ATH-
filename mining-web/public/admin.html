@@ -68,7 +68,7 @@
       <article><small>Staking Contract</small><strong id="stakingState">Pending</strong><span id="stakingAddress">—</span></article>
       <article><small>Staking Principal</small><strong id="stakingPrincipal">0 ATH</strong><span>Protected user principal liability</span></article>
       <article><small>Staking Reward Reserve</small><strong id="stakingRewardReserve">0 ATH</strong><span>160M allocation · daily Staking reward only</span></article>
-      <article><small>Marketing / Network Reserve</small><strong id="stakingNetworkReserve">0 ATH</strong><span>50M allocation · referral / L1-L10 / lifetime Rank salary</span></article>
+      <article><small>Marketing / Lifestyle Matching Reserve</small><strong id="stakingNetworkReserve">0 ATH</strong><span>50M allocation · referral / L1-L10 / lifetime Rank salary</span></article>
       <article><small>Rank Referral Uplift Paid</small><strong id="rankSponsorPaid">0 ATH</strong><span>Increment above the common 10% · pass-up</span></article>
       <article><small>Rank Salary Paid</small><strong id="rankSalaryPaid">$0.00</strong><span id="rankSalaryPaidAth">0 ATH</span></article>
       <article><small>Presale Status</small><strong id="presaleState">Pending</strong><span id="presaleAddress">—</span></article>
@@ -84,7 +84,7 @@
         <div><strong>700M</strong><span>Mining Reward</span><small>70% · Mining smart-contract reserve</small></div>
         <div><strong>160M</strong><span>Staking Reward Pool</span><small>16% · protected reward reserve</small></div>
         <div><strong>30M</strong><span>ATH Presale</span><small>3% · $0.070 stepped pricing</small></div>
-        <div><strong>50M</strong><span>Marketing / Network Bonus</span><small>5% · Direct Referral 10%-35% by Rank + L1-L10 + lifetime Rank salary</small></div>
+        <div><strong>50M</strong><span>Marketing / Lifestyle Bonus / Matching Staking</span><small>5% · Direct Referral 10%-35% by Rank + L1-L10 + lifetime Rank salary</small></div>
         <div><strong>30M</strong><span>Development Vesting</span><small>3% · vesting contract</small></div>
         <div><strong>20M</strong><span>Liquidity</span><small>2% · later listing phase</small></div>
         <div><strong>10M</strong><span>Ecosystem Reserve</span><small>1% · reserve allocation</small></div>
@@ -179,7 +179,7 @@
           <div class="row"><span>Staking Owner</span><code id="stakingOwner">—</code></div>
           <div class="row"><span>Staking Status</span><strong id="stakingPause">—</strong></div>
           <div class="row"><span>Daily Reward Reserve</span><strong id="stakingReserveDetail">0 ATH</strong></div>
-          <div class="row"><span>Marketing / Network Reserve</span><strong id="stakingNetworkReserveDetail">0 ATH</strong></div>
+          <div class="row"><span>Marketing / Lifestyle Matching Reserve</span><strong id="stakingNetworkReserveDetail">0 ATH</strong></div>
           <div class="button-row">
             <button id="pauseStakingBtn" class="btn danger" disabled>Pause Staking</button>
             <button id="unpauseStakingBtn" class="btn" disabled>Unpause Staking</button>
@@ -188,11 +188,11 @@
         <div>
           <div class="row"><span>Direct Referral Paid (Total)</span><strong id="stakingReferralPaid">0 ATH</strong></div>
           <div class="row"><span>Rank Referral Uplift Paid</span><strong id="stakingRankSponsorPaid">0 ATH</strong></div>
-          <div class="row"><span>L1-L10 Network Reward Paid</span><strong id="stakingNetworkPaid">0 ATH</strong></div>
+          <div class="row"><span>Lifestyle Bonus / Matching Staking Paid</span><strong id="stakingNetworkPaid">0 ATH</strong></div>
           <div class="row"><span>Rank Salary Paid</span><strong id="stakingRankPaidDetail">$0.00 / 0 ATH</strong></div>
         </div>
       </div>
-      <p class="muted">Direct Referral is ONE unified payout: unranked sponsor receives 10% total; ranked sponsor receives R1 13%, R2 16%, R3 19%, R4 22%, R5 25%, R6 28%, R7 31%, or R8 35% total. These Rank percentages already include the common 10% Direct Referral. Only the incremental Rank portion passes up to a higher Rank, and same Rank receives no uplift, but pass-up continues upward to the next higher Rank. Rank thresholds / weekly salary remain: R1 $1k/$25, R2 $5k/$75, R3 $15k/$200, R4 $50k/$500, R5 $100k/$1k, R6 $250k/$2k, R7 $500k/$5k, R8 $1M/$10k. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Rank Salary remains weekly at 00:30 UTC and lifetime after qualification. All networking bonuses use only the protected 50M Marketing / Network Reserve.</p>
+      <p class="muted">Direct Referral is ONE unified payout: unranked sponsor receives 10% total; ranked sponsor receives R1 13%, R2 16%, R3 19%, R4 22%, R5 25%, R6 28%, R7 31%, or R8 35% total. These Rank percentages already include the common 10% Direct Referral. Only the incremental Rank portion passes up to a higher Rank, and same Rank receives no uplift, but pass-up continues upward to the next higher Rank. Rank thresholds / weekly salary remain: R1 $1k/$25, R2 $5k/$75, R3 $15k/$200, R4 $50k/$500, R5 $100k/$1k, R6 $250k/$2k, R7 $500k/$5k, R8 $1M/$10k. Qualification requires 5 direct sponsors; small-leg turnover excludes the single largest dynamic leg. Rank Salary remains weekly at 00:30 UTC and lifetime after qualification. All networking bonuses use only the protected 50M Marketing / Lifestyle Matching Reserve.</p>
     </section>
 
     <section class="panel control-zone" data-control-zone="staking" hidden>
@@ -227,7 +227,7 @@
           <label>Fund Daily Reward Reserve (ATH)<input id="rewardFundAmount" inputmode="decimal" placeholder="100000" /></label>
           <button id="fundRewardBtn" class="btn gold full" disabled>Fund 160M Reward Reserve</button>
           <div class="row"><span>Marketing / Network Pool</span><strong id="networkFundingState">0 / 50M ATH</strong></div>
-          <label>Fund Marketing / Network Reserve (ATH)<input id="networkFundAmount" inputmode="decimal" placeholder="100000" /></label>
+          <label>Fund Marketing / Lifestyle Matching Reserve (ATH)<input id="networkFundAmount" inputmode="decimal" placeholder="100000" /></label>
           <button id="fundNetworkBtn" class="btn gold full" disabled>Fund 50M Network Reserve</button>
           <p class="muted">Funding cannot exceed the fixed 160M Reward or 50M Marketing/Network tokenomic caps.</p>
         </div>
@@ -262,7 +262,7 @@
         <div><small>Lifetime Rank weekly liability</small><strong id="rankWeeklyLiability">$0.00/week</strong></div>
         <div><small>Rank-only network reserve runway</small><strong id="rankRunway">—</strong></div>
       </div>
-      <p class="muted">Reward runway is a conservative projection from current active stake run-rate. Rank runway covers Rank Salary only; real-time Direct Referral and L1-L10 bonuses also consume the 50M Marketing/Network Reserve.</p>
+      <p class="muted">Reward runway is a conservative projection from current active stake run-rate. Rank runway covers Rank Salary only; real-time Direct Referral and Lifestyle Bonus / Matching Staking also consume the 50M Marketing/Network Reserve.</p>
       <div class="section-head subhead">
         <div><span class="eyebrow">RANK MEMBERS</span><h3><span id="rankMemberCount">0</span> qualified members</h3></div>
         <div class="button-row compact"><button id="rankPrevBtn" class="btn">Previous</button><button id="rankNextBtn" class="btn">Next</button></div>
@@ -333,6 +333,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-  <script src="/admin.js?v=wallet-gate-v2"></script>
+  <script src="/admin.js?v=lifestyle-matching-v1"></script>
 </body>
 </html>
