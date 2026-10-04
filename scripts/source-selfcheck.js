@@ -152,6 +152,10 @@ must(presaleI18n, /"Buy ATH Directly On-chain"/, "Presale storefront has dedicat
 must(adminHtml, /Open Presale/, "Control Panel exposes explicit Presale opening control");
 must(adminWeb, /presaleWrite\.unpause\(\)/, "Control Panel opens Presale only through owner transaction");
 must(adminWeb, /presaleWrite\.pause\(\)/, "Control Panel can pause Presale");
+must(adminWeb, /pauseStakingBtn[\s\S]*!stakingAuthorized\(\)\|\|state\.stakingPaused/, "Control Panel enables Staking pause only for the authorized owner");
+must(adminWeb, /unpauseStakingBtn[\s\S]*!stakingAuthorized\(\)\|\|!state\.stakingPaused/, "Control Panel enables Staking unpause only for the authorized owner");
+must(adminWeb, /stakingWrite\.pause\(\)/, "Control Panel executes owner-gated Staking pause");
+must(adminWeb, /stakingWrite\.unpause\(\)/, "Control Panel executes owner-gated Staking unpause");
 must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Control Panel shows current 300M Staking ecosystem breakdown");
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
