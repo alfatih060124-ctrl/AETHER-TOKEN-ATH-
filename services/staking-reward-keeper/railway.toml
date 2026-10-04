@@ -1,8 +1,0 @@
-[build]
-builder = "RAILPACK"
-buildCommand = "npm install --omit=dev --no-audit --no-fund && npm run check"
-
-[deploy]
-startCommand = "npm start"
-cronSchedule = "50 0 * * *"
-restartPolicyType = "NEVER"
