@@ -37,6 +37,8 @@ const TOKEN_ABI=[
   "function paused() view returns (bool)",
   "function totalSupply() view returns (uint256)",
   "function balanceOf(address) view returns (uint256)",
+  "function allowance(address,address) view returns (uint256)",
+  "function approve(address,uint256) returns (bool)",
   "function pause()",
   "function unpause()"
 ];
@@ -57,10 +59,34 @@ const STAKING_ADMIN_ABI=[
   "function principalLiabilityATH() view returns (uint256)",
   "function rewardReserveATH() view returns (uint256)",
   "function networkReserveATH() view returns (uint256)",
+  "function totalRewardFundedATH() view returns (uint256)",
+  "function totalNetworkFundedATH() view returns (uint256)",
+  "function MAX_REWARD_POOL() view returns (uint256)",
+  "function MAX_NETWORK_MARKETING_POOL() view returns (uint256)",
+  "function DAILY_REWARD_UTC_OFFSET() view returns (uint256)",
   "function totalReferralPaidATH() view returns (uint256)",
   "function totalNetworkPaidATH() view returns (uint256)",
   "function totalRankSalaryPaidATH() view returns (uint256)",
   "function totalRankSalaryPaidUSDT() view returns (uint256)",
+  "function totalWeeklyRankSalaryUSDT() view returns (uint256)",
+  "function activeDailyRewardRunRateUSDT() view returns (uint256)",
+  "function rewardReserveRunwayDays() view returns (uint256)",
+  "function rankSalaryRunwayWeeks() view returns (uint256)",
+  "function packageCount() view returns (uint256)",
+  "function packages(uint256) view returns (uint256 minUSDT,uint256 maxUSDT,uint256 dailyRateBps,uint256 lockDays,bool active)",
+  "function updatePackage(uint256,uint256,uint256,uint256,uint256,bool)",
+  "function addPackage(uint256,uint256,uint256,uint256)",
+  "function fundRewards(uint256)",
+  "function fundNetworkReserve(uint256)",
+  "function totalRankMembers() view returns (uint256)",
+  "function getRankMembers(uint256,uint256) view returns (address[] result)",
+  "function rankInfo(address) view returns (uint8 highestRank,uint64 firstRankAchievedAt,uint64 nextPayoutAt,uint256 totalSalaryPaidUSDT,uint256 totalSalaryPaidATH)",
+  "function rankSalaryPreview(address) view returns (uint8 highestRank,uint8 payableRankNow,uint256 periodsDue,uint256 salaryUSDT,uint256 salaryATH,uint256 nextPayoutAt,uint256 smallLegTurnover,uint256 sponsors)",
+  "function processRankSalary(address)",
+  "function totalDirectLegs(address) view returns (uint256)",
+  "function getDirectLegMembers(address,uint256,uint256) view returns (address[] result)",
+  "function legTurnoverUSDT(address,address) view returns (uint256)",
+  "event RankSalaryPaid(address indexed account,uint8 indexed payableRank,uint256 periodsPaid,uint256 salaryUSDT,uint256 salaryATH,uint256 priceUSD8,uint256 nextPayoutAt)",
   "function pause()",
   "function unpause()"
 ];
@@ -78,8 +104,10 @@ const PRESALE_ADMIN_ABI=[
 ];
 
 let cfg,readProvider,browserProvider,signer,account="",miningRead,tokenRead,miningWrite,tokenWrite,stakingRead,stakingWrite,presaleRead,presaleWrite;
-let state={miningOwner:"",tokenOwner:"",stakingOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,stakingPaused:false,presalePaused:true};
+let state={miningOwner:"",tokenOwner:"",stakingOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,stakingPaused:false,presalePaused:true,rewardFundingRemaining:0n,networkFundingRemaining:0n};
 let toastTimer;
+let rankPage=0;
+const rankPageSize=25;
 
 function toast(message,isError=false){
   const el=$("toast"); el.textContent=message; el.classList.toggle("error",isError); el.classList.add("show");
@@ -87,6 +115,8 @@ function toast(message,isError=false){
 }
 function short(v){return v?`${v.slice(0,6)}…${v.slice(-4)}`:"—"}
 function ath(v){try{return `${Number(ethers.formatEther(v)).toLocaleString(undefined,{maximumFractionDigits:3})} ATH`}catch{return "0 ATH"}}
+function usd(v){try{return "$"+Number(ethers.formatEther(v)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}catch{return "$0.00"}}
+function runway(v,unit){try{return v===ethers.MaxUint256?"∞":Number(v).toLocaleString()+" "+unit}catch{return "—"}}
 function addr(v){return Boolean(v&&ethers.isAddress(v))}
 function mainnetWriteAllowed(){return cfg?.networkMode!=="MAINNET"||cfg?.adminMainnetWritesEnabled===true}
 function miningAuthorized(){return account&&state.miningOwner&&account.toLowerCase()===state.miningOwner.toLowerCase()&&mainnetWriteAllowed()}
@@ -118,6 +148,10 @@ function paintAccess(){
   $("unpauseTokenBtn").disabled=!tokenAuthorized()||!state.tokenPaused;
   $("pauseStakingBtn").disabled=!stakingAuthorized()||state.stakingPaused;
   $("unpauseStakingBtn").disabled=!stakingAuthorized()||!state.stakingPaused;
+  $("fundRewardBtn").disabled=!stakingAuthorized()||state.rewardFundingRemaining<=0n;
+  $("fundNetworkBtn").disabled=!stakingAuthorized()||state.networkFundingRemaining<=0n;
+  $("updatePackageBtn").disabled=!stakingAuthorized();
+  $("addPackageBtn").disabled=!stakingAuthorized();
   $("openPresaleBtn").disabled=!presaleAuthorized()||!state.presalePaused;
   $("pausePresaleBtn").disabled=!presaleAuthorized()||state.presalePaused;
 }
