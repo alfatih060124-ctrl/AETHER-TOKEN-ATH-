@@ -78,6 +78,10 @@ const STAKING_ADMIN_ABI=[
   "function packageCount() view returns (uint256)",
   "function packages(uint256) view returns (uint256 minUSDT,uint256 maxUSDT,uint256 dailyRateBps,uint256 lockDays,bool active)",
   "function totalStakingMembers() view returns (uint256)",
+  "function getStakingMembers(uint256,uint256) view returns (address[] result)",
+  "function stakeCount(address) view returns (uint256)",
+  "function userInfo(address) view returns (address referrer,uint256 activeStakedUSDT,uint256 totalReferralEarnedATH,uint256 totalNetworkEarnedATH)",
+  "function activeContractCountByMember(address) view returns (uint256)",
   "function activeStakingMembers() view returns (uint256)",
   "function totalStakingContracts() view returns (uint256)",
   "function totalActiveStakingContracts() view returns (uint256)",
@@ -127,6 +131,8 @@ let legPage=0;
 const legPageSize=50;
 let rankHistoryPage=0;
 const rankHistoryPageSize=25;
+let stakingMemberPage=0;
+const stakingMemberPageSize=25;
 
 function toast(message,isError=false){
   const el=$("toast"); el.textContent=message; el.classList.toggle("error",isError); el.classList.add("show");
@@ -331,7 +337,7 @@ async function refreshUnifiedModules(){
       $("rankRunway").textContent=runway(rankRunway,"weeks");
       const rankSponsorRates=await Promise.all(Array.from({length:8},(_,i)=>stakingRead.rankSponsorBonusBps(i)));
       $("rankSponsorRates").textContent=rankSponsorRates.map(v=>(Number(v)/100).toFixed(0)+"%").join(" · ");
-      await Promise.all([loadPackageList(),loadStakingContractDashboard(),loadRankDashboard(),loadRankHistory()]);
+      await Promise.all([loadPackageList(),loadStakingContractDashboard(),loadStakingMemberDirectory(),loadRankDashboard(),loadRankHistory()]);
     }catch(err){console.error("staking admin",err)}
   }
   if(addr(cfg?.presaleAddress)){
@@ -436,6 +442,40 @@ async function addPackage(){
   let v;try{v=packageForm()}catch(err){return toast(err.message,true)}
   if(!v.active)return toast("A new package is created ACTIVE. Add it first, then deactivate if required.",true);
   return runTx("Add Staking Package",()=>stakingWrite.addPackage(v.min,v.max,v.rate,v.lock));
+}
+
+async function loadStakingMemberDirectory(){
+  if(!stakingRead)return;
+  const total=Number(await stakingRead.totalStakingMembers());
+  const maxPage=Math.max(0,Math.ceil(total/stakingMemberPageSize)-1);
+  if(stakingMemberPage>maxPage)stakingMemberPage=maxPage;
+  const offset=stakingMemberPage*stakingMemberPageSize;
+  const members=total?await stakingRead.getStakingMembers(offset,stakingMemberPageSize):[];
+
+  $("memberPrevBtn").disabled=stakingMemberPage<=0;
+  $("memberNextBtn").disabled=stakingMemberPage>=maxPage;
+
+  if(!members.length){
+    $("stakingMemberDirectory").innerHTML='<div class="empty">No Staking members yet.</div>';
+    return;
+  }
+
+  const rows=await Promise.all(members.map(async member=>{
+    const [contracts,activeContracts,info,rank]=await Promise.all([
+      stakingRead.stakeCount(member),
+      stakingRead.activeContractCountByMember(member),
+      stakingRead.userInfo(member),
+      stakingRead.rankInfo(member)
+    ]);
+    return {member,contracts,activeContracts,info,rank};
+  }));
+
+  let html='<table class="admin-table"><thead><tr><th>Wallet</th><th>Total Contracts</th><th>ACTIVE</th><th>Active Staked</th><th>Rank</th><th>Direct Sponsor / Referrer</th></tr></thead><tbody>';
+  for(const r of rows){
+    html+='<tr><td><code title="'+r.member+'">'+short(r.member)+'</code></td><td>'+Number(r.contracts).toLocaleString()+'</td><td>'+Number(r.activeContracts).toLocaleString()+'</td><td>'+usd(r.info.activeStakedUSDT)+'</td><td>'+(Number(r.rank.highestRank)>0?"Rank "+Number(r.rank.highestRank):"No Rank")+'</td><td><code title="'+r.info.referrer+'">'+(r.info.referrer===ethers.ZeroAddress?"—":short(r.info.referrer))+'</code></td></tr>';
+  }
+  html+='</tbody></table>';
+  $("stakingMemberDirectory").innerHTML=html;
 }
 
 async function loadStakingContractDashboard(){
@@ -748,7 +788,9 @@ async function boot(){
   $("fundNetworkBtn").addEventListener("click",()=>fundStakingReserve("network"));
   $("loadPackageBtn").addEventListener("click",()=>loadPackageEditor());
   $("updatePackageBtn").addEventListener("click",updatePackage);
-  $("refreshContractStatsBtn").addEventListener("click",async()=>{await Promise.all([loadPackageList(),loadStakingContractDashboard()]);toast("Staking member and contract data refreshed.");});
+  $("refreshContractStatsBtn").addEventListener("click",async()=>{await Promise.all([loadPackageList(),loadStakingContractDashboard(),loadStakingMemberDirectory()]);toast("Staking member and contract data refreshed.");});
+  $("memberPrevBtn").addEventListener("click",async()=>{if(stakingMemberPage>0){stakingMemberPage--;await loadStakingMemberDirectory();}});
+  $("memberNextBtn").addEventListener("click",async()=>{stakingMemberPage++;await loadStakingMemberDirectory();});
   $("lookupStakingContractBtn").addEventListener("click",lookupStakingContract);
   $("stakingContractIdInput").addEventListener("keydown",event=>{if(event.key==="Enter")lookupStakingContract();});
   $("addPackageBtn").addEventListener("click",addPackage);
