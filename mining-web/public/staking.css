@@ -8,3 +8,8 @@
 .staking-packages{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:9px}.staking-package{padding:10px;border:1px solid rgba(237,190,67,.16);border-radius:8px;background:#0a0805}.staking-package b{display:block;color:#e9ce73;font-size:10px}.staking-package span{display:block;margin-top:5px;color:#837b6e;font-size:7px;line-height:1.4}.staking-package.active{border-color:rgba(238,194,75,.52);box-shadow:inset 0 0 0 1px rgba(238,194,75,.08)}
 @media(max-width:980px){.staking-price-grid{grid-template-columns:1fr 1fr}.staking-layout{grid-template-columns:1fr}.staking-packages{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.staking-zone{padding:12px}.staking-head{align-items:flex-start;flex-direction:column}.staking-price-grid{grid-template-columns:1fr 1fr}.staking-packages{grid-template-columns:1fr 1fr}.staking-actions{grid-template-columns:1fr}.staking-head h2{font-size:23px}}
+.staking-rank-panel{grid-column:1/-1}
+.staking-rank-panel .staking-account{grid-template-columns:repeat(4,minmax(0,1fr))}
+.staking-rank-claim{margin-top:10px;min-width:190px}
+@media(max-width:980px){.staking-rank-panel .staking-account{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.staking-rank-panel .staking-account{grid-template-columns:1fr}.staking-rank-claim{width:100%}}
