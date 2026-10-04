@@ -99,7 +99,11 @@ must(staking, /_addPackage\(2_000 ether, 9_999 ether, 65, 365\)/, "Staking Gold 
 must(staking, /_addPackage\(10_000 ether, 49_999 ether, 75, 730\)/, "Staking Platinum package is configured");
 must(staking, /_addPackage\(50_000 ether, type\(uint256\)\.max, 85, 730\)/, "Staking Diamond package is configured");
 must(staking, /principalLiabilityATH/, "Staking protects principal liability");
-must(staking, /rewardReserveATH/, "Staking separates reward reserve");
+must(staking, /rewardReserveATH/, "Staking separates daily reward reserve");
+must(staking, /MAX_NETWORK_MARKETING_POOL\s*=\s*50_000_000 ether/, "Networking bonuses are capped by the 50M Marketing allocation");
+must(staking, /networkReserveATH/, "Staking separates the Marketing/network bonus reserve");
+must(staking, /function fundNetworkReserve\(/, "Staking exposes owner-only Marketing/network reserve funding");
+must(staking, /totalNetworkFundedATH/, "Staking records cumulative Marketing/network reserve funding");
 must(staking, /recoverExcessATH[\s\S]*onlyOwner whenPaused/, "Staking excess recovery is owner-only and pause-gated");
 must(staking, /MIN_DIRECT_SPONSORS_FOR_RANK\s*=\s*5/, "Rank salary requires at least 5 direct sponsors");
 must(staking, /rankSmallLegThresholdUSDT\[0\]\s*=\s*1_000 ether/, "Rank 1 small-leg threshold is $1,000");
@@ -117,7 +121,11 @@ must(rankKeeper, /RANK_KEEPER_ENABLED/, "Rank keeper is fail-closed behind an ex
 must(rankKeeper, /RANK_KEEPER_DRY_RUN/, "Rank keeper defaults to dry-run support");
 must(rankKeeper, /00:30-00:59 UTC/, "Rank keeper enforces the 00:30 UTC schedule window");
 must(rankKeeper, /totalRankMembers/, "Rank keeper reads the on-chain Rank registry");
-must(staking, /rewardReserveATH -= salaryATH/, "Rank salary is paid from reward reserve, not principal");
+must(staking, /networkReserveATH -= salaryATH/, "Rank salary is paid from the 50M Marketing/network reserve");
+must(staking, /networkReserveATH -= referralReward/, "Direct referral is paid from the 50M Marketing/network reserve");
+must(staking, /networkReserveATH -= networkTotal/, "L1-L10 Network reward is paid from the 50M Marketing/network reserve");
+must(staking, /rewardReserveATH -= rewardATH/, "Daily Staking reward remains isolated to the 160M reward pool");
+must(staking, /protectedBalance = principalLiabilityATH \+ rewardReserveATH \+ networkReserveATH/, "Principal, daily reward and network reserves are all protected from excess recovery");
 
 must(priceRegistry, /PRESALE_START_PRICE\s*=\s*7_000_000/, "ATH unified price starts from Presale at $0.07");
 must(priceRegistry, /PRESALE_FINAL_PRICE\s*=\s*37_000_000/, "ATH Presale-linked reference reaches $0.37 at sell-out");
@@ -178,6 +186,9 @@ must(deploy, /parseEther\("700000000"\)/, "Deployment preserves 700M Mining allo
 must(deploy, /parseEther\("160000000"\)/, "Deployment funds 160M Staking reward pool");
 must(deploy, /parseEther\("30000000"\)/, "Deployment contains 30M Staking allocations");
 must(deploy, /parseEther\("50000000"\)/, "Deployment contains 50M Staking marketing allocation");
+must(deploy, /staking\.fundNetworkReserve\(stakingMarketing\)/, "Deployment routes the 50M Marketing allocation into the Staking network reserve");
+must(deploy, /staking\.networkReserveATH\(\)/, "Deployment verifies the 50M Marketing/network reserve");
+must(deploy, /staking\.totalNetworkFundedATH\(\)/, "Deployment verifies the network funding ledger");
 must(deploy, /parseEther\("20000000"\)/, "Deployment contains 20M Staking liquidity allocation");
 must(deploy, /parseEther\("10000000"\)/, "Deployment contains 10M Staking reserve allocation");
 must(deploy, /stakingBreakdown\s*!==\s*stakingEcosystem/, "Deployment asserts 300M Staking conservation");
