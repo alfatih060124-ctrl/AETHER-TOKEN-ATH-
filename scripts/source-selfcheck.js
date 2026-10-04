@@ -111,6 +111,16 @@ must(staking, /rankSmallLegThresholdUSDT\[7\]\s*=\s*1_000_000 ether/, "Rank 8 sm
 must(staking, /rankWeeklySalaryUSDT\[0\]\s*=\s*25 ether/, "Rank 1 salary is $25 weekly");
 must(staking, /rankWeeklySalaryUSDT\[7\]\s*=\s*10_000 ether/, "Rank 8 salary is $10,000 weekly");
 must(staking, /RANK_PAYOUT_UTC_OFFSET\s*=\s*30 minutes/, "Rank salary schedule is 00:30 UTC");
+must(staking, /DAILY_REWARD_UTC_OFFSET\s*=\s*50 minutes/, "Staking daily reward schedule is 00:50 UTC");
+must(staking, /function getRewardSchedule\(/, "Staking exposes the 00:50 daily reward schedule");
+must(staking, /_first0050AtOrAfter/, "Staking reward settlement aligns to 00:50 UTC");
+must(staking, /rewardDaysClaimed/, "Staking tracks settled daily reward slots");
+must(staking, /directLegMembers/, "Staking records direct legs for Control Panel inspection");
+must(staking, /function getDirectLegMembers\(/, "Control Panel can page direct-leg members");
+must(staking, /activeDailyRewardRunRateUSDT/, "Staking exposes active daily reward run-rate");
+must(staking, /totalWeeklyRankSalaryUSDT/, "Staking exposes lifetime weekly Rank Salary liability");
+must(staking, /function rewardReserveRunwayDays\(/, "Staking exposes daily reward reserve runway");
+must(staking, /function rankSalaryRunwayWeeks\(/, "Staking exposes Rank Salary reserve runway");
 must(staking, /RANK_FIRST_DELAY\s*=\s*7 days/, "Rank salary first payout waits at least 7 days");
 must(staking, /smallLegTurnover = totalTurnover > largestTurnover \? totalTurnover - largestTurnover : 0/, "Small-leg turnover excludes the dynamic largest leg");
 must(staking, /processRankSalaryBatch/, "Rank salary supports permissionless batch processing");
@@ -124,6 +134,8 @@ must(rankKeeper, /totalRankMembers/, "Rank keeper reads the on-chain Rank regist
 must(staking, /networkReserveATH -= salaryATH/, "Rank salary is paid from the 50M Marketing/network reserve");
 must(staking, /networkReserveATH -= referralReward/, "Direct referral is paid from the 50M Marketing/network reserve");
 must(staking, /networkReserveATH -= networkTotal/, "L1-L10 Network reward is paid from the 50M Marketing/network reserve");
+must(staking, /athToken\.safeTransfer\(boundReferrer, referralReward\)/, "Direct Referral is transferred in real time during stake");
+must(staking, /athToken\.safeTransfer\(uplines\[i\], amount\)/, "L1-L10 Network Bonus is transferred in real time during reward settlement");
 must(staking, /rewardReserveATH -= rewardATH/, "Daily Staking reward remains isolated to the 160M reward pool");
 must(staking, /protectedBalance = principalLiabilityATH \+ rewardReserveATH \+ networkReserveATH/, "Principal, daily reward and network reserves are all protected from excess recovery");
 
@@ -164,6 +176,16 @@ must(adminWeb, /pauseStakingBtn[\s\S]*!stakingAuthorized\(\)\|\|state\.stakingPa
 must(adminWeb, /unpauseStakingBtn[\s\S]*!stakingAuthorized\(\)\|\|!state\.stakingPaused/, "Control Panel enables Staking unpause only for the authorized owner");
 must(adminWeb, /stakingWrite\.pause\(\)/, "Control Panel executes owner-gated Staking pause");
 must(adminWeb, /stakingWrite\.unpause\(\)/, "Control Panel executes owner-gated Staking unpause");
+must(adminWeb, /stakingWrite\.fundRewards\(amount\)/, "Control Panel funds the 160M daily reward reserve");
+must(adminWeb, /stakingWrite\.fundNetworkReserve\(amount\)/, "Control Panel funds the 50M Marketing/network reserve");
+must(adminWeb, /stakingWrite\.updatePackage\(/, "Control Panel can update/activate/deactivate Staking packages");
+must(adminWeb, /stakingWrite\.addPackage\(/, "Control Panel can add Staking packages");
+must(adminWeb, /getRankMembers/, "Control Panel reads Rank member registry");
+must(adminWeb, /getDirectLegMembers/, "Control Panel reads member leg details");
+must(adminWeb, /RankSalaryPaid/, "Control Panel reads Rank Salary history");
+must(adminWeb, /processRankSalary/, "Control Panel exposes due Rank payout processing");
+must(adminHtml, /Reserve runway & Rank payout queue/, "Control Panel exposes reserve runway and Rank payout queue");
+must(adminHtml, /00:50 UTC/, "Control Panel shows the Staking daily reward time");
 must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Control Panel shows current 300M Staking ecosystem breakdown");
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
