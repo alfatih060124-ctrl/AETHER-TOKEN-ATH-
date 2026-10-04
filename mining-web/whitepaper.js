@@ -80,11 +80,11 @@ function streamWhitepaper(res) {
   doc.addPage();
   pageBase(doc, 2, "Token Model");
   y = heading(doc, "01 / Token Model", "Fixed Supply and Allocation", 105);
-  y = body(doc, "ATH uses a one-time fixed supply. Allocation policy is separated into mining, liquidity, team/development, and marketing reserves.", y);
-  card(doc, 50, y + 12, 239, 88, "Mining Reserve", "700,000,000 ATH", "70% - reward reserve for the mining protocol");
-  card(doc, 306, y + 12, 239, 88, "Liquidity Reserve", "200,000,000 ATH", "20% - reserved for later ATH/USDT liquidity decisions");
-  card(doc, 50, y + 116, 239, 88, "Team and Development", "50,000,000 ATH", "5% - locked for 365 days under the current policy");
-  card(doc, 306, y + 116, 239, 88, "Marketing", "50,000,000 ATH", "5% - ecosystem communication and promotion allocation");
+  y = body(doc, "ATH uses a one-time fixed supply. The final ecosystem split is 700,000,000 ATH for Mining and 300,000,000 ATH for the Staking ecosystem.", y);
+  card(doc, 50, y + 12, 239, 88, "Mining Reserve", "700,000,000 ATH", "70% - locked Mining reward allocation");
+  card(doc, 306, y + 12, 239, 88, "Staking Reward Pool", "160,000,000 ATH", "Daily, referral, network and Rank salary reserve");
+  card(doc, 50, y + 116, 239, 88, "Presale + Marketing", "80,000,000 ATH", "30M Presale + 50M ecosystem marketing");
+  card(doc, 306, y + 116, 239, 88, "Dev + Liquidity + Reserve", "60,000,000 ATH", "30M development + 20M liquidity + 10M reserve");
 
   y = heading(doc, "Supply Controls", "Token Contract Properties", y + 240);
   y = bulletList(doc, [
@@ -93,7 +93,8 @@ function streamWhitepaper(res) {
     "Supply is minted once to the initial owner during deployment.",
     "No external mint function exists after deployment.",
     "The owner can pause and unpause token transfers as an emergency control.",
-    "Team allocation uses a dedicated lock contract with a 365-day release policy."
+    "Staking ecosystem: 160M reward pool, 30M Presale, 50M marketing, 30M development vesting, 20M liquidity and 10M ecosystem reserve.",
+    "Development allocation uses a dedicated 30M vesting contract with a two-month cliff and 33 active vesting months."
   ], y);
   doc.addPage();
   pageBase(doc, 3, "Mining Protocol");
@@ -117,7 +118,7 @@ function streamWhitepaper(res) {
   ], y);
 
   y = heading(doc, "Protocol Reference Metric", "ATH Reference Price", y + 10);
-  y = body(doc, "The official ATH pre-listing reference price is fixed at $0.37 per ATH through the unified ATH Price Registry. Mining, Staking, P2P and AETHER Wallet use this same reference. A live DEX market price may be displayed separately before listing, but it does not replace the official reference until the 15,000-holder gate is met and official listing is explicitly activated. The reference price is not a guaranteed redemption promise or investment-return forecast.", y);
+  y = body(doc, "Before official listing, the ATH reference price follows the on-chain Presale curve. It opens at $0.070 and rises by $0.001 after each complete 100,000 ATH sold, reaching a $0.370 sold-out reference after the 30,000,000 ATH Presale allocation is exhausted. Mining and Staking read this same Presale-linked registry price. A DEX quote may be visible separately before listing; market mode still requires the 15,000-holder gate and explicit activation. The reference price is not a guaranteed redemption promise or investment-return forecast.", y);
 
   doc.addPage();
   pageBase(doc, 4, "Rewards and Vesting");
@@ -143,8 +144,34 @@ function streamWhitepaper(res) {
     "Double Power requires at least 5 referrals and applies 3x on top of an active 2x Power Booster without extending its expiry."
   ], y);
   doc.addPage();
-  pageBase(doc, 5, "Security Architecture");
-  y = heading(doc, "04 / Security", "Fail-Closed Release Architecture", 105);
+  pageBase(doc, 5, "Staking and Network");
+  y = heading(doc, "04 / Staking", "Packages, Network and Rank Salary", 105);
+  y = body(doc, "ATH Staking uses USDT-denominated package values while payment and rewards settle in ATH at the current Presale-linked ATH price. Holder principal is accounted separately from the protected Staking reward reserve.", y);
+
+  card(doc, 50, y + 12, 153, 84, "Staking Allocation", "300M ATH", "160M reward pool + ecosystem allocations");
+  card(doc, 221, y + 12, 153, 84, "Direct Referral", "10%", "Paid from reward reserve, not principal");
+  card(doc, 392, y + 12, 153, 84, "Rank Minimum", "5 sponsors", "Direct sponsors required for salary rank");
+
+  y = heading(doc, "Network Reward", "10-Level Daily Network", y + 126);
+  y = bulletList(doc, [
+    "Level 1: 8%; Level 2: 5%; Level 3: 3%; Level 4: 2%; Level 5: 1%; Levels 6-10: 0.5% each.",
+    "Each direct sponsor creates one direct network leg.",
+    "The dynamic big leg is whichever direct leg currently has the largest cumulative USDT turnover.",
+    "Small-leg turnover equals total direct-leg turnover minus the single largest dynamic leg."
+  ], y);
+
+  y = heading(doc, "Rank Salary", "Weekly Protocol-Defined Qualification", y + 12);
+  y = bulletList(doc, [
+    "Rank 1: $1,000 small-leg / $25 weekly; Rank 2: $5,000 / $75; Rank 3: $15,000 / $200; Rank 4: $50,000 / $500.",
+    "Rank 5: $100,000 / $1,000; Rank 6: $250,000 / $2,000; Rank 7: $500,000 / $5,000; Rank 8: $1,000,000 / $10,000.",
+    "First salary slot is 00:30 UTC after at least seven full days from qualification; subsequent slots advance weekly.",
+    "Salary is denominated in USD accounting value and converted to ATH at the current Presale-linked price at payout.",
+    "Rank salary is paid only from the protected reward reserve. Principal is not used if the reward reserve is insufficient."
+  ], y);
+
+  doc.addPage();
+  pageBase(doc, 6, "Security Architecture");
+  y = heading(doc, "05 / Security", "Fail-Closed Release Architecture", 105);
   y = body(doc, "Production activation is deliberately separated from development progress. Code completion alone does not open Mainnet. Release gates require explicit evidence and operator approval.", y);
 
   y = bulletList(doc, [
@@ -163,18 +190,18 @@ function streamWhitepaper(res) {
   card(doc, 50, y + 12, 239, 92, "Validated", "Core Engine", "Solidity compilation, automated tests, reserve controls and public interfaces");
   card(doc, 306, y + 12, 239, 92, "Next Gate", "BSC Testnet", "Fund Testnet gas, deploy once, verify addresses, then test full user flow");
   card(doc, 50, y + 120, 239, 92, "Production", "Blocked", "Mainnet remains closed until audit, multisig and liquidity-lock gates pass");
-  card(doc, 306, y + 120, 239, 92, "Team Lock", "365 days", "Current locked Team and Development policy");
+  card(doc, 306, y + 120, 239, 92, "Staking Safety", "Protected", "Principal liability is separate from reward reserve");
 
   doc.addPage();
-  pageBase(doc, 6, "Roadmap");
-  y = heading(doc, "05 / Roadmap", "Build with Gates, Not Promises", 105);
+  pageBase(doc, 7, "Roadmap");
+  y = heading(doc, "06 / Roadmap", "Build with Gates, Not Promises", 105);
   y = body(doc, "Roadmap phases distinguish completed engineering work from future gated milestones. Future items are plans and may change after testing, security review, legal review, market conditions, or ecosystem requirements.", y);
 
   const phases = [
     ["01", "COMPLETE", "Protocol Foundation", "Fixed supply, UTC daily rewards, referral, Power/Double Power Boosters, 12-cycle vesting, burn and reserve protection."],
-    ["02", "COMPLETE", "Validation and Interfaces", "25 automated tests, source checks, deterministic ABI fingerprints, keeper hardening, admin controls, responsive web and release-gate documentation."],
+    ["02", "COMPLETE", "Validation and Interfaces", "Mining, Presale, Staking, Rank salary, source checks, automated tests, ABI fingerprints, keeper hardening and admin controls."],
     ["03", "NEXT GATE", "BSC Testnet Deployment", "After Testnet gas funding, deploy once, auto-run v3.3 post-deploy invariants, verify addresses, then test the full holder flow."],
-    ["04", "PLANNED", "Wallet Integration", "Freeze verified Testnet ABI/address data and connect ATH mining to AETHER Wallet public testing."],
+    ["04", "PLANNED", "Wallet Integration", "Freeze verified Testnet ABI/address data and connect Mining, Presale and Staking to AETHER Wallet public testing."],
     ["05", "REQUIRED", "Production Security", "Independent audit, production multisig, operational controls and release evidence."],
     ["06", "GATED", "Mainnet and Liquidity", "Mainnet and ATH/USDT liquidity only after all production release gates are satisfied."],
     ["07", "FUTURE", "Ecosystem Expansion", "Community utilities, analytics, education, integrations and post-launch ecosystem tooling."]
@@ -189,8 +216,8 @@ function streamWhitepaper(res) {
     py += 72;
   }
   doc.addPage();
-  pageBase(doc, 7, "Public Project Team");
-  y = heading(doc, "06 / Project Presentation", "Developer and Creative Team", 105);
+  pageBase(doc, 8, "Public Project Team");
+  y = heading(doc, "07 / Project Presentation", "Developer and Creative Team", 105);
   y = body(doc, "The public landing page uses project aliases and illustrative portraits for presentation. These names are not represented as verified legal identities, employment histories, or third-party credentials.", y);
 
   const team = [
