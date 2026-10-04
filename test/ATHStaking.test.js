@@ -193,6 +193,36 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
+  it("distributes the complete 10-level network schedule 8/5/3/2/1/0.5x5", async function () {
+    const chain = signers.slice(1, 12);
+    for (const member of chain) {
+      await token.transfer(member.address, ethers.parseEther("1000000"));
+      await token.connect(member).approve(await staking.getAddress(), ethers.MaxUint256);
+    }
+
+    await staking.connect(chain[0]).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    for (let i = 1; i < chain.length; i++) {
+      await staking.connect(chain[i]).stake(0, ethers.parseEther("10"), chain[i - 1].address);
+    }
+
+    await increase(DAY);
+
+    const leaf = chain[10];
+    const uplines = chain.slice(0, 10).reverse();
+    const before = await Promise.all(uplines.map((u) => token.balanceOf(u.address)));
+
+    const rewardATH = athForUsd(ethers.parseEther("0.035"), PRICE_007);
+    const rates = [800n, 500n, 300n, 200n, 100n, 50n, 50n, 50n, 50n, 50n];
+
+    await staking.connect(leaf).claimReward(0);
+
+    for (let i = 0; i < 10; i++) {
+      const after = await token.balanceOf(uplines[i].address);
+      const expected = (rewardATH * rates[i]) / 10_000n;
+      expect(after - before[i]).to.equal(expected);
+    }
+  });
+
   it("snapshots package economics so later admin edits do not rewrite existing stakes", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
     await staking.updatePackage(
