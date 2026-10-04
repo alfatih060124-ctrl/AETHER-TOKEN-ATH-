@@ -202,7 +202,6 @@ must(preflight, /DEVELOPMENT_BENEFICIARY/, "Preflight requires Development benef
 for (const name of [
   "PRESALE_WALLET",
   "PRESALE_PAYMENT_TOKEN",
-  "MARKETING_WALLET",
   "LIQUIDITY_WALLET",
   "STAKING_RESERVE_WALLET",
   "DEVELOPMENT_BENEFICIARY",
