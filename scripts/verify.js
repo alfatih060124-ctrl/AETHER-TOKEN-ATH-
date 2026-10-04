@@ -46,8 +46,10 @@ async function main() {
 
   const singleWalletMode = isTestnet && process.env.TESTNET_USE_DEPLOYER_ROLES === "true";
   const roleAddress = (name) => singleWalletMode ? deployerAddress : requiredAddress(name);
-  const owner = roleAddress("OWNER_ADDRESS");
-  const treasury = roleAddress("TREASURY_ADDRESS");
+  const miningOwner = roleAddress("MINING_OWNER_ADDRESS");
+  const stakingOwner = roleAddress("STAKING_OWNER_ADDRESS");
+  const presaleOwner = roleAddress("PRESALE_OWNER_ADDRESS");
+  const treasury = miningOwner;
   const presaleTreasury = roleAddress("PRESALE_WALLET");
   const developmentBeneficiary = roleAddress("DEVELOPMENT_BENEFICIARY");
 
@@ -68,17 +70,17 @@ async function main() {
 
   await hre.run("verify:verify", {
     address: priceRegistry,
-    constructorArguments: [owner],
+    constructorArguments: [presale, presaleOwner],
   });
 
   await hre.run("verify:verify", {
     address: presale,
-    constructorArguments: [token, presalePaymentToken, presaleTreasury, owner],
+    constructorArguments: [token, presalePaymentToken, presaleTreasury, presaleOwner],
   });
 
   await hre.run("verify:verify", {
     address: mining,
-    constructorArguments: [token, treasury, priceRegistry, owner],
+    constructorArguments: [token, treasury, priceRegistry, miningOwner],
   });
 
   await hre.run("verify:verify", {
@@ -88,7 +90,7 @@ async function main() {
 
   await hre.run("verify:verify", {
     address: staking,
-    constructorArguments: [token, oracle, owner],
+    constructorArguments: [token, oracle, stakingOwner],
   });
 
   await hre.run("verify:verify", {
