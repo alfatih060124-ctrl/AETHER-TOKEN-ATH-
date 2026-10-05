@@ -190,6 +190,11 @@ async function main() {
   assertEq(await presaleContract.paused(), true, "Presale deploys paused");
   await (await presaleContract.unpause()).wait();
   assertEq(await presaleContract.paused(), false, "Presale explicitly opened");
+
+  assertEq(await staking.paused(), true, "Staking deploys paused");
+  await (await staking.unpause()).wait();
+  assertEq(await staking.paused(), false, "Staking explicitly opened");
+
   // Staking user buys 200 ATH from Presale at opening price $0.07 = $14.00.
   const presalePaymentUnit = 1_000_000n;
   await (await presalePaymentToken.mint(stakingUser.address, 1_000n * presalePaymentUnit)).wait();

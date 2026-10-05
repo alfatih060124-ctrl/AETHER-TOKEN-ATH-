@@ -54,6 +54,8 @@ async function deployNetworkingFixture() {
   await token.approve(await staking.getAddress(), ethers.MaxUint256);
   await staking.fundRewards(ethers.parseEther("160000000"));
   await staking.fundNetworkReserve(ethers.parseEther("50000000"));
+  expect(await staking.paused()).to.equal(true);
+  await staking.unpause();
 
   const participants = [sponsor, ...rest];
   for (const signer of participants) {

@@ -563,7 +563,7 @@ async function main() {
   if (!eqAddr(stakingToken, tokenAddress)) throw new Error("Staking token mismatch");
   if (!eqAddr(stakingOracle, oracleAddress)) throw new Error("Staking oracle mismatch");
   if (!eqAddr(stakingOwner, stakingOwnerExpected)) throw new Error("Staking owner mismatch");
-  if (stakingPaused) throw new Error("Staking unexpectedly paused");
+  if (!stakingPaused) throw new Error("Staking must remain PAUSED/fail-closed after deployment checks");
   assertEq(stakingAllocation, threeHundredM, "Staking ecosystem allocation");
   assertEq(maxRewardPool, oneSixtyM, "Staking daily reward pool cap");
   assertEq(maxNetworkMarketingPool, fiftyM, "Staking Marketing/network pool cap");

@@ -99,7 +99,7 @@ Latest validator evidence:
 - Syntax checks: **PASS**.
 - BSC Testnet RPC: **PASS**.
 - Solidity compiled: **28 files**.
-- Automated tests: **70 passing**.
+- Automated tests: **73 passing**.
 - ABI export: **PASS**.
 - Local release rehearsal: **PASS**.
 

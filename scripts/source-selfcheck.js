@@ -388,6 +388,7 @@ must(preflight, /KEEPER_WALLET_ADDRESS/, "Preflight requires dedicated Keeper wa
 must(deploy, /const treasury = roleAddress\("MINING_TREASURY_ADDRESS"\)/, "Deployment reads dedicated Mining Treasury");
 must(deploy, /MiningAirdrop\.deploy\(tokenAddress, treasury, priceRegistryAddress, miningOwner\)/, "Deployment assigns Mining owner and treasury separately");
 must(deploy, /ATHStaking[\s\S]*Staking\.deploy\(tokenAddress, oracleAddress, stakingOwner\)/, "Deployment assigns Staking to Staking Admin");
+must(staking, /constructor\(address token_, address oracle_, address initialOwner\)[\s\S]*?_pause\(\);/, "ATH Staking deploys PAUSED/fail-closed");
 must(deploy, /presaleWallet,\s*presaleOwner/, "Deployment assigns Presale to Presale Admin");
 must(deploy, /token\.transferOwnership\(tokenOwner\)/, "ATH Token ownership is transferred to Token\/Presale Admin");
 must(deploy, /PriceRegistry\.deploy\(presaleAddress, priceRegistryOwner\)/, "Price Registry belongs to Token\/Presale Admin");
@@ -436,7 +437,7 @@ console.log("OK: runtime dependency audit is locked to production tree");
 
 must(noBnbCompletionDoc, /00:50 UTC daily slot/, "No-BNB register documents Staking 00:50 reward");
 must(noBnbCompletionDoc, /Same Rank = skip, not stop/, "No-BNB register documents Same-Rank Skip");
-must(noBnbCompletionDoc, /70 passing/, "No-BNB register carries current automated test count");
+must(noBnbCompletionDoc, /73 passing/, "No-BNB register carries current automated test count");
 must(noBnbCompletionDoc, /Lifestyle Bonus \/ Matching Staking/, "No-BNB register uses the official Lifestyle Bonus / Matching Staking name");
 must(testnetChecklistDoc, /Lifestyle Bonus \/ Matching Staking/, "Testnet checklist uses the official Lifestyle Bonus / Matching Staking name");
 must(stakingKeeperRunbookDoc, /Lifestyle Bonus \/ Matching Staking/, "Staking keeper runbook uses the official Lifestyle Bonus / Matching Staking name");

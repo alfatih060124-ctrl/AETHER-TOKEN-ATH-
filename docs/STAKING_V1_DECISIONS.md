@@ -127,5 +127,6 @@ Example:
 - Testnet-first.
 - Mainnet remains fail-closed.
 - Presale deploys PAUSED.
+- Staking deploys PAUSED; reserve funding and deployment verification happen before explicit owner opening.
 - Full source self-check, syntax gate, compile, automated tests, ABI export and local rehearsal must pass before Testnet deployment.
 - Independent security review remains required before Mainnet.

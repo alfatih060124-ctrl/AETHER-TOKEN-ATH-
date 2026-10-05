@@ -7,6 +7,11 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "presalePriceSource_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
           "name": "initialOwner",
           "type": "address"
         }
@@ -133,7 +138,20 @@
     },
     {
       "inputs": [],
-      "name": "PRE_LISTING_PRICE",
+      "name": "PRESALE_FINAL_PRICE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PRESALE_START_PRICE",
       "outputs": [
         {
           "internalType": "uint256",
@@ -179,6 +197,45 @@
     },
     {
       "inputs": [],
+      "name": "getPresalePrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPresaleRemainingATH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPresaleSoldATH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getPrice",
       "outputs": [
         {
@@ -200,7 +257,7 @@
           "type": "uint256"
         }
       ],
-      "stateMutability": "pure",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -248,6 +305,19 @@
       "outputs": [
         {
           "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "presalePriceSource",
+      "outputs": [
+        {
+          "internalType": "contract IATHPresalePriceSource",
           "name": "",
           "type": "address"
         }

@@ -55,6 +55,7 @@
 - [x] Complete Rank Salary history + payout queue + direct-leg pagination.
 - [x] Staking Reward Keeper fail-closed.
 - [x] Rank Salary Keeper fail-closed.
+- [x] ATHStaking deploys PAUSED/fail-closed and requires explicit owner unpause after funding/verification.
 
 ### Web / Control Panel
 - [x] Admin public surface exposes only Connect Wallet Mining / Staking / Presale.
@@ -72,7 +73,7 @@
 - [x] Source self-check PASS.
 - [x] Syntax checks PASS.
 - [x] Solidity compile PASS.
-- [x] 70/70 automated tests PASS.
+- [x] 73/73 automated tests PASS.
 - [x] Deterministic ABI/release export PASS.
 - [x] Local release rehearsal PASS.
 - [x] EIP-170 bytecode checks PASS.
@@ -111,6 +112,7 @@ The first four are operator/business inputs, not coding gaps.
 - [ ] Confirm 700M + 300M supply conservation.
 - [ ] Confirm 160M Daily Reward Reserve and 50M Marketing / Lifestyle Matching Reserve funding.
 - [ ] Confirm Presale is paused until explicit opening.
+- [ ] Confirm ATHStaking is paused until reserve funding and deployment verification are complete.
 - [ ] Confirm Mainnet gates remain closed.
 
 ## D. Explorer verification

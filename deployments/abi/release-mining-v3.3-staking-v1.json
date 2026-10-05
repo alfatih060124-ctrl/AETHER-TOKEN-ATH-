@@ -12,9 +12,9 @@
     },
     "ATHPriceRegistry": {
       "abiFile": "deployments/abi/ATHPriceRegistry.v1.json",
-      "abiSha256": "7366539508966daafe7e993ddf5f60396db9fce7d8b334066fe1ae46b90bef6d",
-      "deployedBytecodeSha256": "8db0ec7d1575142d825dc1cf368e6eb500fc2ab6564e0445013e912d8591c082",
-      "deployedBytecodeBytes": 1880
+      "abiSha256": "7d82dcfa01332743bf7f9d3e44dfefd37b80dd2a92923428a22b1d06ee29b569",
+      "deployedBytecodeSha256": "c35791a5678906411ca8c84eb3793c2f4fb404930d04308d152943d8ff1f5b41",
+      "deployedBytecodeBytes": 2593
     },
     "ATHPresale": {
       "abiFile": "deployments/abi/ATHPresale.v1.json",
@@ -30,9 +30,9 @@
     },
     "ATHStaking": {
       "abiFile": "deployments/abi/ATHStaking.v1.json",
-      "abiSha256": "d91f7368c8ad85776c6e1bcfbb2beb6850e9361db1f2a831654fcb68660acf1b",
-      "deployedBytecodeSha256": "ebce0014912969dc8d31e4800b18f34e48565c4cdba2a2520c79b26d6eca294f",
-      "deployedBytecodeBytes": 8401
+      "abiSha256": "e7fba4f0fb0d0911642b679652f48bd069082b721a9c39bf50609bf42abfac3d",
+      "deployedBytecodeSha256": "79c0517efdb652f699e73f2c8fddc977b416e17578623fa4d44260993655949a",
+      "deployedBytecodeBytes": 22846
     },
     "ATHStakingPriceOracle": {
       "abiFile": "deployments/abi/ATHStakingPriceOracle.v1.json",

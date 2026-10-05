@@ -83,6 +83,30 @@ describe("AETHER ATH Staking v1", function () {
     await token.approve(await staking.getAddress(), ethers.MaxUint256);
     await staking.fundRewards(ethers.parseEther("160000000"));
     await staking.fundNetworkReserve(ethers.parseEther("50000000"));
+    expect(await staking.paused()).to.equal(true);
+    await staking.unpause();
+  });
+
+  it("deploys PAUSED/fail-closed and only the owner can explicitly open Staking", async function () {
+    const Staking = await ethers.getContractFactory("ATHStaking");
+    const fresh = await Staking.deploy(
+      await token.getAddress(),
+      await oracle.getAddress(),
+      owner.address
+    );
+    await fresh.waitForDeployment();
+
+    expect(await fresh.paused()).to.equal(true);
+    await expect(
+      fresh.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress)
+    ).to.be.revertedWithCustomError(fresh, "EnforcedPause");
+
+    await expect(fresh.connect(user).unpause())
+      .to.be.revertedWithCustomError(fresh, "OwnableUnauthorizedAccount")
+      .withArgs(user.address);
+
+    await fresh.connect(owner).unpause();
+    expect(await fresh.paused()).to.equal(false);
   });
 
   it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {

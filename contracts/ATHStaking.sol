@@ -255,6 +255,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         require(token_ != address(0) && oracle_ != address(0) && initialOwner != address(0), "zero address");
         athToken = IERC20(token_);
         priceOracle = IATHStakingPriceOracle(oracle_);
+        _pause(); // fail-closed: owner explicitly opens Staking after funding and deployment checks.
 
         _addPackage(10 ether, 99 ether, 35, 180);
         _addPackage(100 ether, 499 ether, 45, 180);
