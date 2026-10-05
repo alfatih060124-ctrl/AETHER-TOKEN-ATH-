@@ -1,52 +1,57 @@
 # ATH Engine Security / Release Gates
 
-## Gate A — Source / Logic
+## Gate A — Current protocol security
+- [x] Fixed supply 1,000,000,000 ATH; no post-deployment mint.
+- [x] 700M Mining + 300M Staking ecosystem allocation.
+- [x] Staking: 160M Reward / 30M Presale / 50M Marketing-Network / 30M Development / 20M Liquidity / 10M Reserve.
+- [x] Presale-linked price: $0.070 opening, +$0.001 per complete 100,000 ATH sold, $0.370 sold-out reference.
+- [x] Official market-price activation requires 15,000 holders plus explicit owner activation.
+- [x] ATH Presale deploys PAUSED/fail-closed.
+- [x] ATH Staking deploys PAUSED/fail-closed.
+- [x] ATH Staking cannot open until full 160M Reward + 50M Marketing/Network funding ledgers are complete.
+- [x] Staking principal liability is isolated from reward/network reserves.
+- [x] Mainnet gates default CLOSED.
 
-- [x] Fixed supply token: 1,000,000,000 ATH.
-- [x] Mining allocation constant: 700,000,000 ATH.
-- [x] Power: 0.001 BNB.
-- [x] Base daily reward: 10 ATH.
-- [x] Missed claim is not accumulated.
-- [x] Referral multiplier: +10% to +50% by supplied tiers.
-- [x] Booster: 0.001 BNB, +100 Hash, reward x2.
-- [x] Vesting: 10% @30d, 5% @60d, 5% @90d, 80% @180d.
-- [x] ATH pre-listing official price is fixed at $0.37 in ATHPriceRegistry; a live DEX price is separate until the 15,000-holder gate and explicit official-listing activation.
-- [x] ATH Presale deploys PAUSED/fail-closed; opening requires an explicit owner `unpause()` transaction after deployment checks.
-- [x] ATH Staking deploys PAUSED/fail-closed; reserve funding and deployment checks happen before explicit owner `unpause()`.
-- [x] Treasury is owner-updatable.
-- [x] Mining reserve protection prevents allocating rewards beyond funded reserve.
+## Gate B — Zero-cost validation
+- [x] Dependency install validated on authorized VM.
+- [x] Source self-check and JavaScript syntax gate PASS.
+- [x] Solidity compile PASS.
+- [x] Full automated contract test suite PASS.
+- [x] Deterministic ABI/release export PASS.
+- [x] Local full release rehearsal PASS.
+- [x] Runtime production dependency audit: 0 high/critical.
+- [x] Non-BNB readiness PASS with separate role wallets.
+- [x] EIP-170 bytecode checks included in release export.
+- [x] Admin and holder UI enforce Staking pause/opening boundary.
+- [x] Incident runbook, multisig migration procedure and pre-audit scope prepared.
 
-## Gate B — Automated tests
+## Gate C — External inputs before BSC Testnet
+- [ ] PRESALE_PAYMENT_TOKEN
+- [ ] LIQUIDITY_WALLET
+- [ ] STAKING_RESERVE_WALLET
+- [ ] DEVELOPMENT_BENEFICIARY
+- [ ] Dedicated Testnet key stored outside GitHub/chat.
+- [ ] Testnet deployer funded with sufficient tBNB.
 
-- [ ] `npm install` in a network-enabled development runner.
-- [ ] `npm test` passes.
-- [ ] Solidity compile passes with the pinned dependency range.
-- [ ] Gas report reviewed for `claimAllVested()` worst-case positions.
-- [x] Holder gas policy: AETHER does not subsidize holder transactions; explicit vesting processing is holder-only and holder claims pay BNB gas.
+## Gate D — Testnet evidence requiring transactions
+- [ ] One-shot deployment on chain ID 97.
+- [ ] Post-deploy invariant checker PASS.
+- [ ] BscScan verification.
+- [ ] Real Presale/Staking wallet flows PASS.
+- [ ] Explicit owner Staking opening after reserve verification.
+- [ ] Keeper dry-run + transaction evidence.
+- [ ] Verified addresses/ABI frozen into AETHER Wallet.
 
-## Gate C — BSC Testnet
+## Gate E — Mainnet prerequisites
+- [ ] Independent smart-contract audit completed and accepted findings resolved.
+- [ ] Production multisig signer set, threshold and addresses approved.
+- [x] Multisig migration procedure documented.
+- [x] Operational incident runbook documented.
+- [ ] Liquidity provider/lock decision approved.
+- [ ] ATH/USDT launch parameters approved.
+- [ ] Production RPC/monitoring tested.
+- [ ] Final operator approval.
 
-- [ ] Deploy ATHToken + MiningAirdrop + TeamTokenLock.
-- [ ] Confirm 70/20/5/5 allocation on-chain.
-- [ ] Verify contracts on BscScan.
-- [ ] Test real wallet flow: buy Power → daily claim → Booster → vesting claim.
-- [ ] Test treasury update using intended owner / multisig.
-- [ ] Test pause / unpause.
+Mainnet remains blocked until every required Gate E item is complete.
 
-## Gate D — Mainnet prerequisites
-
-- [x] Team & Dev lock fixed at exactly 12 months / 365 days.
-- [ ] Choose liquidity lock provider and lock duration for ATH/USDT.
-- [ ] External smart-contract audit completed and issues resolved.
-- [ ] Owner changed to production multisig.
-- [ ] Treasury/revenue wallet confirmed.
-- [ ] BSC mainnet RPC provider and monitoring configured.
-- [ ] Final contract addresses frozen in Aether Wallet configuration.
-
-**Mainnet deployment remains blocked until Gate D is complete.**
-
-## Technical fail-closed gate
-
-- [x] No fallback/default deployment private key.
-- [x] BSC mainnet deployment script requires four explicit `true` environment gates.
-- [x] Default `.env.example` keeps every mainnet gate `false`.
+GitHub-hosted Actions are currently blocked before job start by a GitHub account billing lock. The same source is validated on the authorized AETHER VM; the billing lock is an external account blocker, not a code PASS.

@@ -122,7 +122,7 @@ const PRESALE_ADMIN_ABI=[
 ];
 
 let cfg,readProvider,browserProvider,signer,account="",miningRead,tokenRead,miningWrite,tokenWrite,stakingRead,stakingWrite,presaleRead,presaleWrite;
-let state={miningOwner:"",tokenOwner:"",stakingOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,stakingPaused:false,presalePaused:true,rewardFundingRemaining:0n,networkFundingRemaining:0n};
+let state={miningOwner:"",tokenOwner:"",stakingOwner:"",presaleOwner:"",miningPaused:false,tokenPaused:false,stakingPaused:false,stakingOpeningReady:false,presalePaused:true,rewardFundingRemaining:0n,networkFundingRemaining:0n};
 let toastTimer;
 let rankPage=0;
 const rankPageSize=25;
@@ -175,7 +175,7 @@ function paintAccess(){
   $("pauseTokenBtn").disabled=!tokenAuthorized()||state.tokenPaused;
   $("unpauseTokenBtn").disabled=!tokenAuthorized()||!state.tokenPaused;
   $("pauseStakingBtn").disabled=!stakingAuthorized()||state.stakingPaused;
-  $("unpauseStakingBtn").disabled=!stakingAuthorized()||!state.stakingPaused;
+  $("unpauseStakingBtn").disabled=!stakingAuthorized()||!state.stakingPaused||!state.stakingOpeningReady;
   $("fundRewardBtn").disabled=!stakingAuthorized()||state.rewardFundingRemaining<=0n;
   $("fundNetworkBtn").disabled=!stakingAuthorized()||state.networkFundingRemaining<=0n;
   $("updatePackageBtn").disabled=!stakingAuthorized();
@@ -310,7 +310,8 @@ async function refreshUnifiedModules(){
         stakingRead.totalReferralPaidATH(),stakingRead.totalLifestyleMatchingPaidATH(),stakingRead.totalRankSponsorPaidATH(),stakingRead.totalRankSalaryPaidATH(),stakingRead.totalRankSalaryPaidUSDT(),
         stakingRead.activeDailyRewardRunRateUSDT(),stakingRead.totalWeeklyRankSalaryUSDT(),stakingRead.rewardReserveRunwayDays(),stakingRead.rankSalaryRunwayWeeks()
       ]);
-      state.stakingOwner=owner; state.stakingPaused=paused;
+      const openingReady=rewardFunded===rewardCap&&networkFunded===networkCap;
+      state.stakingOwner=owner; state.stakingPaused=paused; state.stakingOpeningReady=openingReady;
       state.rewardFundingRemaining=rewardCap>rewardFunded?rewardCap-rewardFunded:0n;
       state.networkFundingRemaining=networkCap>networkFunded?networkCap-networkFunded:0n;
       $("stakingState").textContent="Connected";
@@ -321,7 +322,7 @@ async function refreshUnifiedModules(){
       $("rankSalaryPaid").textContent=usd(rankPaidUsd);
       $("rankSalaryPaidAth").textContent=ath(rankPaidAth);
       $("stakingOwner").textContent=owner;
-      $("stakingPause").textContent=paused?"PAUSED":"ACTIVE";
+      $("stakingPause").textContent=paused?(openingReady?"PAUSED · READY TO OPEN":"PAUSED · RESERVE FUNDING REQUIRED"):"ACTIVE";
       $("stakingReserveDetail").textContent=ath(rewardReserve);
       $("stakingNetworkReserveDetail").textContent=ath(networkReserve);
       $("stakingReferralPaid").textContent=ath(referralPaid);

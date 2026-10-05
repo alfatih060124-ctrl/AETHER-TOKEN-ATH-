@@ -248,8 +248,14 @@ async function main() {
   if ((await staking.networkReserveATH()) !== stakingMarketing) {
     throw new Error("Staking network/marketing reserve is not exactly 50M ATH");
   }
+  if ((await staking.totalRewardFundedATH()) !== stakingRewardPool) {
+    throw new Error("Staking reward funding ledger is not exactly 160M ATH");
+  }
   if ((await staking.totalNetworkFundedATH()) !== stakingMarketing) {
     throw new Error("Staking network funding ledger is not exactly 50M ATH");
+  }
+  if ((await staking.paused()) !== true) {
+    throw new Error("Staking must remain PAUSED after deployment and reserve funding");
   }
   if ((await token.balanceOf(developmentVestingAddress)) !== stakingDevelopment) {
     throw new Error("Development vesting is not exactly 30M ATH");

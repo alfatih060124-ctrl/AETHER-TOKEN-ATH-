@@ -105,6 +105,15 @@ describe("AETHER ATH Staking v1", function () {
       .to.be.revertedWithCustomError(fresh, "OwnableUnauthorizedAccount")
       .withArgs(user.address);
 
+    await expect(fresh.connect(owner).unpause())
+      .to.be.revertedWithCustomError(fresh, "StakingOpeningNotReady");
+
+    await token.connect(owner).approve(await fresh.getAddress(), ethers.MaxUint256);
+    await fresh.connect(owner).fundRewards(ethers.parseEther("160000000"));
+    await expect(fresh.connect(owner).unpause())
+      .to.be.revertedWithCustomError(fresh, "StakingOpeningNotReady");
+
+    await fresh.connect(owner).fundNetworkReserve(ethers.parseEther("50000000"));
     await fresh.connect(owner).unpause();
     expect(await fresh.paused()).to.equal(false);
   });

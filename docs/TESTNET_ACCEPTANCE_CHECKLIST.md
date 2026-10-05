@@ -56,6 +56,8 @@
 - [x] Staking Reward Keeper fail-closed.
 - [x] Rank Salary Keeper fail-closed.
 - [x] ATHStaking deploys PAUSED/fail-closed and requires explicit owner unpause after funding/verification.
+- [x] ATHStaking on-chain opening guard requires full 160M Reward + 50M Marketing/Network funding ledgers.
+- [x] Admin and Holder portals block opening/staking while the Staking readiness boundary is not satisfied.
 
 ### Web / Control Panel
 - [x] Admin public surface exposes only Connect Wallet Mining / Staking / Presale.
@@ -216,8 +218,9 @@ Only after verified Testnet addresses are frozen:
 
 Mainnet remains closed until:
 - [ ] Independent smart-contract audit.
-- [ ] Production multisig decision and migration plan.
-- [ ] Operational incident runbook.
+- [x] Operational incident runbook prepared.
+- [x] Production multisig migration procedure prepared.
+- [ ] Production multisig signer set/threshold/address approval.
 - [ ] Liquidity provider/lock decision.
 - [ ] ATH/USDT launch parameters.
 - [ ] Final operator approval.

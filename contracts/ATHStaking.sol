@@ -248,6 +248,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     );
     event PrincipalWithdrawn(address indexed user, uint256 indexed stakeId, uint256 principalATH);
     event PackageAdded(uint256 indexed packageId, uint256 minUSDT, uint256 maxUSDT, uint256 dailyRateBps, uint256 lockDays);
+    error StakingOpeningNotReady();
+
     event PackageUpdated(uint256 indexed packageId, uint256 minUSDT, uint256 maxUSDT, uint256 dailyRateBps, uint256 lockDays, bool active);
     event ExcessRecovered(address indexed to, uint256 amount);
 
@@ -817,6 +819,10 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     function unpause() external onlyOwner {
+        if (
+            totalRewardFundedATH != MAX_REWARD_POOL
+                || totalNetworkFundedATH != MAX_NETWORK_MARKETING_POOL
+        ) revert StakingOpeningNotReady();
         _unpause();
     }
 

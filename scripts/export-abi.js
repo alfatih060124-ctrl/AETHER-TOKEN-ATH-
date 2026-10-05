@@ -244,8 +244,13 @@ if (miningBytes >= 24576) {
 }
 
 const stakingBytes = release.contracts.ATHStaking.deployedBytecodeBytes;
-if (stakingBytes >= 24576) {
-  throw new Error("ATHStaking exceeds EIP-170 deployed bytecode limit");
+const EIP170_LIMIT_BYTES = 24576;
+const STAKING_MIN_HEADROOM_BYTES = 256;
+if (stakingBytes > EIP170_LIMIT_BYTES - STAKING_MIN_HEADROOM_BYTES) {
+  throw new Error(
+    "ATHStaking bytecode safety margin breached: requires at least "
+      + STAKING_MIN_HEADROOM_BYTES + " bytes EIP-170 headroom"
+  );
 }
 
 fs.writeFileSync(

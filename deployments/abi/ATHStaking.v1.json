@@ -73,6 +73,11 @@
       "type": "error"
     },
     {
+      "inputs": [],
+      "name": "StakingOpeningNotReady",
+      "type": "error"
+    },
+    {
       "anonymous": false,
       "inputs": [
         {

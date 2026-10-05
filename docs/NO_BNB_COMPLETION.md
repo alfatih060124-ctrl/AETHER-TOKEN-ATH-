@@ -42,6 +42,8 @@ This register defines everything that can and must be completed before any BSC T
 - Rank Salary schedule = weekly **00:30 UTC** after the qualification delay.
 - Persistent Rank member registry, direct-leg pagination, Rank payout queue and complete on-chain Rank Salary history are implemented.
 - Dedicated 00:50 Staking Reward Keeper and 00:30 Rank Salary Keeper are fail-closed and Testnet-only until activation.
+- ATHStaking deploys PAUSED and cannot open until the full 160M Reward Reserve + 50M Marketing/Network funding ledgers are complete.
+- Holder and Admin UIs both enforce the on-chain Staking opening boundary.
 
 ### Admin and wallet-role security
 - Mining, Staking and Presale/Token owners are separate wallet roles.
@@ -80,7 +82,7 @@ This register defines everything that can and must be completed before any BSC T
 - Full automated contract tests.
 - Deterministic ABI/release export.
 - Local full release rehearsal.
-- EIP-170 bytecode size checks.
+- EIP-170 bytecode size checks, including a mandatory 256-byte ATHStaking safety headroom gate.
 - One-shot Testnet deployment gate.
 - Post-deploy invariant checker.
 - BscScan verification tooling.
@@ -88,6 +90,10 @@ This register defines everything that can and must be completed before any BSC T
 - Whitepaper / roadmap / AETHER AI sync.
 - Testnet acceptance checklist.
 - Mining, Staking Reward and Rank Salary keeper runbooks.
+- ATH Staking incident-response runbook.
+- Production multisig migration procedure.
+- Independent-audit preparation and invariant scope.
+- CodeQL, PR dependency review, Dependabot and security disclosure configuration.
 
 ## Latest no-BNB validation evidence
 
@@ -101,6 +107,7 @@ Latest validator evidence:
 - Solidity compiled: **28 files**.
 - Automated tests: **73 passing**.
 - ABI export: **PASS**.
+- ATHStaking deployed bytecode: **24,207 bytes**; EIP-170 headroom: **369 bytes**; mandatory safety minimum: **256 bytes**.
 - Local release rehearsal: **PASS**.
 
 Latest public web evidence:
@@ -132,4 +139,4 @@ The following require a real BSC Testnet transaction or deployed address:
 7. Enable transactional keeper mode and produce real keeper transactions.
 8. Bind AETHER Wallet to verified deployed Testnet contracts.
 
-No real BNB is required for the Testnet phase. Mainnet remains closed.
+No mainnet BNB is required for this source-completion phase. Real BSC Testnet deployment and transaction evidence require tBNB gas. Mainnet remains closed.

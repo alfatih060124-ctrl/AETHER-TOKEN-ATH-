@@ -192,6 +192,8 @@ async function main() {
   assertEq(await presaleContract.paused(), false, "Presale explicitly opened");
 
   assertEq(await staking.paused(), true, "Staking deploys paused");
+  assertEq(await staking.totalRewardFundedATH(), stakingRewardPool, "Staking reward funding ledger ready");
+  assertEq(await staking.totalNetworkFundedATH(), marketingAllocation, "Staking network funding ledger ready");
   await (await staking.unpause()).wait();
   assertEq(await staking.paused(), false, "Staking explicitly opened");
 

@@ -46,6 +46,14 @@ const testnetChecklistDoc = read("docs/TESTNET_ACCEPTANCE_CHECKLIST.md");
 const miningKeeperRunbookDoc = read("docs/REWARD_KEEPER_RUNBOOK.md");
 const stakingKeeperRunbookDoc = read("docs/STAKING_REWARD_KEEPER_RUNBOOK.md");
 const rankKeeperRunbookDoc = read("docs/RANK_SALARY_KEEPER_RUNBOOK.md");
+const stakingIncidentRunbookDoc = read("docs/ATH_STAKING_INCIDENT_RUNBOOK.md");
+const stakingMultisigDoc = read("docs/ATH_STAKING_MULTISIG_MIGRATION.md");
+const stakingPreauditDoc = read("docs/ATH_STAKING_PREAUDIT.md");
+const ciWorkflow = read(".github/workflows/ci.yml");
+const dependencyReviewWorkflow = read(".github/workflows/dependency-review.yml");
+const codeqlWorkflow = read(".github/workflows/codeql.yml");
+const dependabotConfig = read(".github/dependabot.yml");
+const securityPolicy = read(".github/SECURITY.md");
 
 must(token, /TOTAL_SUPPLY\s*=\s*1_000_000_000\s*\*\s*10\s*\*\*\s*18/, "ATH fixed supply is 1,000,000,000");
 must(token, /ERC20\("Aether",\s*"ATH"\)/, "token identity Aether / ATH");
@@ -389,6 +397,11 @@ must(deploy, /const treasury = roleAddress\("MINING_TREASURY_ADDRESS"\)/, "Deplo
 must(deploy, /MiningAirdrop\.deploy\(tokenAddress, treasury, priceRegistryAddress, miningOwner\)/, "Deployment assigns Mining owner and treasury separately");
 must(deploy, /ATHStaking[\s\S]*Staking\.deploy\(tokenAddress, oracleAddress, stakingOwner\)/, "Deployment assigns Staking to Staking Admin");
 must(staking, /constructor\(address token_, address oracle_, address initialOwner\)[\s\S]*?_pause\(\);/, "ATH Staking deploys PAUSED/fail-closed");
+must(staking, /error StakingOpeningNotReady\(\)/, "ATH Staking defines a compact opening-readiness error");
+must(staking, /function unpause\(\) external onlyOwner[\s\S]*totalRewardFundedATH != MAX_REWARD_POOL[\s\S]*totalNetworkFundedATH != MAX_NETWORK_MARKETING_POOL[\s\S]*revert StakingOpeningNotReady\(\)/, "ATH Staking cannot open before both protected funding ledgers are complete");
+must(adminWeb, /unpauseStakingBtn[\s\S]*!state\.stakingOpeningReady/, "Control Panel blocks Staking opening until reserve readiness");
+must(stakingWeb, /read\.paused\(\)/, "Holder Staking portal reads on-chain pause state");
+must(stakingWeb, /sPaused[\s\S]*stakingStakeBtn/, "Holder Staking portal blocks stake while paused");
 must(deploy, /presaleWallet,\s*presaleOwner/, "Deployment assigns Presale to Presale Admin");
 must(deploy, /token\.transferOwnership\(tokenOwner\)/, "ATH Token ownership is transferred to Token\/Presale Admin");
 must(deploy, /PriceRegistry\.deploy\(presaleAddress, priceRegistryOwner\)/, "Price Registry belongs to Token\/Presale Admin");
@@ -430,6 +443,7 @@ must(nonBnbReadiness, /Current policy requires Mining Treasury = Presale Treasur
 must(nonBnbReadiness, /Keeper wallet must remain separate/, "Keeper role isolation is enforced");
 console.log("OK: explicit non-BNB readiness classification");
 
+must(read("scripts/export-abi.js"), /STAKING_MIN_HEADROOM_BYTES = 256/, "ATH Staking release enforces a 256-byte EIP-170 safety margin");
 must(runtimeSecurityAudit, /runtimeHighCritical/, "Runtime security audit reports high\/critical count");
 must(runtimeSecurityAudit, /devToolingFindings/, "Runtime security audit separates dev-tooling findings");
 must(runtimeSecurityAudit, /runtimeSecurityAudit: PASSED/, "Runtime security audit has explicit PASS marker");
@@ -451,7 +465,20 @@ must(stakingKeeperRunbookDoc, /00:50 UTC daily slot/, "Staking keeper runbook ca
 must(stakingKeeperRunbookDoc, /KEEPER_WALLET_ADDRESS/, "Staking keeper runbook carries expected-wallet gate");
 must(rankKeeperRunbookDoc, /00:30 UTC/, "Rank keeper runbook carries Rank Salary schedule");
 must(rankKeeperRunbookDoc, /lifetime weekly Rank Salary/, "Rank keeper runbook carries lifetime salary rule");
-console.log("OK: release documentation is synchronized with current Mining/Staking/Admin rules");
+must(stakingIncidentRunbookDoc, /SEV-1/, "Staking incident runbook defines critical incident handling");
+must(stakingIncidentRunbookDoc, /Keep Staking PAUSED/, "Staking incident runbook is fail-closed");
+must(stakingMultisigDoc, /Keep ATH Staking PAUSED/, "Multisig migration remains fail-closed");
+must(stakingMultisigDoc, /Keeper: automation only; never owner/, "Multisig plan preserves role separation");
+must(stakingPreauditDoc, /Principal liability is never spent/, "Pre-audit scope locks principal protection");
+must(stakingPreauditDoc, /Internal review is not a substitute/, "Pre-audit scope preserves independent-audit requirement");
+must(ciWorkflow, /npm ci --no-audit --no-fund/, "CI uses the locked dependency tree");
+must(ciWorkflow, /security:audit:runtime/, "CI includes runtime dependency security gate");
+must(ciWorkflow, /readiness:nonbnb/, "CI includes non-BNB readiness");
+must(dependencyReviewWorkflow, /dependency-review-action@v4/, "PR dependency review is configured");
+must(codeqlWorkflow, /javascript-typescript/, "CodeQL JavaScript analysis is configured");
+must(dependabotConfig, /package-ecosystem: npm/, "Dependabot npm updates are configured");
+must(securityPolicy, /Never include seed phrases, private keys/, "Security policy forbids secret disclosure");
+console.log("OK: release documentation and supply-chain security are synchronized");
 
 for (const gate of [
   "ALLOW_MAINNET_DEPLOY",

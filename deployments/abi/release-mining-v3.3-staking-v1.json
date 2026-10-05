@@ -30,9 +30,9 @@
     },
     "ATHStaking": {
       "abiFile": "deployments/abi/ATHStaking.v1.json",
-      "abiSha256": "e7fba4f0fb0d0911642b679652f48bd069082b721a9c39bf50609bf42abfac3d",
-      "deployedBytecodeSha256": "79c0517efdb652f699e73f2c8fddc977b416e17578623fa4d44260993655949a",
-      "deployedBytecodeBytes": 22846
+      "abiSha256": "87f36c298120f9314e787965984060dfbbadb49f31e36cfefb09f22e0c32e264",
+      "deployedBytecodeSha256": "fd6149907edbe5df8fe9ef6808a0ab1e67d7d1d33ed0d9d179891c0ede569813",
+      "deployedBytecodeBytes": 24207
     },
     "ATHStakingPriceOracle": {
       "abiFile": "deployments/abi/ATHStakingPriceOracle.v1.json",

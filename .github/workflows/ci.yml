@@ -15,26 +15,49 @@ permissions:
   contents: read
 
 jobs:
-  compile-test:
+  release-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      ATH_CHAIN_ID: "97"
+      BSC_TESTNET_RPC: "https://bsc-testnet-rpc.publicnode.com"
+      TESTNET_USE_DEPLOYER_ROLES: "false"
+      MINING_OWNER_ADDRESS: "0x1111111111111111111111111111111111111111"
+      STAKING_OWNER_ADDRESS: "0x2222222222222222222222222222222222222222"
+      PRESALE_OWNER_ADDRESS: "0x3333333333333333333333333333333333333333"
+      KEEPER_WALLET_ADDRESS: "0x4444444444444444444444444444444444444444"
+      MINING_TREASURY_ADDRESS: "0x5555555555555555555555555555555555555555"
+      PRESALE_WALLET: "0x5555555555555555555555555555555555555555"
+      ALLOW_MAINNET_DEPLOY: "false"
+      MAINNET_AUDIT_PASSED: "false"
+      MAINNET_MULTISIG_CONFIRMED: "false"
+      LIQUIDITY_LOCK_CONFIRMED: "false"
+      RUN_ATH_TESTNET_DEPLOY: "false"
+      TESTNET_DEPLOY_APPROVED: "false"
+      RUN_ATH_POSTDEPLOY_CHECK: "false"
+      RANK_KEEPER_ENABLED: "false"
+      KEEPER_ENABLED: "false"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Zero-dependency source self-check
-        run: node scripts/source-selfcheck.js
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Source self-check
+        run: npm run source:selfcheck
+      - name: Syntax gate
+        run: npm run syntax:check
       - name: Compile contracts
         run: npm run compile
-
-      - name: Run tests
+      - name: Automated tests
         run: npm test
+      - name: Deterministic ABI and bytecode export
+        run: npm run abi:export
+      - name: Local release rehearsal
+        run: npm run release:smoke:local
+      - name: Runtime dependency security gate
+        run: npm run security:audit:runtime
+      - name: Non-BNB readiness
+        run: npm run readiness:nonbnb
