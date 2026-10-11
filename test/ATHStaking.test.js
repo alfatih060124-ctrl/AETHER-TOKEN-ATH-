@@ -505,11 +505,33 @@ describe("AETHER ATH Staking v1", function () {
   it("locks the eight final rank thresholds and weekly salaries", async function () {
     const thresholds = ["1000","5000","15000","50000","100000","250000","500000","1000000"];
     const salaries = ["25","75","200","500","1000","2000","5000","10000"];
+    const personalMinimums = ["0","0","100","200","500","1000","2000","5000"];
     for (let i = 0; i < 8; i++) {
       expect(await staking.rankSmallLegThresholdUSDT(i)).to.equal(ethers.parseEther(thresholds[i]));
       expect(await staking.rankWeeklySalaryUSDT(i)).to.equal(ethers.parseEther(salaries[i]));
+      expect(await staking.rankPersonalStakeMinimumUSDT(i)).to.equal(ethers.parseEther(personalMinimums[i]));
     }
     expect(await staking.MIN_DIRECT_SPONSORS_FOR_RANK()).to.equal(5n);
+  });
+
+  it("requires the personal staking minimum from Rank 3 and refreshes rank after the member's own stake", async function () {
+    // $90 personal stake: enough to meet neither R3's $100 minimum nor higher ranks.
+    await staking.connect(user).stake(0, ethers.parseEther("90"), ethers.ZeroAddress);
+
+    // Five direct legs produce $16,000 small-leg turnover: sufficient for R3 group volume.
+    for (const leg of [leg1, leg2, leg3, leg4, leg5]) {
+      await staking.connect(leg).stake(3, ethers.parseEther("4000"), user.address);
+    }
+
+    expect((await staking.getSmallLegTurnoverUSDT(user.address)).smallLegTurnover)
+      .to.equal(ethers.parseEther("16000"));
+    expect(await staking.getEligibleRank(user.address)).to.equal(2n);
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(2n);
+
+    // An additional $10 raises active personal staking to exactly $100.
+    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    expect(await staking.getEligibleRank(user.address)).to.equal(3n);
+    expect((await staking.rankInfo(user.address)).highestRank).to.equal(3n);
   });
 
   it("calculates the user's five-leg example dynamically: 900 big leg and 3,539 small leg", async function () {
@@ -698,7 +720,8 @@ describe("AETHER ATH Staking v1", function () {
     expect(reserveBefore - (await staking.networkReserveATH())).to.equal(expectedPathTotal);
   });
 
-  it("caps a ranked direct sponsor at 35% total including the common 10% referral", async function () {
+  it("caps a Rank 8 direct sponsor at 35% total including the common 10% referral", async function () {
+    await staking.connect(user).stake(3, ethers.parseEther("5000"), ethers.ZeroAddress);
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["300000","250000","250000","250000","250000"];
     for (let i = 0; i < legs.length; i++) {
@@ -726,7 +749,8 @@ describe("AETHER ATH Staking v1", function () {
     expect(reserveBefore - (await staking.networkReserveATH())).to.equal(expectedTotal);
   });
 
-  it("qualifies Rank 8 at $1,000,000 small-leg turnover with five direct sponsors", async function () {
+  it("qualifies Rank 8 at $1,000,000 small-leg turnover with five direct sponsors and $5,000 personal stake", async function () {
+    await staking.connect(user).stake(3, ethers.parseEther("5000"), ethers.ZeroAddress);
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["300000","250000","250000","250000","250000"];
     for (let i = 0; i < legs.length; i++) {
