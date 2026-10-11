@@ -154,6 +154,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     // Rank thresholds are based on cumulative SMALL-LEG USDT turnover:
     // total direct-leg turnover minus the single largest direct leg.
     uint256[8] public rankSmallLegThresholdUSDT;
+    // Minimum active personal staking balance required to qualify for R3-R8.
+    // R1 and R2 have no additional personal-staking minimum.
+    uint256[8] public rankPersonalStakeMinimumUSDT;
     uint256[8] public rankWeeklySalaryUSDT;
     // Direct Referral target by Rank. These totals INCLUDE the common 10% referral.
     // Unranked sponsor = 10%; R1..R8 = 13/16/19/22/25/28/31/35%.
@@ -283,6 +286,13 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         rankWeeklySalaryUSDT[5] = 2_000 ether;
         rankWeeklySalaryUSDT[6] = 5_000 ether;
         rankWeeklySalaryUSDT[7] = 10_000 ether;
+
+        rankPersonalStakeMinimumUSDT[2] = 100 ether;   // R3
+        rankPersonalStakeMinimumUSDT[3] = 200 ether;   // R4
+        rankPersonalStakeMinimumUSDT[4] = 500 ether;   // R5
+        rankPersonalStakeMinimumUSDT[5] = 1_000 ether; // R6
+        rankPersonalStakeMinimumUSDT[6] = 2_000 ether; // R7
+        rankPersonalStakeMinimumUSDT[7] = 5_000 ether; // R8
     }
 
     function packageCount() external view returns (uint256) {
@@ -489,9 +499,16 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         (, , uint256 smallLegTurnover, ) = getSmallLegTurnoverUSDT(account);
 
         for (uint8 r = uint8(RANK_COUNT); r > 0; r--) {
-            if (smallLegTurnover >= rankSmallLegThresholdUSDT[r - 1]) {
-                return r;
-            }
+            if (smallLegTurnover < rankSmallLegThresholdUSDT[r - 1]) continue;
+
+            // R3-R8 require both the group's small-leg turnover and the
+            // member's own active staking balance. R1-R2 need no personal minimum.
+            if (
+                r >= 3 &&
+                userInfo[account].activeStakedUSDT < rankPersonalStakeMinimumUSDT[r - 1]
+            ) continue;
+
+            return r;
         }
     }
 
@@ -641,6 +658,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         }
 
         _propagateLegTurnover(msg.sender, amountUSDT);
+        // A member's own stake can satisfy the personal minimum for a rank
+        // after their group turnover was already accumulated.
+        _refreshRank(msg.sender);
 
         emit Staked(msg.sender, stakeId, packageId, amountUSDT, principalATH, pkg.dailyRateBps, pkg.lockDays);
     }
