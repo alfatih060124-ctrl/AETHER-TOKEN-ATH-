@@ -590,7 +590,7 @@ const server = http.createServer((req, res) => {
               'body[data-aether-view="staking"] #home,',
               'body[data-aether-view="staking"] #home > .hero-stage,'
             )
-            .replaceAll('href="#home"', 'href="#staking"');
+            .replace('href="#home" aria-label="AETHER STAKING"', 'href="#staking" aria-label="AETHER STAKING"');
           return send(res, 200, html, MIME[".html"], false);
         });
       }
