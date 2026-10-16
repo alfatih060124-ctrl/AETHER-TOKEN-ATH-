@@ -270,6 +270,11 @@ function isControlPanelHost(req) {
   return host === "pm.aether.boats";
 }
 
+function isStakingHost(req) {
+  const host = String(req.headers.host || "").split(":")[0].toLowerCase();
+  return host === "stake.aether.boats";
+}
+
 const ADMIN_PUBLIC_FILES = new Set(["/admin", "/admin/", "/admin.html", "/admin.js", "/admin-login.html", "/admin-login.js", "/admin.css"]);
 const CONTROL_PANEL_ALLOWED_FILES = new Set([
   "/", "/admin", "/admin/", "/admin.html", "/admin.js",
@@ -300,6 +305,7 @@ function safePublicPath(urlPath, controlPanelHost = false) {
 
 const server = http.createServer((req, res) => {
   const controlPanelHost = isControlPanelHost(req);
+  const stakingHost = isStakingHost(req);
   const requestUrl = new URL(String(req.url || "/"), "https://aether.local");
   const requestPath = requestUrl.pathname;
 
@@ -567,7 +573,9 @@ const server = http.createServer((req, res) => {
     );
   }
 
-  const full = safePublicPath(req.url || "/", controlPanelHost);
+  const full = stakingHost && requestPath === "/"
+    ? path.join(PUBLIC_DIR, "stake.html")
+    : safePublicPath(req.url || "/", controlPanelHost);
   if (!full) return send(res, 404, "Not found", "text/plain; charset=utf-8", controlPanelHost);
 
   fs.stat(full, (statErr, stat) => {
