@@ -613,7 +613,7 @@ const server = http.createServer((req, res) => {
               label + '</a>'
             ).join("") + '</nav>';
           let html = data.toString("utf8")
-            .replace('<title>AETHER STAKING — ATH Staking &amp; Networking</title>', '<title>' + pageLabel + ' | AETHER STAKING</title>')
+            .replace('<title>AETHER STAKING — ATH Staking & Networking</title>', '<title>' + pageLabel + ' | AETHER STAKING</title>')
             .replace(
               'body[data-aether-view="staking"] #home,',
               'body[data-aether-view="staking"] #home > .hero-stage,'
