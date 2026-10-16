@@ -584,6 +584,13 @@ const server = http.createServer((req, res) => {
   }
 
   const stakingPage = stakingHost ? STAKING_PAGE_BY_PATH[requestPath] : null;
+  if (stakingHost && !stakingPage) {
+    const assetExtension = path.extname(requestPath).toLowerCase();
+    const stakingAssetExtensions = new Set([".css", ".js", ".svg", ".png", ".webp", ".ico", ".woff", ".woff2", ".pdf"]);
+    if (!stakingAssetExtensions.has(assetExtension)) {
+      return send(res, 404, "Staking page not found", "text/plain; charset=utf-8");
+    }
+  }
   const full = stakingPage
     ? path.join(PUBLIC_DIR, "stake.html")
     : safePublicPath(req.url || "/", controlPanelHost);
@@ -658,8 +665,8 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    if (controlPanelHost) {
-      return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
+    if (controlPanelHost || stakingHost) {
+      return send(res, 404, "Not found", "text/plain; charset=utf-8", controlPanelHost);
     }
     const index = path.join(PUBLIC_DIR, "index.html");
     fs.readFile(index, (err, data) => {
