@@ -275,6 +275,16 @@ function isStakingHost(req) {
   return host === "stake.aether.boats";
 }
 
+const STAKING_PAGE_BY_PATH = Object.freeze({
+  "/": "overview",
+  "/stake": "stake",
+  "/positions": "positions",
+  "/account": "account",
+  "/network": "network",
+  "/network/bonus": "bonus",
+  "/rank": "rank",
+});
+
 const ADMIN_PUBLIC_FILES = new Set(["/admin", "/admin/", "/admin.html", "/admin.js", "/admin-login.html", "/admin-login.js", "/admin.css"]);
 const CONTROL_PANEL_ALLOWED_FILES = new Set([
   "/", "/admin", "/admin/", "/admin.html", "/admin.js",
@@ -573,7 +583,8 @@ const server = http.createServer((req, res) => {
     );
   }
 
-  const full = stakingHost && requestPath === "/"
+  const stakingPage = stakingHost ? STAKING_PAGE_BY_PATH[requestPath] : null;
+  const full = stakingPage
     ? path.join(PUBLIC_DIR, "stake.html")
     : safePublicPath(req.url || "/", controlPanelHost);
   if (!full) return send(res, 404, "Not found", "text/plain; charset=utf-8", controlPanelHost);
@@ -581,16 +592,49 @@ const server = http.createServer((req, res) => {
   fs.stat(full, (statErr, stat) => {
     if (!statErr && stat.isFile()) {
       const ext = path.extname(full).toLowerCase();
-      if (stakingHost && requestPath === "/" && ext === ".html") {
+      if (stakingPage && ext === ".html") {
         return fs.readFile(full, (readErr, data) => {
           if (readErr) return send(res, 500, "Staking page unavailable", "text/plain; charset=utf-8");
-          // Keep the existing visual design intact while hiding only the Mining hero.
-          const html = data.toString("utf8")
+          // Reuse the approved Staking design and assets; route-specific CSS only changes which panel is visible.
+          const pageLinks = [
+            ["overview", "/", "Overview"],
+            ["stake", "/stake", "Stake"],
+            ["positions", "/positions", "My Positions"],
+            ["account", "/account", "Account"],
+            ["network", "/network", "Sponsor Network"],
+            ["bonus", "/network/bonus", "Lifestyle Bonus"],
+            ["rank", "/rank", "Rank Salary"],
+          ];
+          const nav = '<nav class="main-nav" aria-label="Staking navigation">' +
+            pageLinks.map(([key, href, label]) =>
+              '<a' + (key === stakingPage ? ' class="active"' : '') +
+              ' href="' + href + '"' + (key === stakingPage ? ' aria-current="page"' : '') + '>' +
+              label + '</a>'
+            ).join("") + '</nav>';
+          let html = data.toString("utf8")
             .replace(
               'body[data-aether-view="staking"] #home,',
               'body[data-aether-view="staking"] #home > .hero-stage,'
             )
-            .replace('href="#home" aria-label="AETHER STAKING"', 'href="#staking" aria-label="AETHER STAKING"');
+            .replace('<body data-aether-view="staking">', '<body data-aether-view="staking" data-staking-page="' + stakingPage + '">')
+            .replace('href="#home" aria-label="AETHER STAKING"', 'href="/" aria-label="AETHER STAKING"')
+            .replace(/<nav class="main-nav" aria-label="Primary navigation">[\s\S]*?<\/nav>/, nav);
+          const pageCss = [
+            'body[data-staking-page] #staking .staking-layout > article { display:none !important; }',
+            'body[data-staking-page="overview"] #staking .staking-layout, body[data-staking-page="overview"] #stakingPackages { display:none !important; }',
+            'body[data-staking-page="stake"] #staking .staking-layout > article:nth-of-type(1),',
+            'body[data-staking-page="positions"] #staking .staking-layout > article:nth-of-type(2),',
+            'body[data-staking-page="account"] #staking .staking-layout > article:nth-of-type(3),',
+            'body[data-staking-page="rank"] #staking .staking-layout > article:nth-of-type(4),',
+            'body[data-staking-page="network"] #staking .staking-layout > article:nth-of-type(5),',
+            'body[data-staking-page="bonus"] #staking .staking-layout > article:nth-of-type(5) { display:block !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-head, body[data-staking-page="bonus"] #staking .staking-network-toolbar, body[data-staking-page="bonus"] #staking #stakingNetworkTree { display:none !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-summary > div { display:none !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-summary > div:nth-child(5) { display:block !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-summary { grid-template-columns:1fr !important; }',
+            'body[data-staking-page]:not([data-staking-page="overview"]) #staking .staking-head { margin-bottom:18px; }'
+          ].join("\\n");
+          html = html.replace('</style>', pageCss + '\\n  </style>');
           return send(res, 200, html, MIME[".html"], false);
         });
       }
