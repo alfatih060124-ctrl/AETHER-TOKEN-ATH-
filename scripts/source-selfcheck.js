@@ -137,6 +137,15 @@ must(staking, /recoverExcessATH[\s\S]*onlyOwner whenPaused/, "Staking excess rec
 must(staking, /MIN_DIRECT_SPONSORS_FOR_RANK\s*=\s*5/, "Rank salary requires at least 5 direct sponsors");
 must(staking, /rankSmallLegThresholdUSDT\[0\]\s*=\s*1_000 ether/, "Rank 1 small-leg threshold is $1,000");
 must(staking, /rankSmallLegThresholdUSDT\[7\]\s*=\s*1_000_000 ether/, "Rank 8 small-leg threshold is $1,000,000");
+must(staking, /rankPersonalStakeMinimumUSDT\[2\]\s*=\s*100 ether/, "Rank 3 requires $100 personal staking");
+must(staking, /rankPersonalStakeMinimumUSDT\[3\]\s*=\s*200 ether/, "Rank 4 requires $200 personal staking");
+must(staking, /rankPersonalStakeMinimumUSDT\[4\]\s*=\s*500 ether/, "Rank 5 requires $500 personal staking");
+must(staking, /rankPersonalStakeMinimumUSDT\[5\]\s*=\s*1_000 ether/, "Rank 6 requires $1,000 personal staking");
+must(staking, /rankPersonalStakeMinimumUSDT\[6\]\s*=\s*2_000 ether/, "Rank 7 requires $2,000 personal staking");
+must(staking, /rankPersonalStakeMinimumUSDT\[7\]\s*=\s*5_000 ether/, "Rank 8 requires $5,000 personal staking");
+must(staking, /r >= 3 &&[\s\S]*userInfo\[account\]\.activeStakedUSDT < rankPersonalStakeMinimumUSDT\[r - 1\]/, "Rank 3-8 qualification checks active personal staking");
+must(staking, /_propagateLegTurnover\(msg\.sender, amountUSDT\);[\s\S]*_refreshRank\(msg\.sender\);/, "Personal staking re-evaluates the member's Rank");
+
 must(staking, /rankWeeklySalaryUSDT\[0\]\s*=\s*25 ether/, "Rank 1 salary is $25 weekly");
 must(staking, /rankWeeklySalaryUSDT\[7\]\s*=\s*10_000 ether/, "Rank 8 salary is $10,000 weekly");
 must(staking, /rankSponsorBonusBps\s*=\s*\[1300, 1600, 1900, 2200, 2500, 2800, 3100, 3500\]/, "Ranked Direct Referral totals are 13/16/19/22/25/28/31/35%");
