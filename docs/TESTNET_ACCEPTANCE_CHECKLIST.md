@@ -51,6 +51,8 @@
 - [x] L1–L10 Lifestyle Bonus / Matching Staking = 8/5/3/2/1/0.5/0.5/0.5/0.5/0.5%.
 - [x] Lifestyle Bonus / Matching Staking settles in real time during Staking reward settlement.
 - [x] Rank 1–8 small-leg thresholds and lifetime weekly salaries.
+- [ ] Rank qualification also requires minimum active personal staking from R3: R3 $100, R4 $200, R5 $500, R6 $1,000, R7 $2,000, R8 $5,000; R1–R2 have no additional personal minimum.
+- [ ] Verify Rank re-evaluates after the member's own additional stake and that R3 is not granted below $100 personal active staking.
 - [x] Rank Salary schedule = 00:30 UTC weekly after qualification delay.
 - [x] Complete Rank Salary history + payout queue + direct-leg pagination.
 - [x] Staking Reward Keeper fail-closed.
