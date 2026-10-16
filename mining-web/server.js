@@ -585,10 +585,12 @@ const server = http.createServer((req, res) => {
         return fs.readFile(full, (readErr, data) => {
           if (readErr) return send(res, 500, "Staking page unavailable", "text/plain; charset=utf-8");
           // Keep the existing visual design intact while hiding only the Mining hero.
-          const html = data.toString("utf8").replace(
-            'body[data-aether-view="staking"] #home,',
-            'body[data-aether-view="staking"] #home > .hero-stage,'
-          );
+          const html = data.toString("utf8")
+            .replace(
+              'body[data-aether-view="staking"] #home,',
+              'body[data-aether-view="staking"] #home > .hero-stage,'
+            )
+            .replaceAll('href="#home"', 'href="#staking"');
           return send(res, 200, html, MIME[".html"], false);
         });
       }
