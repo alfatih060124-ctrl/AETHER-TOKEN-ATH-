@@ -633,8 +633,8 @@ const server = http.createServer((req, res) => {
             'body[data-staking-page="bonus"] #staking .staking-network-summary > div:nth-child(5) { display:block !important; }',
             'body[data-staking-page="bonus"] #staking .staking-network-summary { grid-template-columns:1fr !important; }',
             'body[data-staking-page]:not([data-staking-page="overview"]) #staking .staking-head { margin-bottom:18px; }'
-          ].join("\\n");
-          html = html.replace('</style>', pageCss + '\\n  </style>');
+          ].join("\n");
+          html = html.replace('</style>', pageCss + '\n  </style>');
           return send(res, 200, html, MIME[".html"], false);
         });
       }
