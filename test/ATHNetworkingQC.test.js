@@ -152,6 +152,19 @@ describe("ATH Networking Bonus QC Matrix", function () {
       expect(snapshot.smallLegTurnover, `Rank ${i + 1} turnover`).to.equal(
         ethers.parseEther(targets[i])
       );
+      // The personal-staking minimum is independent of group small-leg turnover.
+      // Raise the sponsor's own active stake only when Rank 3+ requires it.
+      const personalStakeIncrements = ["100", "100", "300", "500", "1000", "3000"];
+      const personalStakePackages = [1, 1, 1, 2, 2, 3];
+      if (i >= 2) {
+        const personalIndex = i - 2;
+        await staking.connect(sponsor).stake(
+          personalStakePackages[personalIndex],
+          ethers.parseEther(personalStakeIncrements[personalIndex]),
+          ethers.ZeroAddress
+        );
+      }
+
       expect(await staking.getEligibleRank(sponsor.address), `Rank ${i + 1} eligibility`).to.equal(
         BigInt(i + 1)
       );
