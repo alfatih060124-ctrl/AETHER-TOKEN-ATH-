@@ -605,6 +605,7 @@ const server = http.createServer((req, res) => {
             ["bonus", "/network/bonus", "Lifestyle Bonus"],
             ["rank", "/rank", "Rank Salary"],
           ];
+          const pageLabel = pageLinks.find(([key]) => key === stakingPage)?.[2] || "Overview";
           const nav = '<nav class="main-nav" aria-label="Staking navigation">' +
             pageLinks.map(([key, href, label]) =>
               '<a' + (key === stakingPage ? ' class="active"' : '') +
@@ -612,6 +613,7 @@ const server = http.createServer((req, res) => {
               label + '</a>'
             ).join("") + '</nav>';
           let html = data.toString("utf8")
+            .replace('<title>AETHER STAKING — ATH Staking &amp; Networking</title>', '<title>' + pageLabel + ' | AETHER STAKING</title>')
             .replace(
               'body[data-aether-view="staking"] #home,',
               'body[data-aether-view="staking"] #home > .hero-stage,'
@@ -621,6 +623,7 @@ const server = http.createServer((req, res) => {
             .replace(/<nav class="main-nav" aria-label="Primary navigation">[\s\S]*?<\/nav>/, nav);
           const pageCss = [
             'body[data-staking-page] #staking .staking-layout > article { display:none !important; }',
+            'body[data-aether-view="staking"] main#home > :not(#staking):not(#toast) { display:none !important; }',
             'body[data-staking-page="overview"] #staking .staking-layout, body[data-staking-page="overview"] #stakingPackages { display:none !important; }',
             'body[data-staking-page="stake"] #staking .staking-layout > article:nth-of-type(1),',
             'body[data-staking-page="positions"] #staking .staking-layout > article:nth-of-type(2),',
