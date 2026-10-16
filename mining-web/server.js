@@ -581,6 +581,17 @@ const server = http.createServer((req, res) => {
   fs.stat(full, (statErr, stat) => {
     if (!statErr && stat.isFile()) {
       const ext = path.extname(full).toLowerCase();
+      if (stakingHost && requestPath === "/" && ext === ".html") {
+        return fs.readFile(full, (readErr, data) => {
+          if (readErr) return send(res, 500, "Staking page unavailable", "text/plain; charset=utf-8");
+          // Keep the existing visual design intact while hiding only the Mining hero.
+          const html = data.toString("utf8").replace(
+            'body[data-aether-view="staking"] #home,',
+            'body[data-aether-view="staking"] #home > .hero-stage,'
+          );
+          return send(res, 200, html, MIME[".html"], false);
+        });
+      }
       const dynamicExt = [".html",".css",".js",".json"].includes(ext);
       res.writeHead(200, {
         "content-type": MIME[ext] || "application/octet-stream",
