@@ -105,7 +105,7 @@ Latest validator evidence:
 - Syntax checks: **PASS**.
 - BSC Testnet RPC: **PASS**.
 - Solidity compiled: **28 files**.
-- Automated tests: **73 passing**.
+- Automated tests: **74 passing**.
 - ABI export: **PASS**.
 - ATHStaking deployed bytecode: **24,207 bytes**; EIP-170 headroom: **369 bytes**; mandatory safety minimum: **256 bytes**.
 - Local release rehearsal: **PASS**.
