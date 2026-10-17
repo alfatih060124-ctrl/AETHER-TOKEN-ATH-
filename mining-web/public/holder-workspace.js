@@ -4,8 +4,9 @@
   const status=document.getElementById("holderWalletWorkspaceStatus");
   const connect=document.getElementById("connectBtn");
   const valid=new Set(["mining","staking"]);
+  const publicSite=document.body.dataset.publicSite||"";
 
-  function normalize(view){return valid.has(view)?view:"mining"}
+  function normalize(view){if(publicSite==="mining"||publicSite==="staking")return publicSite;return valid.has(view)?view:"mining"}
 
   function set(view,{scrollTo=null,persist=true}={}){
     const safe=normalize(view);
@@ -21,7 +22,7 @@
     document.querySelectorAll('.main-nav a[href="#mining"],.main-nav a[href="#staking"]').forEach(link=>{
       link.classList.toggle("holder-area-active",link.getAttribute("href")==="#"+safe);
     });
-    if(persist){
+    if(persist && !publicSite){
       try{localStorage.setItem("ath-holder-workspace",safe)}catch{}
     }
     if(scrollTo){
@@ -65,11 +66,11 @@
     new MutationObserver(paintWallet).observe(connect,{childList:true,subtree:true,characterData:true});
   }
 
-  let initial="mining";
-  try{
+  let initial=publicSite==="mining"||publicSite==="staking"?publicSite:"mining";
+  if(!publicSite){try{
     const saved=localStorage.getItem("ath-holder-workspace");
     if(valid.has(saved))initial=saved;
-  }catch{}
+  }catch{}}
   if(location.hash==="#staking")initial="staking";
   if(location.hash==="#mining")initial="mining";
   set(initial,{persist:false});
