@@ -634,3 +634,31 @@ body[data-holder-view="staking"] .main-nav a[href="#staking"]{
   .ath-tokenomics-breakdown{grid-template-columns:1fr}
   .ath-allocation-card strong{font-size:32px}
 }
+
+
+/* Member-area / page routing */
+body[data-page-view] main > section{display:none}
+body[data-page-view="home"] main > #home,
+body[data-page-view="home"] main > #holder-workspace,
+body[data-page-view="home"] main > .feature-strip,
+body[data-page-view="home"] main > #docs{display:block}
+body[data-page-view="mining"] main > [data-holder-zone="mining"]:not([data-member-only="true"]),
+body[data-page-view="member"] main > [data-member-only="true"],
+body[data-page-view="member"] main > [data-holder-zone="staking"],
+body[data-page-view="presale"] main > #buy-ath,
+body[data-page-view="docs"] main > #docs{display:block}
+body[data-page-view="member"] main > #member-area-shell{display:block}
+body[data-page-view="home"] main > .security-note{display:block}
+body[data-page-view="home"] main > .toast,
+body[data-page-view="mining"] main > .toast,
+body[data-page-view="member"] main > .toast,
+body[data-page-view="presale"] main > .toast,
+body[data-page-view="docs"] main > .toast{display:block}
+.member-page-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.member-page-tabs a{color:var(--cream);border:1px solid var(--line);border-radius:9px;padding:10px 13px;text-decoration:none;font-size:12px}
+.member-page-tabs a[aria-current="page"]{background:rgba(215,166,44,.16);border-color:var(--gold)}
+.member-access-gate,.presale-flow-status{display:block;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:rgba(215,166,44,.07);color:var(--cream);line-height:1.55}
+.member-access-gate{margin:0 auto 18px;max-width:1320px}
+.presale-input{width:100%;margin:7px 0 14px;padding:12px 13px;background:#090806;color:var(--text);border:1px solid var(--line);border-radius:9px;font:inherit}
+body[data-page-view="member"] .holder-operation-zone[hidden]{display:none!important}
+@media(max-width:860px){.main-nav{display:flex;overflow-x:auto;justify-content:flex-start;gap:12px;max-width:46vw}.main-nav a{white-space:nowrap;padding:12px 0;font-size:11px}.nav-wrap{gap:10px}}
