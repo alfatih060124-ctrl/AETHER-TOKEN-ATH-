@@ -662,3 +662,7 @@ body[data-page-view="docs"] main > .toast{display:block}
 .presale-input{width:100%;margin:7px 0 14px;padding:12px 13px;background:#090806;color:var(--text);border:1px solid var(--line);border-radius:9px;font:inherit}
 body[data-page-view="member"] .holder-operation-zone[hidden]{display:none!important}
 @media(max-width:860px){.main-nav{display:flex;overflow-x:auto;justify-content:flex-start;gap:12px;max-width:46vw}.main-nav a{white-space:nowrap;padding:12px 0;font-size:11px}.nav-wrap{gap:10px}}
+
+/* Never let route display rules override explicit member-area hidden state. */
+body[data-page-view] main > [hidden],
+body[data-page-view] main > section[hidden]{display:none!important}
