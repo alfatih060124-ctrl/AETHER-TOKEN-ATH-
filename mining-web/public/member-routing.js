@@ -48,6 +48,21 @@
         el.hidden = !(shouldShow && (isMainMember || page === "member-history"));
       }
     });
+    const pagePanelMap = {
+      "member-staking": ["staking"],
+      "member-referrals": ["referrals"],
+      "member-network": ["network"],
+      "member-lifestyle": ["network"],
+      "member-rank": ["rank"]
+    };
+    document.querySelectorAll("[data-member-panel]").forEach(panel => {
+      const allowed = page === "member" || (pagePanelMap[page] || []).includes(panel.dataset.memberPanel);
+      panel.hidden = !(onMember && connected && allowed);
+    });
+    const historyPanel = document.getElementById("member-history-panel");
+    if (historyPanel) historyPanel.hidden = !(page === "member-history" && connected);
+    const stakingRoot = document.getElementById("staking");
+    if (stakingRoot && page !== "member" && page !== "member-staking" && page !== "member-network" && page !== "member-lifestyle" && page !== "member-rank") stakingRoot.hidden = true;
     const mainMember = document.getElementById("member-area-shell");
     if (mainMember) mainMember.style.display = onMember ? "block" : "none";
     if (gate) gate.style.display = onMember && !connected ? "block" : "none";
