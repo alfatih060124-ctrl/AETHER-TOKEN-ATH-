@@ -332,13 +332,35 @@
       cfg = await fetch("/config", { cache: "no-store" }).then(r => r.json());
 
       document.querySelectorAll(".presale-quick").forEach(el => { el.hidden = true; });
-      $("presaleStakePackage")?.addEventListener("change", () => {
-        const amount = $("presaleStakePackage").value;
-        if ($("presaleStakeUsd")) $("presaleStakeUsd").value = amount;
+      const packageSelect = $("presaleStakePackage");
+      const usdInput = $("presaleStakeUsd");
+      const durationInput = $("presaleStakeDuration");
+      const packageStatus = $("presaleStakeFlowStatus");
+      function syncPackageSelection(resetAmount = false) {
+        const option = packageSelect?.selectedOptions?.[0];
+        if (!option || !usdInput) return;
+        const min = Number(option.dataset.min || 10);
+        const max = option.dataset.max ? Number(option.dataset.max) : null;
+        const days = Number(option.dataset.days || 0);
+        usdInput.min = String(min);
+        if (max !== null) usdInput.max = String(max); else usdInput.removeAttribute("max");
+        if (resetAmount || !Number.isFinite(Number(usdInput.value)) || Number(usdInput.value) < min || (max !== null && Number(usdInput.value) > max)) usdInput.value = String(min);
+        if (durationInput) durationInput.value = days ? `${days} days (Package ${option.value})` : "Contract duration unavailable";
+        const amount = Number(usdInput.value);
+        const valid = amount >= min && (max === null || amount <= max);
+        usdInput.setCustomValidity(valid ? "" : `Selected package accepts ${min} to ${max === null ? "unlimited" : max} USDT.`);
+        if (packageStatus) packageStatus.textContent = valid
+          ? "Package range and lock duration are aligned with source contract. Purchase remains disabled pending audited atomic Presale→Staking integration."
+          : `Enter a value within this package range: ${min}–${max === null ? "no upper limit" : max} USDT.`;
+      }
+      packageSelect?.addEventListener("change", () => {
+        syncPackageSelection(true);
         syncStakeAmountFromPrice();
         clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 50);
       });
-      $("presaleStakeUsd")?.addEventListener("input", () => {
+      syncPackageSelection(false);
+      usdInput?.addEventListener("input", () => {
+        syncPackageSelection(false);
         syncStakeAmountFromPrice();
         clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 250);
       });
