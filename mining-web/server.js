@@ -7,6 +7,8 @@ const { streamWhitepaper } = require("./whitepaper");
 const { answerQuestion, cleanQuestion } = require("./assistant");
 
 const PORT = Number(process.env.PORT || 8080);
+const requestedPublicSite = String(process.env.PUBLIC_SITE || "unified").trim().toLowerCase();
+const PUBLIC_SITE = ["mining", "staking", "unified"].includes(requestedPublicSite) ? requestedPublicSite : "unified";
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ETHERS_BROWSER_BUNDLE = path.join(
   path.dirname(require.resolve("ethers")),
@@ -276,6 +278,19 @@ const CONTROL_PANEL_ALLOWED_FILES = new Set([
   "/admin-login.html", "/admin-login.js", "/admin.css", "/favicon.ico"
 ]);
 
+function renderPublicSiteHtml(data, controlPanelHost = false) {
+  if (controlPanelHost || PUBLIC_SITE === "unified") return data;
+  let html = Buffer.isBuffer(data) ? data.toString("utf8") : String(data);
+  const bodyClass = `site-mode-${PUBLIC_SITE}`;
+  html = html.replace(/<body([^>]*)>/i, (_match, attrs) => {
+    const cleanAttrs = attrs.replace(/\sdata-public-site=["'][^"']*["']/i, "");
+    return `<body${cleanAttrs} class="${bodyClass}" data-public-site="${PUBLIC_SITE}">`;
+  });
+  html = html.replace("</head>", '  <link rel="stylesheet" href="/public-site.css?v=1" />\n</head>');
+  html = html.replace("</body>", '  <script src="/public-site.js?v=1"></script>\n</body>');
+  return html;
+}
+
 function safePublicPath(urlPath, controlPanelHost = false) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const normalized = path.posix.normalize(decoded).replace(/^\.\.(\/|\\|$)/g, "");
@@ -487,7 +502,7 @@ const server = http.createServer((req, res) => {
       200,
       JSON.stringify({
         ok: true,
-        service: "aether-ath-unified-web",
+        service: `aether-ath-${PUBLIC_SITE}-web`,
         miningProtocolVersion: cfg.miningProtocolVersion,
         whitepaperVersion: cfg.whitepaperVersion,
         networkMode: cfg.networkMode,
@@ -573,6 +588,12 @@ const server = http.createServer((req, res) => {
   fs.stat(full, (statErr, stat) => {
     if (!statErr && stat.isFile()) {
       const ext = path.extname(full).toLowerCase();
+      if (ext === ".html" && path.basename(full) === "index.html" && !controlPanelHost && PUBLIC_SITE !== "unified") {
+        return fs.readFile(full, (err, data) => {
+          if (err) return send(res, 404, "Not found", "text/plain; charset=utf-8");
+          return send(res, 200, renderPublicSiteHtml(data, false), MIME[".html"], false);
+        });
+      }
       const dynamicExt = [".html",".css",".js",".json"].includes(ext);
       res.writeHead(200, {
         "content-type": MIME[ext] || "application/octet-stream",
@@ -596,7 +617,7 @@ const server = http.createServer((req, res) => {
     const index = path.join(PUBLIC_DIR, "index.html");
     fs.readFile(index, (err, data) => {
       if (err) return send(res, 404, "Not found", "text/plain; charset=utf-8");
-      send(res, 200, data, MIME[".html"]);
+      send(res, 200, renderPublicSiteHtml(data, false), MIME[".html"]);
     });
   });
 });
@@ -608,5 +629,5 @@ server.maxHeadersCount = 64;
 
 server.listen(PORT, "0.0.0.0", () => {
   const cfg = configPayload();
-  console.log(`AETHER ATH Mining web listening on ${PORT}; mode=${cfg.networkMode}; contractConfigured=${Boolean(cfg.miningAddress)}; mainnetEnabled=${cfg.mainnetEnabled}`);
+  console.log(`AETHER ATH ${PUBLIC_SITE} web listening on ${PORT}; mode=${cfg.networkMode}; contractConfigured=${Boolean(cfg.miningAddress)}; stakingConfigured=${Boolean(cfg.stakingAddress)}; mainnetEnabled=${cfg.mainnetEnabled}`);
 });

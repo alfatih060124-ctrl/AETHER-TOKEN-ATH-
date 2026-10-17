@@ -1,0 +1,24 @@
+/* Host-specific public Mining / Staking views. The unified default remains unchanged. */
+.site-mode-mining .holder-workspace,
+.site-mode-mining [data-holder-zone="staking"],
+.site-mode-mining #staking,
+.site-mode-mining .main-nav a[href="#staking"] { display: none !important; }
+
+.site-mode-staking .holder-workspace,
+.site-mode-staking #tokenomics,
+.site-mode-staking [data-holder-zone="mining"],
+.site-mode-staking #mining,
+.site-mode-staking #buy-ath,
+.site-mode-staking #leaderboard,
+.site-mode-staking #referral,
+.site-mode-staking .main-nav a[href="#mining"],
+.site-mode-staking .main-nav a[href="#buy-ath"],
+.site-mode-staking .main-nav a[href="#leaderboard"],
+.site-mode-staking .main-nav a[href="#referral"] { display: none !important; }
+
+.site-mode-staking #staking,
+.site-mode-staking [data-holder-zone="staking"] { display: block !important; }
+.site-mode-staking .hero-stage { min-height: 430px; }
+.site-mode-staking .hero-copy h2 { max-width: 13ch; }
+.site-mode-staking .hero-buttons { flex-wrap: wrap; }
+.site-mode-staking .main-nav a[href="#staking"] { display: inline-flex !important; }
