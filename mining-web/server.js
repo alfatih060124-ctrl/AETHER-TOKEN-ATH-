@@ -270,6 +270,21 @@ function isControlPanelHost(req) {
   return host === "pm.aether.boats";
 }
 
+function isStakingHost(req) {
+  const host = String(req.headers.host || "").split(":")[0].toLowerCase();
+  return host === "stake.aether.boats";
+}
+
+const STAKING_PAGE_BY_PATH = Object.freeze({
+  "/": "overview",
+  "/stake": "stake",
+  "/positions": "positions",
+  "/account": "account",
+  "/network": "network",
+  "/network/bonus": "bonus",
+  "/rank": "rank",
+});
+
 const ADMIN_PUBLIC_FILES = new Set(["/admin", "/admin/", "/admin.html", "/admin.js", "/admin-login.html", "/admin-login.js", "/admin.css"]);
 const CONTROL_PANEL_ALLOWED_FILES = new Set([
   "/", "/admin", "/admin/", "/admin.html", "/admin.js",
@@ -300,6 +315,7 @@ function safePublicPath(urlPath, controlPanelHost = false) {
 
 const server = http.createServer((req, res) => {
   const controlPanelHost = isControlPanelHost(req);
+  const stakingHost = isStakingHost(req);
   const requestUrl = new URL(String(req.url || "/"), "https://aether.local");
   const requestPath = requestUrl.pathname;
 
@@ -567,12 +583,76 @@ const server = http.createServer((req, res) => {
     );
   }
 
-  const full = safePublicPath(req.url || "/", controlPanelHost);
+  const stakingPage = stakingHost ? STAKING_PAGE_BY_PATH[requestPath] : null;
+  if (stakingHost && !stakingPage) {
+    const assetExtension = path.extname(requestPath).toLowerCase();
+    const stakingAssetExtensions = new Set([".css", ".js", ".svg", ".png", ".webp", ".ico", ".woff", ".woff2", ".pdf"]);
+    if (!stakingAssetExtensions.has(assetExtension)) {
+      return send(res, 404, "Staking page not found", "text/plain; charset=utf-8");
+    }
+  }
+  const full = stakingPage
+    ? path.join(PUBLIC_DIR, "stake.html")
+    : safePublicPath(req.url || "/", controlPanelHost);
   if (!full) return send(res, 404, "Not found", "text/plain; charset=utf-8", controlPanelHost);
 
   fs.stat(full, (statErr, stat) => {
     if (!statErr && stat.isFile()) {
       const ext = path.extname(full).toLowerCase();
+      if (stakingPage && ext === ".html") {
+        return fs.readFile(full, (readErr, data) => {
+          if (readErr) return send(res, 500, "Staking page unavailable", "text/plain; charset=utf-8");
+          // Reuse the approved Staking design and assets; route-specific CSS only changes which panel is visible.
+          const pageLinks = [
+            ["overview", "/", "Overview"],
+            ["stake", "/stake", "Stake"],
+            ["positions", "/positions", "My Positions"],
+            ["account", "/account", "Account"],
+            ["network", "/network", "Sponsor Network"],
+            ["bonus", "/network/bonus", "Lifestyle Bonus"],
+            ["rank", "/rank", "Rank Salary"],
+          ];
+          const pageLabel = pageLinks.find(([key]) => key === stakingPage)?.[2] || "Overview";
+          const nav = '<nav class="main-nav" aria-label="Staking navigation">' +
+            pageLinks.map(([key, href, label]) =>
+              '<a' + (key === stakingPage ? ' class="active"' : '') +
+              ' href="' + href + '"' + (key === stakingPage ? ' aria-current="page"' : '') + '>' +
+              label + '</a>'
+            ).join("") + '</nav>';
+          let html = data.toString("utf8")
+            .replace('<title>AETHER STAKING — ATH Staking & Networking</title>', '<title>' + pageLabel + ' | AETHER STAKING</title>')
+            .replace(
+              'body[data-aether-view="staking"] #home,',
+              'body[data-aether-view="staking"] #home > .hero-stage,'
+            )
+            .replace('<body data-aether-view="staking">', '<body data-aether-view="staking" data-staking-page="' + stakingPage + '">')
+            .replace('href="#home" aria-label="AETHER STAKING"', 'href="/" aria-label="AETHER STAKING"')
+            .replace(/<nav class="main-nav" aria-label="Primary navigation">[\s\S]*?<\/nav>/, nav);
+          const pageCss = [
+            'body[data-staking-page] #staking .staking-layout > article { display:none !important; }',
+            'body[data-aether-view="staking"] main#home > :not(#staking):not(#toast) { display:none !important; }',
+            'body[data-staking-page="overview"] #staking .staking-layout, body[data-staking-page="overview"] #stakingPackages { display:none !important; }',
+            'body[data-staking-page="stake"] #staking .staking-layout > article:nth-of-type(1),',
+            'body[data-staking-page="positions"] #staking .staking-layout > article:nth-of-type(2),',
+            'body[data-staking-page="account"] #staking .staking-layout > article:nth-of-type(3),',
+            'body[data-staking-page="rank"] #staking .staking-layout > article:nth-of-type(4),',
+            'body[data-staking-page="network"] #staking .staking-layout > article:nth-of-type(5),',
+            'body[data-staking-page="bonus"] #staking .staking-layout > article:nth-of-type(5) { display:block !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-head, body[data-staking-page="bonus"] #staking .staking-network-toolbar, body[data-staking-page="bonus"] #staking #stakingNetworkTree { display:none !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-summary > div { display:none !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-summary > div:nth-child(5) { display:block !important; }',
+            'body[data-staking-page="bonus"] #staking .staking-network-summary { grid-template-columns:1fr !important; }',
+            'body[data-staking-page]:not([data-staking-page="overview"]) #staking .staking-head { margin-bottom:18px; }',
+            'body[data-staking-page] header .main-nav a[href="#whitepaper"], body[data-staking-page] header .main-nav a[href="#roadmap"], body[data-staking-page] header .main-nav a[href="#developers"] { display:none !important; }',
+            'body[data-staking-page] header .nav-wrap { grid-template-columns:auto minmax(0,1fr) auto !important; gap:18px !important; }',
+            'body[data-staking-page] header .main-nav { min-width:0; gap:clamp(10px,1.2vw,16px) !important; }',
+            'body[data-staking-page] header .nav-actions { min-width:0; }',
+            '@media (max-width:860px) { body[data-staking-page] header .nav-wrap { grid-template-columns:auto minmax(0,1fr) !important; gap:6px 10px !important; } body[data-staking-page] header .main-nav { flex-wrap:wrap !important; justify-content:flex-start !important; overflow:visible !important; } }'
+          ].join("\n");
+          html = html.replace('</style>', pageCss + '\n  </style>');
+          return send(res, 200, html, MIME[".html"], false);
+        });
+      }
       const dynamicExt = [".html",".css",".js",".json"].includes(ext);
       res.writeHead(200, {
         "content-type": MIME[ext] || "application/octet-stream",
@@ -590,8 +670,8 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    if (controlPanelHost) {
-      return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
+    if (controlPanelHost || stakingHost) {
+      return send(res, 404, "Not found", "text/plain; charset=utf-8", controlPanelHost);
     }
     const index = path.join(PUBLIC_DIR, "index.html");
     fs.readFile(index, (err, data) => {
