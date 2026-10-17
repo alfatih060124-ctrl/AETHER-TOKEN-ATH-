@@ -315,6 +315,11 @@
       <p id="memberAreaGateMessage">Connect your wallet to open member information. This is a UI gate; smart-contract permissions remain the source of transaction security.</p>
     </section>
 
+    <section id="member-history-panel" class="shell presale-zone" data-member-only="true" hidden>
+      <div class="presale-head"><div><span class="presale-kicker">MEMBER REWARD HISTORY</span><h2>Reward History</h2><p>Reward history must be loaded from verified Staking contract events and indexed transaction records. This panel will remain read-only until that data source is connected and validated.</p></div><span class="presale-badge">History source pending</span></div>
+      <p class="presale-flow-status">No fabricated reward records are shown. Connect the verified member wallet and configure the validated event-history source before this page can display transaction history.</p>
+    </section>
+
     <section class="shell holder-area-banner staking" data-holder-zone="staking" data-member-only="true" hidden>
       <div><span>STAKING HOLDER AREA</span><h2>ATH Staking Operations</h2><p>Only Staking actions are shown below: stake positions, 00:50 UTC reward, Direct Referral/Rank, Lifestyle Bonus / Matching Staking and Rank Salary.</p></div>
       <strong>Daily reward slot: 00:50 UTC</strong>
@@ -332,7 +337,7 @@
         <div><span>Your Wallet</span><strong id="stakingWalletStatus">Not Connected</strong><small>Uses the same EVM wallet as Mining</small></div>
       </div>
       <div class="staking-layout">
-        <article class="staking-panel">
+        <article class="staking-panel" data-member-panel="staking">
           <h3>Stake ATH</h3>
           <label>Package</label><select id="stakingPackageSelect" class="staking-input"><option>Loading packages…</option></select>
           <label>Stake Value (USD reference)</label><input id="stakingAmountUsd" class="staking-input" inputmode="decimal" value="10" />
@@ -341,7 +346,7 @@
           <button id="stakingStakeBtn" class="btn btn-gold staking-action" disabled>Stake ATH</button>
           <small id="stakingActionStatus">Connect wallet and verified Staking contract.</small>
         </article>
-        <article class="staking-panel">
+        <article class="staking-panel" data-member-panel="staking">
           <h3>My Stake Position</h3>
           <label>Position</label><select id="stakingPositionSelect" class="staking-input"><option>No positions yet</option></select>
           <div class="staking-metrics">
@@ -352,7 +357,7 @@
           </div>
           <div class="staking-actions"><button id="stakingClaimBtn" class="btn btn-dark" disabled>Claim Reward</button><button id="stakingWithdrawBtn" class="btn btn-dark" disabled>Withdraw Principal</button></div>
         </article>
-        <article class="staking-panel">
+        <article class="staking-panel" data-member-panel="referrals">
           <h3>Staking Account</h3>
           <div class="staking-account">
             <div><span>Active Staked Value</span><strong id="stakingActiveUsd">$0.00</strong></div>
@@ -362,7 +367,7 @@
           </div>
           <p class="staking-note">ATH valuation follows the Presale contract: $0.070 opening, +$0.001 after each complete 100,000 ATH sold, up to the $0.370 sold-out reference.</p>
         </article>
-        <article class="staking-panel staking-rank-panel">
+        <article class="staking-panel staking-rank-panel" data-member-panel="rank">
           <h3>Rank Salary</h3>
           <div class="staking-account">
             <div><span>Current Rank</span><strong id="stakingRank">No Rank</strong></div>
@@ -378,7 +383,7 @@
           <p class="staking-note">Qualification requires at least 5 direct sponsors. Small-leg turnover = all direct-leg turnover minus the single largest dynamic leg. Salary is defined in USD and paid in ATH using the current Presale-linked price. Payment is subject to the protected Marketing / Network reserve.</p>
         </article>
 
-        <article class="staking-panel staking-network-panel">
+        <article class="staking-panel staking-network-panel" data-member-panel="network">
           <div class="staking-network-head">
             <div>
               <span class="staking-network-kicker">STAKING NETWORK</span>
