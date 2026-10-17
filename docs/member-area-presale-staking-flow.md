@@ -21,6 +21,10 @@ The current `ATHPresale.buyATH(athAmount,maxPaymentAmount)` transfers ATH from t
 
 The UI deliberately fails closed rather than sending a purchase that contradicts the requested flow. Do not enable real purchases from this flow until a reviewed contract design provides an atomic path, with explicit package and lock duration validation, trusted price calculation, USDT transfer handling, staking principal accounting, referral binding, replay/reentrancy protections, and tests for rollback on failure.
 
+## Atomic integration design
+
+The detailed design and security test matrix are maintained in [`atomic-presale-staking-integration-spec.md`](./atomic-presale-staking-integration-spec.md). It is a design specification only, not an implementation or approval to deploy.
+
 ## Remaining before production
 
 1. Implement and review the atomic Presale-to-Staking contract interface and unit/integration tests.
