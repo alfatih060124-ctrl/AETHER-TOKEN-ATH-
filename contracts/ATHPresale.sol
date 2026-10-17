@@ -84,12 +84,15 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         return totalSoldATH == SALE_ALLOCATION_ATH;
     }
 
-    /// @notice Returns payment-token units required for an exact ATH amount.
-    /// @dev Correctly prices a purchase that crosses one or many 100k ATH tranches.
+    /// @notice Returns payment-token units for the selected single price stage.
+    /// @dev When a purchase crosses the next 100k boundary, compare the remaining
+    ///      current-stage inventory with the requested amount. A 50% tie stays
+    ///      at the current stage; below 50% selects the next stage.
     function quotePaymentForATH(uint256 athAmount) public view returns (uint256) {
         require(athAmount > 0, "zero ATH amount");
         require(athAmount <= remainingATH(), "presale allocation exceeded");
-        return _quotePayment(totalSoldATH, athAmount);
+        uint256 selectedPrice = _selectedPriceUSD8(totalSoldATH, athAmount);
+        return _paymentForATHAtPrice(athAmount, selectedPrice);
     }
 
     /// @param maxPaymentAmount Buyer protection if another purchase advances the curve first.
@@ -103,7 +106,8 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         require(athAmount <= remainingATH(), "presale allocation exceeded");
 
         uint256 openingPrice = currentPriceUSD8();
-        paymentAmount = _quotePayment(totalSoldATH, athAmount);
+        uint256 selectedPrice = _selectedPriceUSD8(totalSoldATH, athAmount);
+        paymentAmount = _paymentForATHAtPrice(athAmount, selectedPrice);
         require(paymentAmount <= maxPaymentAmount, "payment exceeds max");
 
         totalSoldATH += athAmount;
@@ -147,37 +151,38 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         athToken.safeTransfer(to, amount);
     }
 
-    function _quotePayment(uint256 soldBefore, uint256 athAmount) internal view returns (uint256) {
-        uint256 amountLeft = athAmount;
-        uint256 index = soldBefore / STEP_SIZE_ATH;
+    function _selectedPriceUSD8(uint256 soldBefore, uint256 athAmount)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 stage = soldBefore / STEP_SIZE_ATH;
         uint256 offset = soldBefore % STEP_SIZE_ATH;
-        uint256 weightedPrice;
+        uint256 currentPrice = START_PRICE_USD8 + (stage * PRICE_STEP_USD8);
+        if (currentPrice > FINAL_PRICE_USD8) currentPrice = FINAL_PRICE_USD8;
 
-        if (offset != 0) {
-            uint256 availableInCurrent = STEP_SIZE_ATH - offset;
-            uint256 segment = amountLeft < availableInCurrent ? amountLeft : availableInCurrent;
-            weightedPrice += segment * (START_PRICE_USD8 + (index * PRICE_STEP_USD8));
-            amountLeft -= segment;
-            if (segment == availableInCurrent) index += 1;
-        }
+        uint256 remainingAtCurrentStage = STEP_SIZE_ATH - offset;
+        if (athAmount <= remainingAtCurrentStage) return currentPrice;
 
-        if (amountLeft >= STEP_SIZE_ATH) {
-            uint256 fullSteps = amountLeft / STEP_SIZE_ATH;
-            uint256 indexSum = (fullSteps * ((2 * index) + fullSteps - 1)) / 2;
-            uint256 priceSum =
-                (fullSteps * START_PRICE_USD8) + (PRICE_STEP_USD8 * indexSum);
-            weightedPrice += STEP_SIZE_ATH * priceSum;
-            amountLeft -= fullSteps * STEP_SIZE_ATH;
-            index += fullSteps;
-        }
+        // Integer comparison implements remaining/requested >= 50% exactly.
+        // At an exact tie, retain the current (lower) stage price.
+        if (remainingAtCurrentStage * 2 >= athAmount) return currentPrice;
 
-        if (amountLeft > 0) {
-            weightedPrice += amountLeft * (START_PRICE_USD8 + (index * PRICE_STEP_USD8));
-        }
+        uint256 nextPrice = currentPrice + PRICE_STEP_USD8;
+        return nextPrice > FINAL_PRICE_USD8 ? FINAL_PRICE_USD8 : nextPrice;
+    }
 
-        uint256 denominator = 1e26; // 1e18 ATH decimals * 1e8 USD price decimals
-        uint256 payment = Math.mulDiv(weightedPrice, paymentUnit, denominator);
-        if (mulmod(weightedPrice, paymentUnit, denominator) > 0) payment += 1;
+    function _paymentForATHAtPrice(uint256 athAmount, uint256 priceUSD8)
+        internal
+        view
+        returns (uint256)
+    {
+        // ATH has 18 decimals; USD price has 8 decimals. Round payment up
+        // to the payment token's smallest unit so the sale is never underpaid.
+        uint256 denominator = 1e26;
+        uint256 numerator = athAmount * priceUSD8;
+        uint256 payment = Math.mulDiv(numerator, paymentUnit, denominator);
+        if (mulmod(numerator, paymentUnit, denominator) > 0) payment += 1;
         return payment;
     }
 }
