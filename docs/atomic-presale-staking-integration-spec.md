@@ -4,9 +4,11 @@ Status: design gate only. This document does not implement or authorize deployme
 
 ## Current source behavior
 
-- `ATHPresale.buyATH(athAmount, maxPaymentAmount)` collects the configured payment token and transfers ATH from the Presale reserve to the buyer.
+- The ATH Presale price is a **discrete step schedule**, not a continuously changing price formula: it starts at $0.07 per ATH and increases by exactly $0.001 per ATH for each completed 100,000 ATH sold, subject to the 30,000,000 ATH Presale allocation and the configured final stage.
+- `ATHPresale.buyATH(athAmount, maxPaymentAmount)` collects the configured payment token and transfers ATH from the Presale reserve to the buyer. Its quote must follow the step schedule and the cumulative sold amount.
 - `ATHStaking.stake(packageId, amountUSDT, referrer)` computes principal ATH from the staking price oracle, then transfers ATH from the buyer into Staking with `safeTransferFrom`.
 - Consequently, the current source does not provide one atomic purchase-and-stake call. A UI sequence of two transactions is not an acceptable substitute for the requested flow.
+- **No new or continuous pricing curve may be introduced.** The integration must use the established 100,000-ATH threshold schedule. The contract specification must explicitly define how a single purchase that crosses a threshold is priced (split across the applicable tiers, or fixed at the stage price snapshotted at transaction start); Presale quote, ATH amount, payment amount, and Staking principal must all use the same approved rule. Do not silently mix a tier-split payment quote with a single-stage staking oracle price.
 
 ## Required design decision
 
