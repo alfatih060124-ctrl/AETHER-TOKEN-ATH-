@@ -58,19 +58,45 @@ describe("AETHER ATH Presale", function () {
     expect(await presale.currentPriceUSD8()).to.equal(7_100_000n);
   });
 
-  it("prices a purchase correctly when it crosses a 100k tranche boundary", async function () {
+  it("applies the majority rule when a purchase crosses a 100k tranche boundary", async function () {
     const { owner, buyer, presale, unit } = await deployFixture();
 
     await presale.connect(owner).unpause();
-    // 100,000 ATH × $0.070 = $7,000
-    //  50,000 ATH × $0.071 = $3,550
-    // total = $10,550
+    // 100,000 ATH remain at $0.070 for a 150,000 ATH request (66.7%),
+    // so the entire request uses the current $0.070 stage price.
     const athAmount = ethers.parseEther("150000");
     const quote = await presale.quotePaymentForATH(athAmount);
-    expect(quote).to.equal(10_550n * unit);
+    expect(quote).to.equal(10_500n * unit);
 
     await presale.connect(buyer).buyATH(athAmount, quote);
     expect(await presale.currentPriceUSD8()).to.equal(7_100_000n);
+  });
+
+  it("uses the next price only when current-stage availability is below 50% of requested ATH", async function () {
+    const cases = [
+      { remaining: "100", expectedPrice: 7_100_000n, label: "100/1000 selects next stage" },
+      { remaining: "900", expectedPrice: 7_000_000n, label: "900/1000 selects current stage" },
+      { remaining: "500", expectedPrice: 7_000_000n, label: "500/1000 tie keeps current stage" },
+      { remaining: "400", expectedPrice: 7_100_000n, label: "400/1000 selects next stage" },
+    ];
+
+    for (const testCase of cases) {
+      const { owner, buyer, presale, unit } = await deployFixture();
+      await presale.connect(owner).unpause();
+
+      const remaining = ethers.parseEther(testCase.remaining);
+      const soldBefore = ethers.parseEther("100000") - remaining;
+      if (soldBefore > 0n) {
+        const setupQuote = await presale.quotePaymentForATH(soldBefore);
+        await presale.connect(buyer).buyATH(soldBefore, setupQuote);
+      }
+
+      const request = ethers.parseEther("1000");
+      const quote = await presale.quotePaymentForATH(request);
+      const expectedDollars = testCase.expectedPrice === 7_000_000n ? 70n : 71n;
+      expect(quote, testCase.label).to.equal(expectedDollars * unit);
+      await presale.connect(buyer).buyATH(request, quote);
+    }
   });
 
   it("sells the final live tranche at $0.369 and reaches $0.370 exactly at sold out", async function () {
@@ -96,10 +122,12 @@ describe("AETHER ATH Presale", function () {
     ).to.be.revertedWith("presale allocation exceeded");
   });
 
-  it("collects $6.585M if the complete 30M allocation sells through the defined curve", async function () {
+  it("uses the availability-majority selected stage price for a single full-allocation request", async function () {
     const { presale, unit } = await deployFixture();
+    // Only 100,000 ATH are available at the opening stage, less than 50%
+    // of the 30M request, so the request is quoted wholly at the next stage.
     const quote = await presale.quotePaymentForATH(ethers.parseEther("30000000"));
-    expect(quote).to.equal(6_585_000n * unit);
+    expect(quote).to.equal(2_130_000n * unit);
   });
 
   it("deploys fail-closed and enforces max-payment, pause controls, and protected reserve", async function () {
