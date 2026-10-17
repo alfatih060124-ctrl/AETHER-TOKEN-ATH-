@@ -647,7 +647,7 @@ const server = http.createServer((req, res) => {
             'body[data-staking-page] header .nav-wrap { grid-template-columns:auto minmax(0,1fr) auto !important; gap:18px !important; }',
             'body[data-staking-page] header .main-nav { min-width:0; gap:clamp(10px,1.2vw,16px) !important; }',
             'body[data-staking-page] header .nav-actions { min-width:0; }',
-            '@media (max-width:860px) { body[data-staking-page] header .nav-wrap { grid-template-columns:auto minmax(0,1fr) !important; gap:6px 10px !important; } }'
+            '@media (max-width:860px) { body[data-staking-page] header .nav-wrap { grid-template-columns:auto minmax(0,1fr) !important; gap:6px 10px !important; } body[data-staking-page] header .main-nav { flex-wrap:wrap !important; justify-content:flex-start !important; overflow:visible !important; } }'
           ].join("\n");
           html = html.replace('</style>', pageCss + '\n  </style>');
           return send(res, 200, html, MIME[".html"], false);
