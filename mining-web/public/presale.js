@@ -146,7 +146,7 @@
     try {
       const usd8 = ethers.parseUnits(rawUsd, 8);
       const ath18 = (usd8 * 10n ** 18n) / currentPriceUSD8;
-      athInput.value = ethers.formatUnits(ath18, 18).replace(/\\.?0+$/, "");
+      athInput.value = ethers.formatUnits(ath18, 18).replace(/\.?0+$/, "");
     } catch {
       athInput.value = "";
     }
@@ -331,7 +331,18 @@
     try {
       cfg = await fetch("/config", { cache: "no-store" }).then(r => r.json());
 
-      document.querySelectorAll(".presale-quick").forEach(el => { el.hidden = true; });\n      $("presaleStakePackage")?.addEventListener("change", () => {\n        const amount = $("presaleStakePackage").value;\n        if ($("presaleStakeUsd")) $("presaleStakeUsd").value = amount;\n        syncStakeAmountFromPrice();\n        clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 50);\n      });\n      $("presaleStakeUsd")?.addEventListener("input", () => {\n        syncStakeAmountFromPrice();\n        clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 250);\n      });\n      document.querySelectorAll(".presale-quick button").forEach(button => {
+      document.querySelectorAll(".presale-quick").forEach(el => { el.hidden = true; });
+      $("presaleStakePackage")?.addEventListener("change", () => {
+        const amount = $("presaleStakePackage").value;
+        if ($("presaleStakeUsd")) $("presaleStakeUsd").value = amount;
+        syncStakeAmountFromPrice();
+        clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 50);
+      });
+      $("presaleStakeUsd")?.addEventListener("input", () => {
+        syncStakeAmountFromPrice();
+        clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 250);
+      });
+      document.querySelectorAll(".presale-quick button").forEach(button => {
         button.addEventListener("click", () => {
           $("presaleAthAmount").value = button.dataset.ath || "1000";
           clearTimeout(quoteTimer);
