@@ -123,12 +123,9 @@ must(staking, /uint256\[10\] public networkRates\s*=\s*\[800, 500, 300, 200, 100
 must(staking, /event LifestyleMatchingStakingPaid\(/, "Lifestyle Bonus / Matching Staking emits an official on-chain event");
 must(staking, /function lifestyleMatchingRateBps\(/, "Lifestyle Bonus / Matching Staking exposes the official rate alias");
 must(staking, /function totalLifestyleMatchingPaidATH\(/, "Lifestyle Bonus / Matching Staking exposes the official paid-total alias");
-must(staking, /_addPackage\(10 ether, 99 ether, 35, 180\)/, "Staking Starter package is configured");
-must(staking, /_addPackage\(100 ether, 499 ether, 45, 180\)/, "Staking Basic package is configured");
-must(staking, /_addPackage\(500 ether, 1_999 ether, 55, 365\)/, "Staking Silver package is configured");
-must(staking, /_addPackage\(2_000 ether, 9_999 ether, 65, 365\)/, "Staking Gold package is configured");
-must(staking, /_addPackage\(10_000 ether, 49_999 ether, 75, 730\)/, "Staking Platinum package is configured");
-must(staking, /_addPackage\(50_000 ether, type\(uint256\)\.max, 85, 730\)/, "Staking Diamond package is configured");
+  must(staking, /_addPackage\(10 ether, 50_000 ether, 35, 180\)/, "Staking 180-day package is configured at 0.35% daily");
+  must(staking, /_addPackage\(10 ether, 50_000 ether, 45, 365\)/, "Staking 365-day package is configured at 0.45% daily");
+  must(staking, /_addPackage\(10 ether, 50_000 ether, 55, 730\)/, "Staking 730-day package is configured at 0.55% daily");
 must(staking, /principalLiabilityATH/, "Staking protects principal liability");
 must(staking, /rewardReserveATH/, "Staking separates daily reward reserve");
 must(staking, /MAX_NETWORK_MARKETING_POOL\s*=\s*50_000_000 ether/, "Networking bonuses are capped by the 50M Marketing allocation");
