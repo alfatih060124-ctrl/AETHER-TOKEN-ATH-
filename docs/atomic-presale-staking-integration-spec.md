@@ -59,8 +59,8 @@ The implementation must resolve the existing contract boundary explicitly; do no
 
 ### Required contract interface changes
 
-- Add an owner-configured, nonzero Presale settlement address to Staking, with an event and a pause-only configuration rule. Staking must reject settlement calls from any other address.
-- Refactor the existing stake body into a shared internal routine that accepts the **beneficiary** and an explicitly supplied principal amount, while preserving the existing public stake(packageId, amountUSDT, referrer) behavior for normal users. The settlement-only routine must verify the package and amount against current on-chain package data, record all positions and referral/turnover accounting against the beneficiary, and must not pull principal ATH from that beneficiary.
+- Implemented in the current feature branch: Staking has an owner-configured, nonzero Presale settlement address, an update event, and a pause-only configuration rule; settlement calls from other addresses are rejected.
+- Implemented in the current feature branch: the existing stake body is shared through a beneficiary-based internal routine, preserving the public `stake(packageId, amountUSDT, referrer)` entry point. `stakeFromPresale` records the beneficiary as position owner and does not pull principal ATH from that beneficiary. It currently requires the supplied principal to equal `getATHAmount(amountUSDT)` from the unified oracle. This strict requirement must be reconciled with tranche-weighted Presale purchases before the Presale can call it successfully.
 - Presale settlement must calculate a payment-denominated quote from the configured payment token decimals and the authoritative sale curve. It must determine the ATH principal using a documented inverse-quote rule, reject zero amounts, enforce package min/max against the actual payment amount, and enforce a buyer-provided maxPaymentAmount plus deadline.
 - The Presale must transfer the calculated ATH principal directly from its protected reserve to Staking and call the settlement-only routine in the same transaction. The entire transaction must revert if any validation or accounting step fails.
 - The Staking principal price/oracle snapshot must be reconciled with the Presale curve. The integration must not silently accept a price mismatch or let the frontend supply an authoritative price. The spec default is strict reconciliation; any alternative tolerance requires explicit approval.
@@ -68,10 +68,11 @@ The implementation must resolve the existing contract boundary explicitly; do no
 
 ### Implementation sequence
 
-1. Implement the internal beneficiary-based staking routine and settlement authorization in a dedicated feature branch; preserve the existing public stake entry point and its semantics.
-2. Add the Presale-to-Staking settlement path with a fixed configured Staking address and explicit price/decimal conversion rules.
-3. Add tests that compare existing stake behavior before/after refactor, successful atomic settlement ownership, payment/ATH reconciliation, package bounds, pause/authorization, stale deadline, slippage, reserve shortage, referral rules, and full rollback after a deliberately forced downstream revert.
-4. Run the complete Hardhat release gate (source:selfcheck, syntax check, compile, all tests, ABI export and local release smoke). Resolve failures rather than weakening assertions.
-5. Keep Presale and Staking paused; keep the frontend purchase action disabled until the contracts are deployed to a non-production test environment and verified against the actual payment token, oracle and package configuration.
+1. Completed in source, tests added but not executed: implement the internal beneficiary-based staking routine and settlement authorization; preserve the public stake entry point.
+2. Remaining: resolve how tranche-weighted Presale pricing produces the exact principal amount accepted by Staking. The current unified oracle is a single current-stage price, so it cannot automatically represent a purchase that spans multiple tranches. Do not bypass this mismatch by trusting frontend-supplied prices.
+3. Remaining: implement the Presale-to-Staking settlement path with fixed contract configuration, explicit token-decimal conversion, deadline and slippage checks, and atomic rollback.
+4. Remaining: add integration tests for successful settlement, payment/ATH reconciliation, package bounds, pause/authorization, deadline, slippage, reserve shortage, referral rules, and full rollback after a forced downstream revert.
+5. Run the complete Hardhat release gate (source:selfcheck, syntax check, compile, all tests, ABI export and local release smoke). Resolve failures rather than weakening assertions.
+6. Keep Presale and Staking paused; keep the frontend purchase action disabled until contracts are deployed to a non-production test environment and verified against actual payment token, oracle and package configuration.
 
 This architecture is a required implementation gate, not evidence that the integration has already been implemented or tested.
