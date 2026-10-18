@@ -36,6 +36,7 @@ const presaleWeb = read("mining-web/public/presale.js");
 const presaleI18n = read("mining-web/public/presale-i18n.js");
 const staticI18n = read("mining-web/public/i18n-static-complete.js");
 const stakingWeb = read("mining-web/public/staking.js");
+must(stakingWeb, /function sReferralLinkFor\(address\)[\s\S]*sMemberRegistered/, "Referral links remain hidden until on-chain member registration is verified");
 const adminWeb = read("mining-web/public/admin.js");
 const adminLoginHtml = read("mining-web/public/admin-login.html");
 const adminLoginWeb = read("mining-web/public/admin-login.js");
