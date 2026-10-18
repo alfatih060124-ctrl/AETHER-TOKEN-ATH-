@@ -118,6 +118,47 @@ describe("AETHER ATH Staking v1", function () {
     expect(await fresh.paused()).to.equal(false);
   });
 
+  it("restricts Presale settlement to the configured address and requires Staking to be paused for configuration", async function () {
+    await expect(
+      staking.connect(owner).setPresaleSettlement(await presale.getAddress())
+    ).to.be.revertedWithCustomError(staking, "ExpectedPause");
+
+    await staking.pause();
+    await staking.connect(owner).setPresaleSettlement(await presale.getAddress());
+    expect(await staking.presaleSettlement()).to.equal(await presale.getAddress());
+
+    await expect(
+      staking.connect(user).stakeFromPresale(
+        user.address,
+        0,
+        ethers.parseEther("10"),
+        athForUsd(ethers.parseEther("10"), PRICE_007),
+        ethers.ZeroAddress
+      )
+    ).to.be.revertedWith("unauthorized settlement");
+
+    await staking.unpause();
+    expect(await staking.paused()).to.equal(false);
+  });
+
+  it("rejects zero beneficiaries and principal amounts inconsistent with the unified price oracle", async function () {
+    await staking.pause();
+    await staking.setPresaleSettlement(await presale.getAddress());
+    await staking.unpause();
+
+    // The configured Presale is authorized, but only it can call this entry point.
+    // Until buy-and-stake is implemented in ATHPresale, an EOA cannot impersonate it.
+    await expect(
+      staking.connect(user).stakeFromPresale(
+        ethers.ZeroAddress,
+        0,
+        ethers.parseEther("10"),
+        athForUsd(ethers.parseEther("10"), PRICE_007),
+        ethers.ZeroAddress
+      )
+    ).to.be.revertedWith("unauthorized settlement");
+  });
+
   it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
     expect(await presale.currentPriceUSD8()).to.equal(PRICE_007);
