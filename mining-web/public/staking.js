@@ -112,10 +112,14 @@ async function sConnect(request=false){
     sstaking=new ethers.Contract(scfg.stakingAddress,STAKING_ABI,ssigner);
     stoken=new ethers.Contract(scfg.tokenAddress,STAKING_TOKEN_ABI,ssigner);
     const [master,registered]=await Promise.all([sstaking.masterAccount(),sstaking.isMemberRegistered(saccount)]);
-    sMemberRegistered=Boolean(registered)||saccount.toLowerCase()===master.toLowerCase();\n    sRefreshReferralLink();\n    if(saccount.toLowerCase()!==master.toLowerCase()&&!registered){
+    sMemberRegistered=Boolean(registered)||saccount.toLowerCase()===master.toLowerCase();
+    window.dispatchEvent(new CustomEvent("aether-member-registration-status",{detail:{address:saccount,registered:sMemberRegistered}}));
+    sRefreshReferralLink();
+    if(saccount.toLowerCase()!==master.toLowerCase()&&!registered){
       const ref=String(new URLSearchParams(window.location.search).get("ref")||"").trim();
       if(!ref||!ethers.isAddress(ref)||ref.toLowerCase()===ethers.ZeroAddress.toLowerCase()){
         se("stakingWalletStatus").textContent="Referral link required";
+        window.dispatchEvent(new CustomEvent("aether-member-registration-status",{detail:{address:saccount,registered:false}}));
         se("stakingStakeBtn").disabled=true;
         sToast("New members must open a valid AETHER referral link before registration.",true);
         return false;
@@ -133,6 +137,9 @@ async function sConnect(request=false){
       await tx.wait();
       const confirmed=await sstaking.isMemberRegistered(saccount);
       if(!confirmed)throw new Error("Referral registration was not confirmed on-chain.");
+      sMemberRegistered=true;
+      window.dispatchEvent(new CustomEvent("aether-member-registration-status",{detail:{address:saccount,registered:true}}));
+      sRefreshReferralLink();
       sToast("Referral registration confirmed. Your personal referral link is ready.");
     }
     se("stakingWalletStatus").textContent=sShort(saccount);
