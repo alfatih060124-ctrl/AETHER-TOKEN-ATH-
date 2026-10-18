@@ -373,10 +373,10 @@ must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Contr
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
 must(stakingWeb, /registerReferral\(ethers\.getAddress\(ref\)\)/, "Member Connect Wallet submits on-chain referral registration");
 must(staking, /function setMasterAccount\(address account\) external onlyOwner whenPaused/, "Account Master can only be configured once by owner while paused");
-must(staking, /function registerReferral\(address sponsor\) external nonReentrant[\\s\\S]*sponsor not registered[\\s\\S]*_bindReferrer\(msg.sender, sponsor\)/, "Referral registration requires an existing sponsor and persists the binding on-chain");
-must(staking, /require\(isMemberRegistered\\[account\\] \\|\\| account == masterAccount, "register with referral first"\)/, "Staking rejects accounts that have not completed referral registration");
-must(staking, /require\(referrer == user\\.referrer, "sponsor mismatch"\)/, "Stake sponsor must match the immutable registered sponsor");
-must(read("scripts/configure-master-account.js"), /network\\.chainId !== 97n && network\\.chainId !== 31337n/, "Master configuration script is restricted to testnet/local networks");
+must(staking, /function registerReferral\(address sponsor\) external nonReentrant[\s\S]*sponsor not registered[\s\S]*_bindReferrer\(msg.sender, sponsor\)/, "Referral registration requires an existing sponsor and persists the binding on-chain");
+must(staking, /require\(isMemberRegistered\[account\] \|\| account == masterAccount, "register with referral first"\)/, "Staking rejects accounts that have not completed referral registration");
+must(staking, /require\(referrer == user\.referrer, "sponsor mismatch"\)/, "Stake sponsor must match the immutable registered sponsor");
+must(read("scripts/configure-master-account.js"), /network\.chainId !== 97n && network\.chainId !== 31337n/, "Master configuration script is restricted to testnet/local networks");
 must(read("scripts/configure-master-account.js"), /Staking must remain paused during Master setup/, "Master configuration keeps Staking paused");
 must(read("test/ATHReferralRegistration.test.js"), /allows referral registration without staking while the staking contract is paused/, "Focused referral tests cover registration independent of staking");
 must(read("test/ATHReferralRegistration.test.js"), /rejects unregistered sponsors, self-referrals and duplicate registration/, "Focused referral tests cover invalid and duplicate sponsor registration");
