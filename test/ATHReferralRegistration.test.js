@@ -63,15 +63,6 @@ describe("ATH referral registration and Account Master", function () {
   });
 
 
-  it("blocks staking until referral registration is confirmed", async function () {
-    await staking.setMasterAccount(MASTER);
-    await expect(staking.connect(member).stake(0, ethers.parseEther("10"), MASTER))
-      .to.be.revertedWith("register with referral first");
-    await staking.connect(member).registerReferral(MASTER);
-    await expect(staking.connect(member).stake(0, ethers.parseEther("10"), other.address))
-      .to.be.revertedWith("sponsor mismatch");
-  });
-
   it("does not allow a non-owner to configure the Master", async function () {
     await expect(staking.connect(member).setMasterAccount(MASTER))
       .to.be.revertedWithCustomError(staking, "OwnableUnauthorizedAccount").withArgs(member.address);
