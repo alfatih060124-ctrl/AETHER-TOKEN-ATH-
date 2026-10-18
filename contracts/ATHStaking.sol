@@ -408,7 +408,10 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         if (availableDays <= position.rewardDaysClaimed) return 0;
 
         uint256 pendingDays = availableDays - position.rewardDaysClaimed;
-        return (position.amountUSDT * position.dailyRateBps * pendingDays) / BPS;
+        // Rewards follow the live USD value of the fixed ATH principal, not the original deposit amount.
+        // principalATH has 18 decimals and the oracle price is USD with 8 decimals.
+        uint256 principalValueUSDT = (position.principalATH * priceOracle.getPrice()) / 1e8;
+        return (principalValueUSDT * position.dailyRateBps * pendingDays) / BPS;
     }
 
     function getPendingRewardATH(address user, uint256 stakeId) external view returns (uint256) {
