@@ -80,7 +80,7 @@ describe("ATH referral registration and Account Master", function () {
       .to.be.revertedWith("sponsor mismatch");
 
     await expect(staking.connect(member).stake(0, tenUsd, MASTER))
-      .to.emit(staking, "StakeCreated");
+      .to.emit(staking, "Staked");
   });
 
   it("does not allow a non-owner to configure the Master", async function () {
