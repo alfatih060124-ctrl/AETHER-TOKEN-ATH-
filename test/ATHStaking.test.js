@@ -147,7 +147,7 @@ describe("AETHER ATH Staking v1", function () {
     await staking.unpause();
 
     // The configured Presale is authorized, but only it can call this entry point.
-    // Until buy-and-stake is implemented in ATHPresale, an EOA cannot impersonate it.
+    // An EOA cannot impersonate the configured settlement contract.
     await expect(
       staking.connect(user).stakeFromPresale(
         ethers.ZeroAddress,
