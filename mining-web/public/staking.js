@@ -19,7 +19,7 @@ const STAKING_ABI=[
 const STAKING_TOKEN_ABI=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
 const PRICE_REGISTRY_ABI=["function getPrice() view returns (uint256)","function HOLDER_TARGET() view returns (uint256)","function recordedHolderCount() view returns (uint256)","function priceMode() view returns (uint8)","function officialListingActivated() view returns (bool)","function marketPriceOracle() view returns (address)","function getMarketPrice() view returns (uint256)"];
 const STAKING_NAMES=["Starter","Basic","Silver","Gold","Platinum","Diamond"];
-let scfg=null,srpc=null,sbrowser=null,ssigner=null,saccount="",sstaking=null,stoken=null,sregistry=null,spackages=[],sPositionCount=0,sPaused=true;
+let scfg=null,srpc=null,sbrowser=null,ssigner=null,saccount="",sstaking=null,stoken=null,sregistry=null,spackages=[],sPositionCount=0,sPaused=true,sMemberRegistered=false;
 const se=id=>document.getElementById(id);
 function sToast(message,error=false){const el=se("toast");if(!el)return;el.textContent=message;el.classList.toggle("error",error);el.classList.add("show");setTimeout(()=>el.classList.remove("show"),3600)}
 function sShort(v){return v?v.slice(0,6)+"…"+v.slice(-4):""}
@@ -106,14 +106,14 @@ async function sConnect(request=false){
     sbrowser=new ethers.BrowserProvider(window.ethereum);
     const method=request?"eth_requestAccounts":"eth_accounts";
     const accounts=await sbrowser.send(method,[]);
-    if(!accounts.length){saccount="";sRefreshReferralLink();se("stakingWalletStatus").textContent="Not Connected";se("stakingStakeBtn").disabled=true;return false}
-    saccount=ethers.getAddress(accounts[0]);sApplyReferralQuery();sRefreshReferralLink();
+    if(!accounts.length){saccount="";sMemberRegistered=false;sRefreshReferralLink();se("stakingWalletStatus").textContent="Not Connected";se("stakingStakeBtn").disabled=true;return false}
+    saccount=ethers.getAddress(accounts[0]);sMemberRegistered=false;sApplyReferralQuery();sRefreshReferralLink();
     ssigner=await sbrowser.getSigner();
     sstaking=new ethers.Contract(scfg.stakingAddress,STAKING_ABI,ssigner);
     stoken=new ethers.Contract(scfg.tokenAddress,STAKING_TOKEN_ABI,ssigner);
     const [master,registered]=await Promise.all([sstaking.masterAccount(),sstaking.isMemberRegistered(saccount)]);
-    if(saccount.toLowerCase()!==master.toLowerCase()&&!registered){
-      const ref=String(new URLSearchParams(window.location.search).get("ref")||se("stakingReferrer")?.value||"").trim();
+    sMemberRegistered=Boolean(registered)||saccount.toLowerCase()===master.toLowerCase();\n    sRefreshReferralLink();\n    if(saccount.toLowerCase()!==master.toLowerCase()&&!registered){
+      const ref=String(new URLSearchParams(window.location.search).get("ref")||"").trim();
       if(!ref||!ethers.isAddress(ref)||ref.toLowerCase()===ethers.ZeroAddress.toLowerCase()){
         se("stakingWalletStatus").textContent="Referral link required";
         se("stakingStakeBtn").disabled=true;
@@ -274,5 +274,5 @@ async function sStake(){if(!(await sConnect(true)))return;if(sPaused)return sToa
 async function sClaim(){if(!(await sConnect(true)))return;const id=Number(se("stakingPositionSelect").value||0);await sRun("Staking reward",()=>sstaking.claimReward(id))}
 async function sWithdraw(){if(!(await sConnect(true)))return;const id=Number(se("stakingPositionSelect").value||0);await sRun("Staking principal",()=>sstaking.withdrawPrincipal(id))}
 async function sClaimRank(){if(!(await sConnect(true)))return;await sRun("Rank salary",()=>sstaking.claimRankSalary())}
-async function sBoot(){try{scfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());srpc=new ethers.JsonRpcProvider(scfg.rpcUrl,scfg.chainId);se("stakingContractStatus").textContent=sReady()?"Staking v1 configured":"Contract pending";await Promise.all([sLoadRegistry(),sLoadPackages()]);await sConnect(false);se("stakingAmountUsd").addEventListener("input",sPreview);se("stakingPackageSelect").addEventListener("change",()=>{const i=Number(se("stakingPackageSelect").value||0),p=spackages[i];if(p)se("stakingAmountUsd").value=Number(ethers.formatEther(p.minUSDT)).toString();document.querySelectorAll(".staking-package").forEach((el,n)=>el.classList.toggle("active",n===i));sPreview()});se("stakingStakeBtn").addEventListener("click",sStake);se("stakingClaimBtn").addEventListener("click",sClaim);se("stakingWithdrawBtn").addEventListener("click",sWithdraw);se("stakingRankClaimBtn").addEventListener("click",sClaimRank);se("stakingReferralCopyBtn")?.addEventListener("click",sCopyReferralLink);sRefreshReferralLink();sApplyReferralQuery();se("stakingNetworkRefreshBtn")?.addEventListener("click",sLoadNetworkTree);se("stakingPositionSelect").addEventListener("change",e=>sLoadPosition(Number(e.target.value||0)));se("connectBtn")?.addEventListener("click",()=>setTimeout(()=>sConnect(false),700));window.ethereum?.on?.("accountsChanged",()=>sConnect(false));window.ethereum?.on?.("chainChanged",()=>window.location.reload());document.querySelector(".staking-package")?.classList.add("active")}catch(err){console.error("staking boot",err);se("stakingActionStatus").textContent="Unable to initialize Staking portal."}}
+async function sBoot(){try{scfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());srpc=new ethers.JsonRpcProvider(scfg.rpcUrl,scfg.chainId);se("stakingContractStatus").textContent=sReady()?"Staking v1 configured":"Contract pending";await Promise.all([sLoadRegistry(),sLoadPackages()]);await sConnect(false);se("stakingAmountUsd").addEventListener("input",sPreview);se("stakingPackageSelect").addEventListener("change",()=>{const i=Number(se("stakingPackageSelect").value||0),p=spackages[i];if(p)se("stakingAmountUsd").value=Number(ethers.formatEther(p.minUSDT)).toString();document.querySelectorAll(".staking-package").forEach((el,n)=>el.classList.toggle("active",n===i));sPreview()});se("stakingStakeBtn").addEventListener("click",sStake);se("stakingClaimBtn").addEventListener("click",sClaim);se("stakingWithdrawBtn").addEventListener("click",sWithdraw);se("stakingRankClaimBtn").addEventListener("click",sClaimRank);se("stakingReferralCopyBtn")?.addEventListener("click",sCopyReferralLink);sRefreshReferralLink();sApplyReferralQuery();se("stakingNetworkRefreshBtn")?.addEventListener("click",sLoadNetworkTree);se("stakingPositionSelect").addEventListener("change",e=>sLoadPosition(Number(e.target.value||0)));se("connectBtn")?.addEventListener("click",()=>setTimeout(()=>sConnect(true),700));window.ethereum?.on?.("accountsChanged",()=>sConnect(false));window.ethereum?.on?.("chainChanged",()=>window.location.reload());document.querySelector(".staking-package")?.classList.add("active")}catch(err){console.error("staking boot",err);se("stakingActionStatus").textContent="Unable to initialize Staking portal."}}
 sBoot();
