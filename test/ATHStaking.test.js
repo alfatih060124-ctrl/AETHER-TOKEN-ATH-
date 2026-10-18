@@ -200,6 +200,36 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.stakeCount(presaleBuyer.address)).to.equal(1n);
   });
 
+  it("enforces buy-and-stake deadline and max-payment protection without changing sale state", async function () {
+    await staking.pause();
+    await staking.setPresaleSettlement(await presale.getAddress());
+    await staking.unpause();
+    await presale.setStakingSettlement(await staking.getAddress());
+    await presale.unpause();
+
+    const amountATH = ethers.parseEther("1000");
+    const quote = await presale.quotePaymentForATH(amountATH);
+    const soldBefore = await presale.totalSoldATH();
+    const stableBefore = await stable.balanceOf(presaleBuyer.address);
+    const now = BigInt((await ethers.provider.getBlock("latest")).timestamp);
+
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        amountATH, quote, 0, ethers.ZeroAddress, now - 1n
+      )
+    ).to.be.revertedWith("expired");
+
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        amountATH, quote - 1n, 0, ethers.ZeroAddress, now + 3600n
+      )
+    ).to.be.revertedWith("payment exceeds max");
+
+    expect(await presale.totalSoldATH()).to.equal(soldBefore);
+    expect(await stable.balanceOf(presaleBuyer.address)).to.equal(stableBefore);
+    expect(await staking.stakeCount(presaleBuyer.address)).to.equal(0n);
+  });
+
   it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
     expect(await presale.currentPriceUSD8()).to.equal(PRICE_007);
