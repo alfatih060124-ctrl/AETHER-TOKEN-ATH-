@@ -33,7 +33,7 @@
     const gate = document.getElementById("memberAreaGateMessage");
     const status = document.getElementById("memberAreaStatus");
     const connected = walletLooksConnected();
-    const registrationOk = connected && memberRegistrationVerified;
+    const registrationOk = connected && memberRegistrationVerified && Boolean(verifiedAddress);
     const onMember = memberPages.has(page);
     const tabs = document.querySelector(".member-page-tabs");
     const isMainMember = page === "member";
@@ -74,6 +74,13 @@
     if (gate) gate.style.display = onMember && !registrationOk ? "block" : "none";
   }
   function onWalletChange() { renderMemberGate(currentPage()); }
+  if (window.ethereum && typeof window.ethereum.on === "function") {
+    window.ethereum.on("accountsChanged", () => {
+      memberRegistrationVerified = false;
+      verifiedAddress = "";
+      renderMemberGate(currentPage());
+    });
+  }
   window.addEventListener("aether-member-registration-status", event => {
     const detail = event.detail || {};
     verifiedAddress = String(detail.address || "").toLowerCase();
