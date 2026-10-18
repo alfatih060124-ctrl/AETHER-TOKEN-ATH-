@@ -9,6 +9,16 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+interface IATHPresaleStakingSettlement {
+    function stakeFromPresale(
+        address beneficiary,
+        uint256 packageId,
+        uint256 amountUSDT,
+        uint256 principalATH,
+        address referrer
+    ) external;
+}
+
 /// @title AETHER ATH Presale
 /// @notice Sells exactly 30M ATH. Price opens at $0.07 and rises $0.001
 ///         after each complete 100,000 ATH sold. At sell-out the displayed
@@ -29,6 +39,7 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
     uint256 public immutable paymentUnit;
 
     address public treasury;
+    address public stakingSettlement;
     uint256 public totalSoldATH;
     uint256 public totalPaymentCollected;
 
@@ -41,6 +52,15 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         uint256 totalSoldATH
     );
     event TreasuryUpdated(address indexed previousTreasury, address indexed newTreasury);
+    event StakingSettlementUpdated(address indexed previousSettlement, address indexed newSettlement);
+    event ATHPurchasedAndStaked(
+        address indexed buyer,
+        uint256 indexed packageId,
+        uint256 athAmount,
+        uint256 paymentAmount,
+        uint256 amountUSDT,
+        uint256 totalSoldATH
+    );
 
     constructor(
         address athToken_,
@@ -121,6 +141,47 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
             currentPriceUSD8(),
             totalSoldATH
         );
+    }
+
+    /// @notice Atomically purchases ATH and opens a Staking position for the buyer.
+    /// @dev Payment and ATH transfers, sale accounting, and Staking position creation all revert together.
+    function buyAndStake(
+        uint256 athAmount,
+        uint256 maxPaymentAmount,
+        uint256 packageId,
+        address referrer,
+        uint256 deadline
+    ) external whenNotPaused nonReentrant returns (uint256 paymentAmount, uint256 amountUSDT) {
+        require(block.timestamp <= deadline, "expired");
+        require(stakingSettlement != address(0), "staking not configured");
+        require(athAmount > 0, "zero ATH amount");
+        require(athAmount <= remainingATH(), "presale allocation exceeded");
+
+        uint256 openingPrice = currentPriceUSD8();
+        paymentAmount = _paymentForATHAcrossStages(totalSoldATH, athAmount);
+        require(paymentAmount <= maxPaymentAmount, "payment exceeds max");
+        // Normalize the USD stablecoin payment to Staking's 18-decimal accounting unit.
+        amountUSDT = Math.mulDiv(paymentAmount, 1 ether, paymentUnit);
+        require(amountUSDT > 0, "payment below accounting precision");
+
+        totalSoldATH += athAmount;
+        totalPaymentCollected += paymentAmount;
+        IERC20(address(paymentToken)).safeTransferFrom(msg.sender, treasury, paymentAmount);
+        athToken.safeTransfer(stakingSettlement, athAmount);
+        IATHPresaleStakingSettlement(stakingSettlement).stakeFromPresale(
+            msg.sender, packageId, amountUSDT, athAmount, referrer
+        );
+
+        emit ATHPurchased(msg.sender, athAmount, paymentAmount, openingPrice, currentPriceUSD8(), totalSoldATH);
+        emit ATHPurchasedAndStaked(msg.sender, packageId, athAmount, paymentAmount, amountUSDT, totalSoldATH);
+    }
+
+    /// @notice Configure the Staking contract only while Presale is paused.
+    function setStakingSettlement(address settlement) external onlyOwner whenPaused {
+        require(settlement != address(0), "zero settlement");
+        address previous = stakingSettlement;
+        stakingSettlement = settlement;
+        emit StakingSettlementUpdated(previous, settlement);
     }
 
     function setTreasury(address newTreasury) external onlyOwner {
