@@ -240,18 +240,15 @@
           <h3>Presale → Staking Order</h3>
           <label for="presaleStakePackage">Staking Package</label>
           <select id="presaleStakePackage" class="presale-input">
-            <option value="0" data-min="10" data-max="99" data-days="180" selected>Package 1 · $10–$99 · 180 days</option>
-            <option value="1" data-min="100" data-max="499" data-days="180">Package 2 · $100–$499 · 180 days</option>
-            <option value="2" data-min="500" data-max="1999" data-days="365">Package 3 · $500–$1,999 · 365 days</option>
-            <option value="3" data-min="2000" data-max="9999" data-days="365">Package 4 · $2,000–$9,999 · 365 days</option>
-            <option value="4" data-min="10000" data-max="49999" data-days="730">Package 5 · $10,000–$49,999 · 730 days</option>
-            <option value="5" data-min="50000" data-days="730">Package 6 · $50,000+ · 730 days</option>
+            <option value="0" data-min="10" data-max="50000" data-days="180" data-rate="0.35%" selected>Single Package · $10–$50,000 · 180 days · 0.35% daily</option>
+            <option value="1" data-min="10" data-max="50000" data-days="365" data-rate="0.45%">Single Package · $10–$50,000 · 365 days · 0.45% daily</option>
+            <option value="2" data-min="10" data-max="50000" data-days="730" data-rate="0.55%">Single Package · $10–$50,000 · 730 days · 0.55% daily</option>
           </select>
           <label for="presaleStakeDuration">Contract Lock Duration</label>
           <input id="presaleStakeDuration" class="presale-input" value="180 days (from selected package)" readonly />
           <label for="presaleStakeUsd">Package Value (USDT reference)</label>
           <input id="presaleStakeUsd" class="presale-input" inputmode="decimal" type="number" min="10" step="0.01" value="10" />
-          <small>Package ranges mirror the current source contract. Verify deployed contract configuration before enabling transactions.</small>
+          <small>The same $10–$50,000 investment range applies to all durations. Daily rewards are 0.35%, 0.45%, or 0.55% according to the selected lock period. Verify deployed contract configuration before enabling transactions.</small>
           <label for="presaleAthAmount">Estimated ATH at current on-chain price</label>
           <input id="presaleAthAmount" class="presale-input" inputmode="decimal" placeholder="Calculated from live contract price" value="" readonly />
           <small id="presaleStakeFlowStatus" class="presale-flow-status">Staking settlement is locked until an audited atomic Presale→Staking contract is configured.</small>
