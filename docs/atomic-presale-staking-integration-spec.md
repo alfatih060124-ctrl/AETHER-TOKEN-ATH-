@@ -91,3 +91,8 @@ The six amount-tier packages are replaced in source by three duration choices sh
 The daily reward rate is applied to the recorded USDT-denominated stake value for each eligible reward day, using the existing reward settlement schedule. The contract continues to calculate ATH principal from the authoritative sale quote for Presale settlement; a UI price estimate is not authoritative. Principal ATH amount remains fixed after staking, while its displayed market value can change with the ATH price.
 
 This change must not alter the existing Direct Referral, Lifestyle Bonus / Matching Staking L1–L10, Rank qualification, Rank Salary, group turnover, reward-pool allocations, or referral binding rules. Tests must verify all three duration/rate combinations, the $10 minimum, the $50,000 inclusive maximum, and rejection above $50,000. Existing deployed contracts are not modified by source changes; any deployment requires separate review and explicit approval.
+
+
+## Reward valuation clarification
+
+For the approved daily rates, reward base is the **live USD value of the fixed ATH principal**, not the original USDT amount recorded at entry. The contract computes `principalATH × priceOracle.getPrice() / 1e8` and applies the position's snapshotted daily basis-point rate for each eligible reward day. Reward payout is then converted to ATH using the current oracle price, with integer rounding. The principal quantity remains fixed. The reserve-runway calculation uses a weighted principal-ATH measure so it follows the current oracle valuation. The legacy `activeDailyRewardRunRateUSDT` storage getter remains for ABI compatibility and reflects entry-value accounting; do not use it as the live reward forecast.
