@@ -371,6 +371,10 @@ must(adminWeb, /cfg\.authenticatedAddress/, "Control Panel binds signing wallet 
 must(adminWeb, /accountsChanged[\s\S]*logoutAdmin/, "Changing wallet locks the authenticated Control Panel");
 must(adminHtml, /160M[\s\S]*30M[\s\S]*50M[\s\S]*30M[\s\S]*20M[\s\S]*10M/, "Control Panel shows current 300M Staking ecosystem breakdown");
 must(stakingWeb, /getATHAmount/, "Staking frontend previews ATH principal from the contract");
+must(stakingWeb, /registerReferral\(ethers\.getAddress\(ref\)\)/, "Member Connect Wallet submits on-chain referral registration");
+must(stakingWeb, /aether-member-registration-status/, "Staking portal publishes confirmed member registration status");
+must(read("mining-web/public/member-routing.js"), /registrationOk = connected && memberRegistrationVerified/, "Member Area remains hidden until referral registration is verified");
+must(read("mining-web/public/member-routing.js"), /Referral registration must be confirmed on-chain/, "Member Area explains its referral-registration gate");
 must(stakingWeb, /claimReward/, "Staking frontend exposes reward claiming");
 must(stakingWeb, /withdrawPrincipal/, "Staking frontend exposes principal withdrawal");
 must(webServer, /preListingPriceUsd: "0.07"/, "Web config exposes the Presale opening price $0.07");
