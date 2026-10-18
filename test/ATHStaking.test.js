@@ -121,7 +121,7 @@ describe("AETHER ATH Staking v1", function () {
   it("restricts Presale settlement to the configured address and requires Staking to be paused for configuration", async function () {
     await expect(
       staking.connect(owner).setPresaleSettlement(await presale.getAddress())
-    ).to.be.revertedWithCustomError(staking, "ExpectedPause");
+    ).to.be.revertedWithCustomError(staking, "EnforcedPause");
 
     await staking.pause();
     await staking.connect(owner).setPresaleSettlement(await presale.getAddress());
@@ -141,7 +141,7 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.paused()).to.equal(false);
   });
 
-  it("rejects zero beneficiaries and principal amounts inconsistent with the unified price oracle", async function () {
+  it("does not allow an unconfigured caller to submit a settlement even with a zero beneficiary", async function () {
     await staking.pause();
     await staking.setPresaleSettlement(await presale.getAddress());
     await staking.unpause();
