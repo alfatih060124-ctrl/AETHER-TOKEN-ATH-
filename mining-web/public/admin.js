@@ -142,7 +142,7 @@ function short(v){return v?`${v.slice(0,6)}…${v.slice(-4)}`:"—"}
 function ath(v){try{return `${Number(ethers.formatEther(v)).toLocaleString(undefined,{maximumFractionDigits:3})} ATH`}catch{return "0 ATH"}}
 function usd(v){try{return "$"+Number(ethers.formatEther(v)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}catch{return "$0.00"}}
 function runway(v,unit){try{return v===ethers.MaxUint256?"∞":Number(v).toLocaleString()+" "+unit}catch{return "—"}}
-const STAKING_PACKAGE_NAMES=["Starter","Basic","Silver","Gold","Platinum","Diamond"];
+const STAKING_PACKAGE_NAMES=["180 Days · 0.35% Daily","365 Days · 0.45% Daily","730 Days · 0.55% Daily"];
 function stakingPackageName(id){return STAKING_PACKAGE_NAMES[Number(id)]||("Custom #"+Number(id))}
 function dateTime(v){try{return new Date(Number(v)*1000).toLocaleString()}catch{return "—"}}
 function addr(v){return Boolean(v&&ethers.isAddress(v))}
