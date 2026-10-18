@@ -70,8 +70,8 @@ The implementation must resolve the existing contract boundary explicitly; do no
 
 1. Completed in source, tests added but not executed: implement the internal beneficiary-based staking routine and settlement authorization; preserve the public stake entry point.
 2. Implemented in source/spec: settlement principal must be computed by the configured Presale contract from its tranche-by-tranche quote; the single-stage staking oracle is not used to validate that principal. Presale integration must still prove quote, payment and transferred ATH reconcile exactly on-chain.
-3. Remaining: implement the Presale-to-Staking settlement path with fixed contract configuration, explicit token-decimal conversion, deadline and slippage checks, and atomic rollback.
-4. Remaining: add integration tests for successful settlement, payment/ATH reconciliation, package bounds, pause/authorization, deadline, slippage, reserve shortage, referral rules, and full rollback after a forced downstream revert.
+3. Implemented in source: `ATHPresale.buyAndStake` uses the authoritative tranche quote, buyer max-payment bound, deadline, stablecoin-decimal normalization, protected Presale ATH reserve, and the configured Staking settlement call in one transaction. Presale settlement address can be configured only while Presale is paused. Integration tests have been added but not executed.
+4. Partially implemented: an integration test covers a successful purchase creating a beneficiary-owned position and a downstream invalid-package revert rolling back payment and sale accounting. Still required: execute the test suite and add explicit tests for deadline, slippage, reserve shortage, pause/authorization, tranche-boundary settlement, and referral invariants.
 5. Run the complete Hardhat release gate (source:selfcheck, syntax check, compile, all tests, ABI export and local release smoke). Resolve failures rather than weakening assertions.
 6. Keep Presale and Staking paused; keep the frontend purchase action disabled until contracts are deployed to a non-production test environment and verified against actual payment token, oracle and package configuration.
 
