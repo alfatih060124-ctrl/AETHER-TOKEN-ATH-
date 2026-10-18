@@ -350,7 +350,7 @@
         const valid = amount >= min && (max === null || amount <= max);
         usdInput.setCustomValidity(valid ? "" : `Selected package accepts ${min} to ${max === null ? "unlimited" : max} USDT.`);
         if (packageStatus) packageStatus.textContent = valid
-          ? "Package range and lock duration are aligned with source contract. Purchase remains disabled pending audited atomic Presale→Staking integration."
+          ? `Shared $10–$50,000 range · ${days} days · ${rate} daily. Purchase remains disabled pending audited atomic Presale→Staking integration.`
           : `Enter a value within this package range: ${min}–${max === null ? "no upper limit" : max} USDT.`;
       }
       packageSelect?.addEventListener("change", () => {
