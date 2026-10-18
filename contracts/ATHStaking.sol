@@ -266,12 +266,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         priceOracle = IATHStakingPriceOracle(oracle_);
         _pause(); // fail-closed: owner explicitly opens Staking after funding and deployment checks.
 
-        _addPackage(10 ether, 99 ether, 35, 180);
-        _addPackage(100 ether, 499 ether, 45, 180);
-        _addPackage(500 ether, 1_999 ether, 55, 365);
-        _addPackage(2_000 ether, 9_999 ether, 65, 365);
-        _addPackage(10_000 ether, 49_999 ether, 75, 730);
-        _addPackage(50_000 ether, type(uint256).max, 85, 730);
+        // Single investment range; contract duration selects the daily reward rate.
+        // 0.35%, 0.45%, and 0.55% daily = 35, 45, and 55 basis points.
+        _addPackage(10 ether, 50_000 ether, 35, 180);
+        _addPackage(10 ether, 50_000 ether, 45, 365);
+        _addPackage(10 ether, 50_000 ether, 55, 730);
 
         rankSmallLegThresholdUSDT[0] = 1_000 ether;
         rankSmallLegThresholdUSDT[1] = 5_000 ether;
