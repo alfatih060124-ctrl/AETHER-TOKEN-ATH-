@@ -171,7 +171,7 @@ must(staking, /packageActiveContracts\[packageId\] \+= 1/, "New Staking contract
 must(staking, /packageInactiveContracts\[position\.packageId\] \+= 1/, "Closed Staking contracts increment package N-ACTIVE count");
 must(adminHtml, /MEMBER & CONTRACT DASHBOARD/, "Control Panel exposes Staking member and contract dashboard");
 must(adminHtml, /Find contract owner by Contract ID/, "Control Panel separates Contract ID lookup from Package ID management");
-must(adminWeb, /function stakingPackageName\(/, "Control Panel names Starter through Diamond packages");
+must(adminWeb, /function stakingPackageName\(/, "Control Panel names duration-based Staking packages");
 must(adminWeb, /getPackageContractStats/, "Control Panel reads per-package ACTIVE and N-ACTIVE statistics");
 must(adminWeb, /getStakingContract\(id\)/, "Control Panel looks up member contracts by Contract ID");
 must(adminHtml, /STAKING MEMBERS/, "Control Panel exposes the Staking member directory");
