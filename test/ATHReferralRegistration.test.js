@@ -62,6 +62,26 @@ describe("ATH referral registration and Account Master", function () {
     await expect(staking.connect(member).registerReferral(MASTER)).to.be.revertedWith("already registered");
   });
 
+  it("blocks staking until the wallet registers, then enforces its bound sponsor", async function () {
+    await staking.setMasterAccount(MASTER);
+    await token.transfer(member.address, ethers.parseEther("1000"));
+    await token.connect(member).approve(await staking.getAddress(), ethers.MaxUint256);
+    await token.approve(await staking.getAddress(), ethers.MaxUint256);
+    await staking.fundRewards(ethers.parseEther("160000000"));
+    await staking.fundNetworkReserve(ethers.parseEther("50000000"));
+    await staking.unpause();
+
+    const tenUsd = ethers.parseEther("10");
+    await expect(staking.connect(member).stake(0, tenUsd, MASTER))
+      .to.be.revertedWith("register with referral first");
+
+    await staking.connect(member).registerReferral(MASTER);
+    await expect(staking.connect(member).stake(0, tenUsd, other.address))
+      .to.be.revertedWith("sponsor mismatch");
+
+    await expect(staking.connect(member).stake(0, tenUsd, MASTER))
+      .to.emit(staking, "StakeCreated");
+  });
 
   it("does not allow a non-owner to configure the Master", async function () {
     await expect(staking.connect(member).setMasterAccount(MASTER))
