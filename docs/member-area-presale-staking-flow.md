@@ -47,3 +47,14 @@ The source package model is now one shared amount range ($10–$50,000 inclusive
 ## Reward valuation rule
 
 The reward percentage is applied daily to the current USD value of the fixed ATH principal: `principalATH × current ATH USD price`. The principal ATH quantity itself does not change when the market price changes. For example, 14,285.714285714… ATH originally acquired for $1,000 at $0.07 is worth about $5,285.714 at $0.37; at 0.55% daily, the indicative reward is about $29.0714 in USD value, converted to ATH using the current oracle price at settlement. Actual on-chain results are subject to integer rounding and the configured oracle.
+
+
+## Account Master and mandatory referral registration
+
+- Designated Account Master public wallet: `0x240086965A9ED9672c649aC0538F049f14270112`.
+- Before member registration is opened, the contract owner must call `setMasterAccount("0x240086965A9ED9672c649aC0538F049f14270112")` on the deployed `ATHStaking` contract while it remains paused. This is a one-time operation and cannot be changed after configuration.
+- Account Master is the root sponsor and is assigned Rank 8. Under the current contract schedule, Rank 8 carries a $10,000 weekly Rank Salary after the normal first-delay schedule; this is an existing economic rule and must be funded from the capped 50M ATH network/marketing reserve.
+- New members must open a valid personal referral URL and confirm `registerReferral(sponsor)` on-chain. Registration does not require staking and is allowed while staking is paused. The wallet must approve the registration transaction and pay network gas.
+- Referral registration is one-time and permanent. A sponsor must already be registered; self-referral and referral cycles are rejected. After registration confirmation, the member's own referral link becomes available.
+- Staking is separate and remains paused until its existing reserve-funding/opening checks pass. Presale-to-Staking beneficiaries must also be registered before their atomic stake can be created.
+- Never put private keys, seed phrases, or wallet PINs in repository configuration. The Master address is public and is not a signing credential.
