@@ -149,7 +149,9 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalRankSalaryPaidATH;
     uint256 public totalRankSalaryPaidUSDT;
     uint256 public totalWeeklyRankSalaryUSDT;
+    // Legacy entry-value snapshot retained for ABI compatibility; live runway uses weighted ATH principal below.
     uint256 public activeDailyRewardRunRateUSDT;
+    uint256 public activeDailyRewardWeightedPrincipalATH;
 
     // Official product name: Lifestyle Bonus / Matching Staking.
     // L1 8%, L2 5%, L3 3%, L4 2%, L5 1%, L6-L10 0.5%.
@@ -470,9 +472,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     function rewardReserveRunwayDays() external view returns (uint256) {
-        if (activeDailyRewardRunRateUSDT == 0) return type(uint256).max;
-        uint256 reserveUSDT = (rewardReserveATH * priceOracle.getPrice()) / 1e8;
-        return reserveUSDT / activeDailyRewardRunRateUSDT;
+        uint256 price = priceOracle.getPrice();
+        uint256 liveDailyRunRateUSDT = (activeDailyRewardWeightedPrincipalATH * price) / 1e8;
+        if (liveDailyRunRateUSDT == 0) return type(uint256).max;
+        uint256 reserveUSDT = (rewardReserveATH * price) / 1e8;
+        return reserveUSDT / liveDailyRunRateUSDT;
     }
 
     function rankSalaryRunwayWeeks() external view returns (uint256) {
@@ -640,6 +644,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         user.activeStakedUSDT += amountUSDT;
         totalActiveStakedUSDT += amountUSDT;
         activeDailyRewardRunRateUSDT += (amountUSDT * pkg.dailyRateBps) / BPS;
+        activeDailyRewardWeightedPrincipalATH += (principalATH * pkg.dailyRateBps) / BPS;
 
         userStakes[account].push(StakeInfo({
             amountUSDT: amountUSDT,
@@ -834,6 +839,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         userInfo[msg.sender].activeStakedUSDT -= position.amountUSDT;
         totalActiveStakedUSDT -= position.amountUSDT;
         activeDailyRewardRunRateUSDT -= (position.amountUSDT * position.dailyRateBps) / BPS;
+        activeDailyRewardWeightedPrincipalATH -= (position.principalATH * position.dailyRateBps) / BPS;
 
         athToken.safeTransfer(msg.sender, position.principalATH);
         emit PrincipalWithdrawn(msg.sender, stakeId, position.principalATH);
