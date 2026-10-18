@@ -45,6 +45,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     IERC20 public immutable athToken;
     IATHStakingPriceOracle public immutable priceOracle;
 
+    // Only the configured Presale settlement contract may create positions
+    // whose principal ATH was transferred directly from the Presale reserve.
+    address public presaleSettlement;
+
+
     struct Package {
         uint256 minUSDT;
         uint256 maxUSDT;
@@ -252,6 +257,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
 
     event PackageUpdated(uint256 indexed packageId, uint256 minUSDT, uint256 maxUSDT, uint256 dailyRateBps, uint256 lockDays, bool active);
     event ExcessRecovered(address indexed to, uint256 amount);
+    event PresaleSettlementUpdated(address indexed previousSettlement, address indexed newSettlement);
+
 
     constructor(address token_, address oracle_, address initialOwner) Ownable(initialOwner) {
         require(token_ != address(0) && oracle_ != address(0) && initialOwner != address(0), "zero address");
@@ -283,6 +290,13 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         rankWeeklySalaryUSDT[5] = 2_000 ether;
         rankWeeklySalaryUSDT[6] = 5_000 ether;
         rankWeeklySalaryUSDT[7] = 10_000 ether;
+    }
+
+    function setPresaleSettlement(address settlement) external onlyOwner whenPaused {
+        require(settlement != address(0), "zero settlement");
+        address previous = presaleSettlement;
+        presaleSettlement = settlement;
+        emit PresaleSettlementUpdated(previous, settlement);
     }
 
     function packageCount() external view returns (uint256) {
@@ -560,39 +574,68 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         nonReentrant
         whenNotPaused
     {
+        uint256 principalATH = getATHAmount(amountUSDT);
+        _createStake(msg.sender, packageId, amountUSDT, principalATH, referrer, true);
+    }
+
+    /// @notice Creates a beneficiary-owned stake for an atomic Presale settlement.
+    /// @dev Presale must transfer principal ATH to this contract in the same transaction.
+    ///      Strict oracle reconciliation prevents the caller from choosing a cheaper principal.
+    function stakeFromPresale(
+        address beneficiary,
+        uint256 packageId,
+        uint256 amountUSDT,
+        uint256 principalATH,
+        address referrer
+    ) external nonReentrant whenNotPaused {
+        require(msg.sender == presaleSettlement && presaleSettlement != address(0), "unauthorized settlement");
+        require(beneficiary != address(0), "zero beneficiary");
+        require(principalATH > 0 && principalATH == getATHAmount(amountUSDT), "principal price mismatch");
+        _createStake(beneficiary, packageId, amountUSDT, principalATH, referrer, false);
+    }
+
+    function _createStake(
+        address account,
+        uint256 packageId,
+        uint256 amountUSDT,
+        uint256 principalATH,
+        address referrer,
+        bool pullPrincipal
+    ) internal {
         require(packageId < packages.length, "invalid package");
         Package memory pkg = packages[packageId];
         require(pkg.active, "package inactive");
         require(amountUSDT >= MIN_STAKE_USDT, "minimum $10");
         require(amountUSDT >= pkg.minUSDT && amountUSDT <= pkg.maxUSDT, "amount out of range");
+        require(principalATH > 0, "zero principal");
 
-        UserInfo storage user = userInfo[msg.sender];
+        UserInfo storage user = userInfo[account];
         if (user.referrer == address(0) && referrer != address(0)) {
-            require(referrer != msg.sender, "self referral");
-            require(!_createsReferralCycle(msg.sender, referrer), "referral cycle");
+            require(referrer != account, "self referral");
+            require(!_createsReferralCycle(account, referrer), "referral cycle");
             user.referrer = referrer;
             directSponsorCount[referrer] += 1;
-            directLegMembers[referrer].push(msg.sender);
-            isDirectLegMember[referrer][msg.sender] = true;
-            emit ReferrerBound(msg.sender, referrer);
-            emit DirectSponsorAdded(referrer, msg.sender, directSponsorCount[referrer]);
+            directLegMembers[referrer].push(account);
+            isDirectLegMember[referrer][account] = true;
+            emit ReferrerBound(account, referrer);
+            emit DirectSponsorAdded(referrer, account, directSponsorCount[referrer]);
         }
 
-        if (!isStakingMember[msg.sender]) {
-            isStakingMember[msg.sender] = true;
-            stakingMembers.push(msg.sender);
+        if (!isStakingMember[account]) {
+            isStakingMember[account] = true;
+            stakingMembers.push(account);
         }
 
-        uint256 principalATH = getATHAmount(amountUSDT);
-        require(principalATH > 0, "zero principal");
-        athToken.safeTransferFrom(msg.sender, address(this), principalATH);
+        if (pullPrincipal) {
+            athToken.safeTransferFrom(account, address(this), principalATH);
+        }
 
         principalLiabilityATH += principalATH;
         user.activeStakedUSDT += amountUSDT;
         totalActiveStakedUSDT += amountUSDT;
         activeDailyRewardRunRateUSDT += (amountUSDT * pkg.dailyRateBps) / BPS;
 
-        userStakes[msg.sender].push(StakeInfo({
+        userStakes[account].push(StakeInfo({
             amountUSDT: amountUSDT,
             principalATH: principalATH,
             packageId: packageId,
@@ -605,44 +648,41 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
             principalWithdrawn: false
         }));
 
-        uint256 stakeId = userStakes[msg.sender].length - 1;
-
+        uint256 stakeId = userStakes[account].length - 1;
         uint256 contractId = ++totalStakingContracts;
         stakingContractRefs[contractId] = StakeContractRef({
-            account: msg.sender,
+            account: account,
             stakeId: uint64(stakeId)
         });
-        stakingContractId[msg.sender][stakeId] = contractId;
+        stakingContractId[account][stakeId] = contractId;
 
         totalActiveStakingContracts += 1;
         packageTotalContracts[packageId] += 1;
         packageActiveContracts[packageId] += 1;
-        if (activeContractCountByMember[msg.sender] == 0) {
+        if (activeContractCountByMember[account] == 0) {
             activeStakingMembers += 1;
         }
-        activeContractCountByMember[msg.sender] += 1;
+        activeContractCountByMember[account] += 1;
 
         emit StakingContractRegistered(
             contractId,
-            msg.sender,
+            account,
             stakeId,
             packageId,
             amountUSDT,
             principalATH
         );
 
-        address boundReferrer = user.referrer;
-        if (boundReferrer != address(0)) {
+        if (user.referrer != address(0)) {
             // One unified referral path:
             // unranked direct sponsor = 10% total;
             // ranked direct sponsor = 13/16/19/22/25/28/31/35% total.
             // Rank percentages already include the common 10% Direct Referral.
-            _payReferralAndRankPassUp(msg.sender, principalATH);
+            _payReferralAndRankPassUp(account, principalATH);
         }
 
-        _propagateLegTurnover(msg.sender, amountUSDT);
-
-        emit Staked(msg.sender, stakeId, packageId, amountUSDT, principalATH, pkg.dailyRateBps, pkg.lockDays);
+        _propagateLegTurnover(account, amountUSDT);
+        emit Staked(account, stakeId, packageId, amountUSDT, principalATH, pkg.dailyRateBps, pkg.lockDays);
     }
 
     function claimReward(uint256 stakeId) external nonReentrant whenNotPaused {
