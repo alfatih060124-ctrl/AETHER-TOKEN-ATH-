@@ -117,6 +117,7 @@ describe("AETHER ATH Staking v1", function () {
 
     await token.approve(await staking.getAddress(), ethers.MaxUint256);
     await staking.setMasterAccount(MASTER);
+    await staking.connect(referrer).registerReferral(MASTER);
     await staking.connect(presaleBuyer).registerReferral(referrer.address);
     await staking.fundRewards(ethers.parseEther("160000000"));
     await staking.fundNetworkReserve(ethers.parseEther("50000000"));
