@@ -9,6 +9,16 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+interface IATHPresaleStakingSettlement {
+    function stakeFromPresale(
+        address beneficiary,
+        uint256 packageId,
+        uint256 amountUSDT,
+        uint256 principalATH,
+        address referrer
+    ) external;
+}
+
 /// @title AETHER ATH Presale
 /// @notice Sells exactly 30M ATH. Price opens at $0.07 and rises $0.001
 ///         after each complete 100,000 ATH sold. At sell-out the displayed
@@ -29,6 +39,7 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
     uint256 public immutable paymentUnit;
 
     address public treasury;
+    address public stakingSettlement;
     uint256 public totalSoldATH;
     uint256 public totalPaymentCollected;
 
@@ -41,6 +52,15 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         uint256 totalSoldATH
     );
     event TreasuryUpdated(address indexed previousTreasury, address indexed newTreasury);
+    event StakingSettlementUpdated(address indexed previousSettlement, address indexed newSettlement);
+    event ATHPurchasedAndStaked(
+        address indexed buyer,
+        uint256 indexed packageId,
+        uint256 athAmount,
+        uint256 paymentAmount,
+        uint256 amountUSDT,
+        uint256 totalSoldATH
+    );
 
     constructor(
         address athToken_,
@@ -84,12 +104,13 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         return totalSoldATH == SALE_ALLOCATION_ATH;
     }
 
-    /// @notice Returns payment-token units required for an exact ATH amount.
-    /// @dev Correctly prices a purchase that crosses one or many 100k ATH tranches.
+    /// @notice Quotes ATH across every 100,000-token price tranche crossed.
+    /// @dev Each tranche is charged at its own stage price; the next tranche
+    ///      increases by exactly $0.001 per ATH after each 100,000 ATH sold.
     function quotePaymentForATH(uint256 athAmount) public view returns (uint256) {
         require(athAmount > 0, "zero ATH amount");
         require(athAmount <= remainingATH(), "presale allocation exceeded");
-        return _quotePayment(totalSoldATH, athAmount);
+        return _paymentForATHAcrossStages(totalSoldATH, athAmount);
     }
 
     /// @param maxPaymentAmount Buyer protection if another purchase advances the curve first.
@@ -103,7 +124,7 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         require(athAmount <= remainingATH(), "presale allocation exceeded");
 
         uint256 openingPrice = currentPriceUSD8();
-        paymentAmount = _quotePayment(totalSoldATH, athAmount);
+        paymentAmount = _paymentForATHAcrossStages(totalSoldATH, athAmount);
         require(paymentAmount <= maxPaymentAmount, "payment exceeds max");
 
         totalSoldATH += athAmount;
@@ -120,6 +141,47 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
             currentPriceUSD8(),
             totalSoldATH
         );
+    }
+
+    /// @notice Atomically purchases ATH and opens a Staking position for the buyer.
+    /// @dev Payment and ATH transfers, sale accounting, and Staking position creation all revert together.
+    function buyAndStake(
+        uint256 athAmount,
+        uint256 maxPaymentAmount,
+        uint256 packageId,
+        address referrer,
+        uint256 deadline
+    ) external whenNotPaused nonReentrant returns (uint256 paymentAmount, uint256 amountUSDT) {
+        require(block.timestamp <= deadline, "expired");
+        require(stakingSettlement != address(0), "staking not configured");
+        require(athAmount > 0, "zero ATH amount");
+        require(athAmount <= remainingATH(), "presale allocation exceeded");
+
+        uint256 openingPrice = currentPriceUSD8();
+        paymentAmount = _paymentForATHAcrossStages(totalSoldATH, athAmount);
+        require(paymentAmount <= maxPaymentAmount, "payment exceeds max");
+        // Normalize the USD stablecoin payment to Staking's 18-decimal accounting unit.
+        amountUSDT = Math.mulDiv(paymentAmount, 1 ether, paymentUnit);
+        require(amountUSDT > 0, "payment below accounting precision");
+
+        totalSoldATH += athAmount;
+        totalPaymentCollected += paymentAmount;
+        IERC20(address(paymentToken)).safeTransferFrom(msg.sender, treasury, paymentAmount);
+        athToken.safeTransfer(stakingSettlement, athAmount);
+        IATHPresaleStakingSettlement(stakingSettlement).stakeFromPresale(
+            msg.sender, packageId, amountUSDT, athAmount, referrer
+        );
+
+        emit ATHPurchased(msg.sender, athAmount, paymentAmount, openingPrice, currentPriceUSD8(), totalSoldATH);
+        emit ATHPurchasedAndStaked(msg.sender, packageId, athAmount, paymentAmount, amountUSDT, totalSoldATH);
+    }
+
+    /// @notice Configure the Staking contract only while Presale is paused.
+    function setStakingSettlement(address settlement) external onlyOwner whenPaused {
+        require(settlement != address(0), "zero settlement");
+        address previous = stakingSettlement;
+        stakingSettlement = settlement;
+        emit StakingSettlementUpdated(previous, settlement);
     }
 
     function setTreasury(address newTreasury) external onlyOwner {
@@ -147,37 +209,38 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         athToken.safeTransfer(to, amount);
     }
 
-    function _quotePayment(uint256 soldBefore, uint256 athAmount) internal view returns (uint256) {
-        uint256 amountLeft = athAmount;
-        uint256 index = soldBefore / STEP_SIZE_ATH;
-        uint256 offset = soldBefore % STEP_SIZE_ATH;
-        uint256 weightedPrice;
+    function _paymentForATHAcrossStages(uint256 soldBefore, uint256 athAmount)
+        internal
+        view
+        returns (uint256 paymentAmount)
+    {
+        uint256 cursor = soldBefore;
+        uint256 unpriced = athAmount;
+        while (unpriced > 0) {
+            uint256 offset = cursor % STEP_SIZE_ATH;
+            uint256 trancheRemaining = STEP_SIZE_ATH - offset;
+            uint256 trancheAmount = unpriced < trancheRemaining ? unpriced : trancheRemaining;
+            uint256 stage = cursor / STEP_SIZE_ATH;
+            uint256 price = START_PRICE_USD8 + (stage * PRICE_STEP_USD8);
+            if (price > FINAL_PRICE_USD8) price = FINAL_PRICE_USD8;
 
-        if (offset != 0) {
-            uint256 availableInCurrent = STEP_SIZE_ATH - offset;
-            uint256 segment = amountLeft < availableInCurrent ? amountLeft : availableInCurrent;
-            weightedPrice += segment * (START_PRICE_USD8 + (index * PRICE_STEP_USD8));
-            amountLeft -= segment;
-            if (segment == availableInCurrent) index += 1;
+            paymentAmount += _paymentForATHAtPrice(trancheAmount, price);
+            cursor += trancheAmount;
+            unpriced -= trancheAmount;
         }
+    }
 
-        if (amountLeft >= STEP_SIZE_ATH) {
-            uint256 fullSteps = amountLeft / STEP_SIZE_ATH;
-            uint256 indexSum = (fullSteps * ((2 * index) + fullSteps - 1)) / 2;
-            uint256 priceSum =
-                (fullSteps * START_PRICE_USD8) + (PRICE_STEP_USD8 * indexSum);
-            weightedPrice += STEP_SIZE_ATH * priceSum;
-            amountLeft -= fullSteps * STEP_SIZE_ATH;
-            index += fullSteps;
-        }
-
-        if (amountLeft > 0) {
-            weightedPrice += amountLeft * (START_PRICE_USD8 + (index * PRICE_STEP_USD8));
-        }
-
-        uint256 denominator = 1e26; // 1e18 ATH decimals * 1e8 USD price decimals
-        uint256 payment = Math.mulDiv(weightedPrice, paymentUnit, denominator);
-        if (mulmod(weightedPrice, paymentUnit, denominator) > 0) payment += 1;
+    function _paymentForATHAtPrice(uint256 athAmount, uint256 priceUSD8)
+        internal
+        view
+        returns (uint256)
+    {
+        // ATH has 18 decimals; USD price has 8 decimals. Round payment up
+        // to the payment token's smallest unit so the sale is never underpaid.
+        uint256 denominator = 1e26;
+        uint256 numerator = athAmount * priceUSD8;
+        uint256 payment = Math.mulDiv(numerator, paymentUnit, denominator);
+        if (mulmod(numerator, paymentUnit, denominator) > 0) payment += 1;
         return payment;
     }
 }

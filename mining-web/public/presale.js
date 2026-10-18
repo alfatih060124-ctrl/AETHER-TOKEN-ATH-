@@ -36,6 +36,8 @@
   let currentMaxPayment = 0n;
   let quoteTimer;
   let saleOpen = false;
+  let currentPriceUSD8 = 0n;
+  const stakingSettlementMode = true;
 
   function shortAddress(value) {
     if (!value || value.length < 12) return value || "—";
@@ -128,8 +130,26 @@
 
   function parseAthInput() {
     const raw = ($("presaleAthAmount")?.value || "").replace(/,/g, "").trim();
-    if (!raw || Number(raw) <= 0) throw new Error("Enter an ATH amount greater than zero.");
+    if (!raw || Number(raw) <= 0) throw new Error("Choose a package amount greater than zero.");
     return ethers.parseUnits(raw, 18);
+  }
+
+  function syncStakeAmountFromPrice() {
+    const usdInput = $("presaleStakeUsd");
+    const athInput = $("presaleAthAmount");
+    if (!usdInput || !athInput || currentPriceUSD8 <= 0n) return;
+    const rawUsd = String(usdInput.value || "").trim();
+    if (!rawUsd || !Number.isFinite(Number(rawUsd)) || Number(rawUsd) <= 0) {
+      athInput.value = "";
+      return;
+    }
+    try {
+      const usd8 = ethers.parseUnits(rawUsd, 8);
+      const ath18 = (usd8 * 10n ** 18n) / currentPriceUSD8;
+      athInput.value = ethers.formatUnits(ath18, 18).replace(/\.?0+$/, "");
+    } catch {
+      athInput.value = "";
+    }
   }
 
   async function loadPaymentMetadata() {
@@ -205,9 +225,10 @@
     const hasQuote = currentQuote > 0n;
     const hasBalance = balance === undefined || balance >= currentMaxPayment;
 
-    btn.disabled = !(configured && saleOpen && hasWallet && hasQuote && hasBalance);
+    btn.disabled = stakingSettlementMode || !(configured && saleOpen && hasWallet && hasQuote && hasBalance);
 
-    if (!configured) btn.textContent = "Presale Contract Pending";
+    if (stakingSettlementMode) btn.textContent = "Staking Contract Integration Pending";
+    else if (!configured) btn.textContent = "Presale Contract Pending";
     else if (!saleOpen) btn.textContent = "Presale Not Available";
     else if (!hasWallet) btn.textContent = "Connect Wallet to Buy";
     else if (!hasBalance) btn.textContent = "Insufficient " + paymentSymbol;
@@ -264,6 +285,10 @@
 
   async function buyOnChain() {
     const btn = $("presaleBuyBtn");
+    if (stakingSettlementMode) {
+      setStatus("Purchase disabled: the current ATHPresale.buyATH() sends ATH to the wallet, not directly into staking. Atomic Presale→Staking contract support must be audited and configured first.", true);
+      return;
+    }
     try {
       btn.disabled = true;
 
@@ -306,6 +331,39 @@
     try {
       cfg = await fetch("/config", { cache: "no-store" }).then(r => r.json());
 
+      document.querySelectorAll(".presale-quick").forEach(el => { el.hidden = true; });
+      const packageSelect = $("presaleStakePackage");
+      const usdInput = $("presaleStakeUsd");
+      const durationInput = $("presaleStakeDuration");
+      const packageStatus = $("presaleStakeFlowStatus");
+      function syncPackageSelection(resetAmount = false) {
+        const option = packageSelect?.selectedOptions?.[0];
+        if (!option || !usdInput) return;
+        const min = Number(option.dataset.min || 10);
+        const max = option.dataset.max ? Number(option.dataset.max) : null;
+        const days = Number(option.dataset.days || 0);
+        usdInput.min = String(min);
+        if (max !== null) usdInput.max = String(max); else usdInput.removeAttribute("max");
+        if (resetAmount || !Number.isFinite(Number(usdInput.value)) || Number(usdInput.value) < min || (max !== null && Number(usdInput.value) > max)) usdInput.value = String(min);
+        if (durationInput) durationInput.value = days ? `${days} days (Package ${option.value})` : "Contract duration unavailable";
+        const amount = Number(usdInput.value);
+        const valid = amount >= min && (max === null || amount <= max);
+        usdInput.setCustomValidity(valid ? "" : `Selected package accepts ${min} to ${max === null ? "unlimited" : max} USDT.`);
+        if (packageStatus) packageStatus.textContent = valid
+          ? `Shared $10–$50,000 range · ${days} days · ${rate} daily. Purchase remains disabled pending audited atomic Presale→Staking integration.`
+          : `Enter a value within this package range: ${min}–${max === null ? "no upper limit" : max} USDT.`;
+      }
+      packageSelect?.addEventListener("change", () => {
+        syncPackageSelection(true);
+        syncStakeAmountFromPrice();
+        clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 50);
+      });
+      syncPackageSelection(false);
+      usdInput?.addEventListener("input", () => {
+        syncPackageSelection(false);
+        syncStakeAmountFromPrice();
+        clearTimeout(quoteTimer); quoteTimer = setTimeout(refreshQuote, 250);
+      });
       document.querySelectorAll(".presale-quick button").forEach(button => {
         button.addEventListener("click", () => {
           $("presaleAthAmount").value = button.dataset.ath || "1000";

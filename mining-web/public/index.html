@@ -21,13 +21,11 @@
       </a>
 
       <nav class="main-nav" aria-label="Primary navigation">
-        <a class="active" href="#home">Home</a>
-        <a href="#mining">Mining</a>
-        <a href="#staking">Staking</a>
-        <a href="#buy-ath">Buy ATH</a>
-        <a href="#leaderboard">Leaderboard</a>
-        <a href="#referral">Referral</a>
-        <a href="#docs">Docs</a>
+        <a class="active" data-page-link="home" href="/?page=home">Home</a>
+        <a data-page-link="mining" href="/?page=mining">Mining</a>
+        <a data-page-link="presale" href="/?page=presale">Presale</a>
+        <a data-page-link="member" href="/?page=member">Member Area</a>
+        <a data-page-link="docs" href="/?page=docs">Docs</a>
       </nav>
 
       <div class="nav-actions">
@@ -223,7 +221,7 @@
         <div>
           <span class="presale-kicker">ATH ON-CHAIN PRESALE</span>
           <h2>Buy ATH Directly On-chain</h2>
-          <p>Connect your EVM wallet, enter the ATH amount, review the contract quote, then pay with the configured stablecoin. Payment goes directly to the Presale treasury and ATH is transferred directly from the contract reserve to your wallet.</p>
+          <p>Choose a staking package and amount to preview the estimated ATH at the current on-chain Presale price. The intended settlement is USDT payment and staking in one atomic contract flow. This flow is not live yet: purchase and settlement stay disabled until the audited Presale→Staking integration is configured and verified.</p>
         </div>
         <span id="presaleContractStatus" class="presale-badge">Contract pending</span>
       </div>
@@ -239,9 +237,21 @@
 
       <div class="presale-layout">
         <article class="presale-panel presale-buy-panel">
-          <h3>Presale Order</h3>
-          <label for="presaleAthAmount">ATH Amount</label>
-          <input id="presaleAthAmount" class="presale-input" inputmode="decimal" placeholder="Example: 1000" value="1000" />
+          <h3>Presale → Staking Order</h3>
+          <label for="presaleStakePackage">Staking Package</label>
+          <select id="presaleStakePackage" class="presale-input">
+            <option value="0" data-min="10" data-max="50000" data-days="180" data-rate="0.35%" selected>Single Package · $10–$50,000 · 180 days · 0.35% daily</option>
+            <option value="1" data-min="10" data-max="50000" data-days="365" data-rate="0.45%">Single Package · $10–$50,000 · 365 days · 0.45% daily</option>
+            <option value="2" data-min="10" data-max="50000" data-days="730" data-rate="0.55%">Single Package · $10–$50,000 · 730 days · 0.55% daily</option>
+          </select>
+          <label for="presaleStakeDuration">Contract Lock Duration</label>
+          <input id="presaleStakeDuration" class="presale-input" value="180 days (from selected package)" readonly />
+          <label for="presaleStakeUsd">Package Value (USDT reference)</label>
+          <input id="presaleStakeUsd" class="presale-input" inputmode="decimal" type="number" min="10" step="0.01" value="10" />
+          <small>The same $10–$50,000 investment range applies to all durations. Daily rewards are 0.35%, 0.45%, or 0.55% according to the selected lock period. Verify deployed contract configuration before enabling transactions.</small>
+          <label for="presaleAthAmount">Estimated ATH at current on-chain price</label>
+          <input id="presaleAthAmount" class="presale-input" inputmode="decimal" placeholder="Calculated from live contract price" value="" readonly />
+          <small id="presaleStakeFlowStatus" class="presale-flow-status">Staking settlement is locked until an audited atomic Presale→Staking contract is configured.</small>
           <div class="presale-quick">
             <button type="button" data-ath="1000">1K ATH</button>
             <button type="button" data-ath="10000">10K ATH</button>
@@ -284,7 +294,26 @@
       </div>
     </section>
 
-    <section class="shell holder-area-banner staking" data-holder-zone="staking" hidden>
+    <section id="member-area-shell" class="shell member-access-gate" aria-label="Member Area">
+      <div class="presale-head"><div><span class="presale-kicker">SECURE MEMBER AREA</span><h2>ATH Member Dashboard</h2><p>Staking positions, Direct Referral Bonus, Sponsor Network, Lifestyle Bonus Level 1–10, Rank & Rank Salary, and reward history are organized here.</p></div><span id="memberAreaStatus" class="presale-badge">Wallet verification required</span></div>
+      <nav class="member-page-tabs" aria-label="Member pages">
+        <a href="/?page=member" data-page-link="member">Overview</a>
+        <a href="/?page=member-staking" data-page-link="member-staking">My Staking</a>
+        <a href="/?page=member-referrals" data-page-link="member-referrals">Direct Referral</a>
+        <a href="/?page=member-network" data-page-link="member-network">Sponsor Network</a>
+        <a href="/?page=member-lifestyle" data-page-link="member-lifestyle">Lifestyle Bonus L1–L10</a>
+        <a href="/?page=member-rank" data-page-link="member-rank">Rank & Salary</a>
+        <a href="/?page=member-history" data-page-link="member-history">Reward History</a>
+      </nav>
+      <p id="memberAreaGateMessage">Connect your wallet to open member information. This is a UI gate; smart-contract permissions remain the source of transaction security.</p>
+    </section>
+
+    <section id="member-history-panel" class="shell presale-zone" data-member-only="true" hidden>
+      <div class="presale-head"><div><span class="presale-kicker">MEMBER REWARD HISTORY</span><h2>Reward History</h2><p>Reward history must be loaded from verified Staking contract events and indexed transaction records. This panel will remain read-only until that data source is connected and validated.</p></div><span class="presale-badge">History source pending</span></div>
+      <p class="presale-flow-status">No fabricated reward records are shown. Connect the verified member wallet and configure the validated event-history source before this page can display transaction history.</p>
+    </section>
+
+    <section class="shell holder-area-banner staking" data-holder-zone="staking" data-member-only="true" hidden>
       <div><span>STAKING HOLDER AREA</span><h2>ATH Staking Operations</h2><p>Only Staking actions are shown below: stake positions, 00:50 UTC reward, Direct Referral/Rank, Lifestyle Bonus / Matching Staking and Rank Salary.</p></div>
       <strong>Daily reward slot: 00:50 UTC</strong>
     </section>
@@ -301,7 +330,7 @@
         <div><span>Your Wallet</span><strong id="stakingWalletStatus">Not Connected</strong><small>Uses the same EVM wallet as Mining</small></div>
       </div>
       <div class="staking-layout">
-        <article class="staking-panel">
+        <article class="staking-panel" data-member-panel="staking">
           <h3>Stake ATH</h3>
           <label>Package</label><select id="stakingPackageSelect" class="staking-input"><option>Loading packages…</option></select>
           <label>Stake Value (USD reference)</label><input id="stakingAmountUsd" class="staking-input" inputmode="decimal" value="10" />
@@ -310,7 +339,7 @@
           <button id="stakingStakeBtn" class="btn btn-gold staking-action" disabled>Stake ATH</button>
           <small id="stakingActionStatus">Connect wallet and verified Staking contract.</small>
         </article>
-        <article class="staking-panel">
+        <article class="staking-panel" data-member-panel="staking">
           <h3>My Stake Position</h3>
           <label>Position</label><select id="stakingPositionSelect" class="staking-input"><option>No positions yet</option></select>
           <div class="staking-metrics">
@@ -321,8 +350,16 @@
           </div>
           <div class="staking-actions"><button id="stakingClaimBtn" class="btn btn-dark" disabled>Claim Reward</button><button id="stakingWithdrawBtn" class="btn btn-dark" disabled>Withdraw Principal</button></div>
         </article>
-        <article class="staking-panel">
+        <article class="staking-panel" data-member-panel="referrals">
           <h3>Staking Account</h3>
+          <div class="staking-referral-share">
+            <label for="stakingReferralLink">Your Personal Referral Link</label>
+            <div class="staking-referral-link-row">
+              <input id="stakingReferralLink" class="staking-input" type="text" readonly value="" placeholder="Connect wallet to generate your link" />
+              <button id="stakingReferralCopyBtn" class="btn btn-dark" type="button" disabled>Copy Link</button>
+            </div>
+            <small id="stakingReferralLinkStatus">Connect your wallet to generate a unique referral link.</small>
+          </div>
           <div class="staking-account">
             <div><span>Active Staked Value</span><strong id="stakingActiveUsd">$0.00</strong></div>
             <div><span>Stake Positions</span><strong id="stakingPositionCount">0</strong></div>
@@ -331,7 +368,7 @@
           </div>
           <p class="staking-note">ATH valuation follows the Presale contract: $0.070 opening, +$0.001 after each complete 100,000 ATH sold, up to the $0.370 sold-out reference.</p>
         </article>
-        <article class="staking-panel staking-rank-panel">
+        <article class="staking-panel staking-rank-panel" data-member-panel="rank">
           <h3>Rank Salary</h3>
           <div class="staking-account">
             <div><span>Current Rank</span><strong id="stakingRank">No Rank</strong></div>
@@ -347,7 +384,7 @@
           <p class="staking-note">Qualification requires at least 5 direct sponsors. Small-leg turnover = all direct-leg turnover minus the single largest dynamic leg. Salary is defined in USD and paid in ATH using the current Presale-linked price. Payment is subject to the protected Marketing / Network reserve.</p>
         </article>
 
-        <article class="staking-panel staking-network-panel">
+        <article class="staking-panel staking-network-panel" data-member-panel="network">
           <div class="staking-network-head">
             <div>
               <span class="staking-network-kicker">STAKING NETWORK</span>
@@ -503,7 +540,7 @@
       </article>
     </section>
 
-    <section id="referral" class="shell referral-box holder-operation-zone" data-holder-zone="mining">
+    <section id="referral" class="shell referral-box holder-operation-zone" data-holder-zone="mining" data-member-only="true">
       <div class="referral-main">
         <div class="panel-title">
           <div class="round-icon">👥</div>
@@ -536,7 +573,7 @@
       </div>
     </section>
 
-    <section id="leaderboard" class="shell bonus-scale holder-operation-zone" data-holder-zone="mining">
+    <section id="leaderboard" class="shell bonus-scale holder-operation-zone" data-holder-zone="mining" data-member-only="true">
       <span>1–5 <b>+10%</b></span>
       <span>6–10 <b>+15%</b></span>
       <span>11–20 <b>+20%</b></span>
@@ -567,6 +604,7 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
   <script src="/i18n-runtime.js?v=2"></script>
   <script src="/holder-workspace.js?v=20261004-v1"></script>
+  <script src="/member-routing.js?v=20261018-member-area-v1"></script>
   <script src="/app.js?v=20261004-holder-workspace-v1"></script>
   <script src="/presale.js?v=20261003-onchain-v1"></script>
   <script src="/staking.js?v=20261004-lifestyle-matching-v1"></script>

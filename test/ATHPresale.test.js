@@ -58,19 +58,35 @@ describe("AETHER ATH Presale", function () {
     expect(await presale.currentPriceUSD8()).to.equal(7_100_000n);
   });
 
-  it("prices a purchase correctly when it crosses a 100k tranche boundary", async function () {
+  it("prices each 100k tranche separately when a purchase crosses a price boundary", async function () {
     const { owner, buyer, presale, unit } = await deployFixture();
-
     await presale.connect(owner).unpause();
-    // 100,000 ATH × $0.070 = $7,000
-    //  50,000 ATH × $0.071 = $3,550
-    // total = $10,550
-    const athAmount = ethers.parseEther("150000");
+
+    const athAmount = ethers.parseEther("200000");
     const quote = await presale.quotePaymentForATH(athAmount);
-    expect(quote).to.equal(10_550n * unit);
+    expect(quote).to.equal(14_100n * unit);
 
     await presale.connect(buyer).buyATH(athAmount, quote);
-    expect(await presale.currentPriceUSD8()).to.equal(7_100_000n);
+    expect(await presale.currentPriceUSD8()).to.equal(7_200_000n);
+  });
+
+  it("prices a 150k purchase as 100k at $0.070 and 50k at $0.071", async function () {
+    const { presale, unit } = await deployFixture();
+    const quote = await presale.quotePaymentForATH(ethers.parseEther("150000"));
+    expect(quote).to.equal(10_550n * unit);
+  });
+
+  it("applies the same tranche-by-tranche curve when the sale starts partway through a tranche", async function () {
+    const { owner, buyer, presale, unit } = await deployFixture();
+    await presale.connect(owner).unpause();
+
+    const first = ethers.parseEther("99900");
+    const firstQuote = await presale.quotePaymentForATH(first);
+    await presale.connect(buyer).buyATH(first, firstQuote);
+
+    const next = ethers.parseEther("200");
+    const quote = await presale.quotePaymentForATH(next);
+    expect(quote).to.equal(14_100n * unit / 1000n); // 100 ATH at $0.070 + 100 ATH at $0.071
   });
 
   it("sells the final live tranche at $0.369 and reaches $0.370 exactly at sold out", async function () {
@@ -96,9 +112,10 @@ describe("AETHER ATH Presale", function () {
     ).to.be.revertedWith("presale allocation exceeded");
   });
 
-  it("collects $6.585M if the complete 30M allocation sells through the defined curve", async function () {
+  it("prices the full allocation using all 300 consecutive price tranches", async function () {
     const { presale, unit } = await deployFixture();
     const quote = await presale.quotePaymentForATH(ethers.parseEther("30000000"));
+    // Sum of 100,000 ATH at each price from $0.070 through $0.369.
     expect(quote).to.equal(6_585_000n * unit);
   });
 

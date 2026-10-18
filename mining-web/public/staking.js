@@ -1,6 +1,7 @@
 const STAKING_ABI=[
 "function packages(uint256) view returns (uint256 minUSDT,uint256 maxUSDT,uint256 dailyRateBps,uint256 lockDays,bool active)",
 "function packageCount() view returns (uint256)","function paused() view returns (bool)","function stakeCount(address) view returns (uint256)",
+"function masterAccount() view returns (address)","function isMemberRegistered(address) view returns (bool)","function registerReferral(address)",
 "function userInfo(address) view returns (address referrer,uint256 activeStakedUSDT,uint256 totalReferralEarnedATH,uint256 totalNetworkEarnedATH)",
 "function userStakes(address,uint256) view returns (uint256 amountUSDT,uint256 principalATH,uint256 packageId,uint256 dailyRateBps,uint256 lockDays,uint256 startTime,uint256 lastClaimTime,uint256 totalClaimedUSDT,bool principalWithdrawn)",
 "function getATHAmount(uint256) view returns (uint256)","function getPendingRewardUSDT(address,uint256) view returns (uint256)",
@@ -18,10 +19,44 @@ const STAKING_ABI=[
 const STAKING_TOKEN_ABI=["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
 const PRICE_REGISTRY_ABI=["function getPrice() view returns (uint256)","function HOLDER_TARGET() view returns (uint256)","function recordedHolderCount() view returns (uint256)","function priceMode() view returns (uint8)","function officialListingActivated() view returns (bool)","function marketPriceOracle() view returns (address)","function getMarketPrice() view returns (uint256)"];
 const STAKING_NAMES=["Starter","Basic","Silver","Gold","Platinum","Diamond"];
-let scfg=null,srpc=null,sbrowser=null,ssigner=null,saccount="",sstaking=null,stoken=null,sregistry=null,spackages=[],sPositionCount=0,sPaused=true;
+let scfg=null,srpc=null,sbrowser=null,ssigner=null,saccount="",sstaking=null,stoken=null,sregistry=null,spackages=[],sPositionCount=0,sPaused=true,sMemberRegistered=false;
 const se=id=>document.getElementById(id);
 function sToast(message,error=false){const el=se("toast");if(!el)return;el.textContent=message;el.classList.toggle("error",error);el.classList.add("show");setTimeout(()=>el.classList.remove("show"),3600)}
 function sShort(v){return v?v.slice(0,6)+"…"+v.slice(-4):""}
+function sReferralLinkFor(address){
+  if(!sMemberRegistered||!address||!ethers.isAddress(address))return "";
+  const url=new URL(window.location.href);
+  url.searchParams.set("page","member");
+  url.searchParams.set("ref",ethers.getAddress(address));
+  url.hash="";
+  return url.toString();
+}
+function sRefreshReferralLink(){
+  const input=se("stakingReferralLink"),button=se("stakingReferralCopyBtn"),status=se("stakingReferralLinkStatus");
+  if(!input||!button||!status)return;
+  const link=sReferralLinkFor(saccount);
+  input.value=link;
+  button.disabled=!link;
+  status.textContent=link?"Share this link. New members can use it to prefill your sponsor wallet.":"Connect your wallet to generate a unique referral link.";
+}
+async function sCopyReferralLink(){
+  const input=se("stakingReferralLink");
+  if(!input||!input.value)return;
+  try{
+    await navigator.clipboard.writeText(input.value);
+    se("stakingReferralLinkStatus").textContent="Referral link copied. Share it with your community.";
+  }catch{
+    input.focus();input.select();
+    const copied=document.execCommand("copy");
+    se("stakingReferralLinkStatus").textContent=copied?"Referral link copied. Share it with your community.":"Select the link and copy it manually.";
+  }
+}
+function sApplyReferralQuery(){
+  const incoming=new URLSearchParams(window.location.search).get("ref")||"";
+  const field=se("stakingReferrer");
+  if(!field||!incoming||!ethers.isAddress(incoming)||incoming.toLowerCase()===ethers.ZeroAddress.toLowerCase())return;
+  if(!field.value.trim())field.value=ethers.getAddress(incoming);
+}
 function sFmtAth(v){try{return Number(ethers.formatEther(v)).toLocaleString(undefined,{maximumFractionDigits:6})+" ATH"}catch{return "0 ATH"}}
 function sFmtUsd(v){try{return "$"+Number(ethers.formatEther(v)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}catch{return "$0.00"}}
 function sI18nRefresh(){window.dispatchEvent(new CustomEvent("aether-language-refresh"))}
@@ -64,7 +99,54 @@ async function sEnsureChain(){if(!window.ethereum||!scfg)return;const wanted="0x
 async function sLoadRegistry(){if(!ethers.isAddress(scfg&&scfg.priceRegistryAddress||""))return;try{sregistry=new ethers.Contract(scfg.priceRegistryAddress,PRICE_REGISTRY_ABI,srpc);const x=await Promise.all([sregistry.getPrice(),sregistry.HOLDER_TARGET(),sregistry.recordedHolderCount(),sregistry.priceMode(),sregistry.officialListingActivated(),sregistry.marketPriceOracle()]);const price=x[0],target=x[1],count=x[2],mode=x[3],listed=x[4],marketOracle=x[5];se("stakingPrice").textContent="$"+(Number(price)/1e8).toFixed(4);se("stakingHolderCount").textContent=Number(count).toLocaleString();se("stakingPriceMode").textContent=Number(mode)===0?"PRESALE-LINKED":"MARKET";se("stakingListingStatus").textContent=listed?"Official listing active":Math.max(0,Number(target)-Number(count)).toLocaleString()+" holders remaining";if(marketOracle!==ethers.ZeroAddress&&!listed){try{const market=await sregistry.getMarketPrice();se("stakingPriceMode").textContent+=" · DEX $"+(Number(market)/1e8).toFixed(4)}catch{}}sI18nRefresh()}catch(err){console.error("ATH price registry",err)}}
 async function sLoadPackages(){if(!sReady())return;try{const read=new ethers.Contract(scfg.stakingAddress,STAKING_ABI,srpc),state=await Promise.all([read.packageCount(),read.paused()]),count=Number(state[0]);sPaused=Boolean(state[1]);spackages=await Promise.all(Array.from({length:count},(_,i)=>read.packages(i)));se("stakingPackageSelect").innerHTML=spackages.map((p,i)=>"<option value=\""+i+"\">"+(STAKING_NAMES[i]||("Package "+(i+1)))+" · "+(Number(p.dailyRateBps)/100).toFixed(2)+"%/day · "+p.lockDays+"d</option>").join("");se("stakingPackages").innerHTML=spackages.map((p,i)=>{const min=Number(ethers.formatEther(p.minUSDT)),max=p.maxUSDT>10n**50n?"∞":Number(ethers.formatEther(p.maxUSDT)).toLocaleString();return "<div class=\"staking-package\" data-package=\""+i+"\"><b>"+(STAKING_NAMES[i]||("Package "+(i+1)))+"</b><span>$"+min.toLocaleString()+"–"+max+"<br>"+(Number(p.dailyRateBps)/100).toFixed(2)+"% daily · "+p.lockDays+" days</span></div>"}).join("");if(spackages[0])se("stakingAmountUsd").value=Number(ethers.formatEther(spackages[0].minUSDT)).toString();se("stakingStakeBtn").disabled=!sReady()||sPaused;se("stakingContractStatus").textContent=sPaused?"Staking v1 PAUSED — opening verification in progress":"Staking v1 connected";await sPreview()}catch(err){console.error("Staking packages",err);se("stakingActionStatus").textContent="Unable to read Staking packages."}}
 async function sPreview(){if(!sReady())return;try{const raw=String(se("stakingAmountUsd").value||"").trim();if(!raw||Number(raw)<=0){se("stakingRequiredAth").textContent="—";return}const read=new ethers.Contract(scfg.stakingAddress,STAKING_ABI,srpc),ath=await read.getATHAmount(ethers.parseEther(raw));se("stakingRequiredAth").textContent=sFmtAth(ath)}catch{se("stakingRequiredAth").textContent="Invalid amount"}}
-async function sConnect(request=false){if(!window.ethereum){sToast("No EVM wallet detected. Open in AETHER Wallet or another compatible wallet.",true);return false}try{await sEnsureChain();sbrowser=new ethers.BrowserProvider(window.ethereum);const method=request?"eth_requestAccounts":"eth_accounts",accounts=await sbrowser.send(method,[]);if(!accounts.length){saccount="";se("stakingWalletStatus").textContent="Not Connected";se("stakingStakeBtn").disabled=true;return false}saccount=ethers.getAddress(accounts[0]);ssigner=await sbrowser.getSigner();sstaking=new ethers.Contract(scfg.stakingAddress,STAKING_ABI,ssigner);stoken=new ethers.Contract(scfg.tokenAddress,STAKING_TOKEN_ABI,ssigner);se("stakingWalletStatus").textContent=sShort(saccount);se("stakingStakeBtn").disabled=!sReady()||sPaused;await sRefreshAccount();return true}catch(err){console.error(err);sToast(err.shortMessage||err.message||"Wallet connection failed.",true);return false}}
+async function sConnect(request=false){
+  if(!window.ethereum){sToast("No EVM wallet detected. Open in AETHER Wallet or another compatible wallet.",true);return false}
+  try{
+    await sEnsureChain();
+    sbrowser=new ethers.BrowserProvider(window.ethereum);
+    const method=request?"eth_requestAccounts":"eth_accounts";
+    const accounts=await sbrowser.send(method,[]);
+    if(!accounts.length){saccount="";sMemberRegistered=false;sRefreshReferralLink();se("stakingWalletStatus").textContent="Not Connected";se("stakingStakeBtn").disabled=true;return false}
+    saccount=ethers.getAddress(accounts[0]);sMemberRegistered=false;sApplyReferralQuery();sRefreshReferralLink();
+    ssigner=await sbrowser.getSigner();
+    sstaking=new ethers.Contract(scfg.stakingAddress,STAKING_ABI,ssigner);
+    stoken=new ethers.Contract(scfg.tokenAddress,STAKING_TOKEN_ABI,ssigner);
+    const [master,registered]=await Promise.all([sstaking.masterAccount(),sstaking.isMemberRegistered(saccount)]);
+    sMemberRegistered=Boolean(registered)||saccount.toLowerCase()===master.toLowerCase();
+    window.dispatchEvent(new CustomEvent("aether-member-registration-status",{detail:{address:saccount,registered:sMemberRegistered}}));
+    sRefreshReferralLink();
+    if(saccount.toLowerCase()!==master.toLowerCase()&&!registered){
+      const ref=String(new URLSearchParams(window.location.search).get("ref")||"").trim();
+      if(!ref||!ethers.isAddress(ref)||ref.toLowerCase()===ethers.ZeroAddress.toLowerCase()){
+        se("stakingWalletStatus").textContent="Referral link required";
+        window.dispatchEvent(new CustomEvent("aether-member-registration-status",{detail:{address:saccount,registered:false}}));
+        se("stakingStakeBtn").disabled=true;
+        sToast("New members must open a valid AETHER referral link before registration.",true);
+        return false;
+      }
+      if(ref.toLowerCase()===saccount.toLowerCase()){sToast("Self-referral is not allowed.",true);return false}
+      if(!request){
+        se("stakingWalletStatus").textContent="Referral registration required";
+        se("stakingStakeBtn").disabled=true;
+        sToast("Connect through your sponsor's referral link, then tap Connect Wallet to confirm registration.",true);
+        return false;
+      }
+      sToast("Confirm the on-chain referral registration in your wallet.");
+      const tx=await sstaking.registerReferral(ethers.getAddress(ref));
+      se("stakingWalletStatus").textContent="Registration submitted";
+      await tx.wait();
+      const confirmed=await sstaking.isMemberRegistered(saccount);
+      if(!confirmed)throw new Error("Referral registration was not confirmed on-chain.");
+      sMemberRegistered=true;
+      window.dispatchEvent(new CustomEvent("aether-member-registration-status",{detail:{address:saccount,registered:true}}));
+      sRefreshReferralLink();
+      sToast("Referral registration confirmed. Your personal referral link is ready.");
+    }
+    se("stakingWalletStatus").textContent=sShort(saccount);
+    se("stakingStakeBtn").disabled=!sReady()||sPaused;
+    await sRefreshAccount();return true;
+  }catch(err){console.error(err);sToast(err.shortMessage||err.reason||err.message||"Wallet connection failed.",true);return false}
+}
 async function sRefreshAccount(){
   if(!sReady()){se("stakingContractStatus").textContent="Contract pending";return}
   se("stakingContractStatus").textContent=sPaused?"Staking v1 PAUSED — opening verification in progress":"Staking v1 connected";
@@ -199,5 +281,5 @@ async function sStake(){if(!(await sConnect(true)))return;if(sPaused)return sToa
 async function sClaim(){if(!(await sConnect(true)))return;const id=Number(se("stakingPositionSelect").value||0);await sRun("Staking reward",()=>sstaking.claimReward(id))}
 async function sWithdraw(){if(!(await sConnect(true)))return;const id=Number(se("stakingPositionSelect").value||0);await sRun("Staking principal",()=>sstaking.withdrawPrincipal(id))}
 async function sClaimRank(){if(!(await sConnect(true)))return;await sRun("Rank salary",()=>sstaking.claimRankSalary())}
-async function sBoot(){try{scfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());srpc=new ethers.JsonRpcProvider(scfg.rpcUrl,scfg.chainId);se("stakingContractStatus").textContent=sReady()?"Staking v1 configured":"Contract pending";await Promise.all([sLoadRegistry(),sLoadPackages()]);await sConnect(false);se("stakingAmountUsd").addEventListener("input",sPreview);se("stakingPackageSelect").addEventListener("change",()=>{const i=Number(se("stakingPackageSelect").value||0),p=spackages[i];if(p)se("stakingAmountUsd").value=Number(ethers.formatEther(p.minUSDT)).toString();document.querySelectorAll(".staking-package").forEach((el,n)=>el.classList.toggle("active",n===i));sPreview()});se("stakingStakeBtn").addEventListener("click",sStake);se("stakingClaimBtn").addEventListener("click",sClaim);se("stakingWithdrawBtn").addEventListener("click",sWithdraw);se("stakingRankClaimBtn").addEventListener("click",sClaimRank);se("stakingNetworkRefreshBtn")?.addEventListener("click",sLoadNetworkTree);se("stakingPositionSelect").addEventListener("change",e=>sLoadPosition(Number(e.target.value||0)));se("connectBtn")?.addEventListener("click",()=>setTimeout(()=>sConnect(false),700));window.ethereum?.on?.("accountsChanged",()=>sConnect(false));window.ethereum?.on?.("chainChanged",()=>window.location.reload());document.querySelector(".staking-package")?.classList.add("active")}catch(err){console.error("staking boot",err);se("stakingActionStatus").textContent="Unable to initialize Staking portal."}}
+async function sBoot(){try{scfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());srpc=new ethers.JsonRpcProvider(scfg.rpcUrl,scfg.chainId);se("stakingContractStatus").textContent=sReady()?"Staking v1 configured":"Contract pending";await Promise.all([sLoadRegistry(),sLoadPackages()]);await sConnect(false);se("stakingAmountUsd").addEventListener("input",sPreview);se("stakingPackageSelect").addEventListener("change",()=>{const i=Number(se("stakingPackageSelect").value||0),p=spackages[i];if(p)se("stakingAmountUsd").value=Number(ethers.formatEther(p.minUSDT)).toString();document.querySelectorAll(".staking-package").forEach((el,n)=>el.classList.toggle("active",n===i));sPreview()});se("stakingStakeBtn").addEventListener("click",sStake);se("stakingClaimBtn").addEventListener("click",sClaim);se("stakingWithdrawBtn").addEventListener("click",sWithdraw);se("stakingRankClaimBtn").addEventListener("click",sClaimRank);se("stakingReferralCopyBtn")?.addEventListener("click",sCopyReferralLink);sRefreshReferralLink();sApplyReferralQuery();se("stakingNetworkRefreshBtn")?.addEventListener("click",sLoadNetworkTree);se("stakingPositionSelect").addEventListener("change",e=>sLoadPosition(Number(e.target.value||0)));se("connectBtn")?.addEventListener("click",()=>setTimeout(()=>sConnect(true),700));window.ethereum?.on?.("accountsChanged",()=>sConnect(false));window.ethereum?.on?.("chainChanged",()=>window.location.reload());document.querySelector(".staking-package")?.classList.add("active")}catch(err){console.error("staking boot",err);se("stakingActionStatus").textContent="Unable to initialize Staking portal."}}
 sBoot();
