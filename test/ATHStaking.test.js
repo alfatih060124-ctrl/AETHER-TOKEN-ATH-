@@ -875,7 +875,7 @@ describe("AETHER ATH Staking v1", function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["300000","250000","250000","250000","250000"];
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(5, ethers.parseEther(values[i]), user.address);
+      await stakeTurnover(staking, legs[i], ethers.parseEther(values[i]), user.address);
     }
 
     const snapshot = await staking.getSmallLegTurnoverUSDT(user.address);
