@@ -5,6 +5,31 @@ const DAY = 24 * 60 * 60;
 const MONTH = 30 * DAY;
 const PRICE_007 = 7_000_000n;
 const PRICE_0071 = 7_100_000n;
+const MASTER = "0x240086965a9ed9672c649ac0538f049f14270112";
+
+async function ensureRegistered(staking, signer, preferredSponsor = ethers.ZeroAddress, seen = new Set()) {
+  const account = signer.address;
+  if (await staking.isMemberRegistered(account)) return (await staking.userInfo(account)).referrer;
+  if (account.toLowerCase() === MASTER.toLowerCase()) return ethers.ZeroAddress;
+  if (seen.has(account.toLowerCase())) throw new Error("Referral setup cycle in test helper");
+  seen.add(account.toLowerCase());
+  let sponsor = preferredSponsor;
+  if (!sponsor || sponsor === ethers.ZeroAddress) sponsor = MASTER;
+  if (sponsor.toLowerCase() !== MASTER.toLowerCase() && !(await staking.isMemberRegistered(sponsor))) {
+    const sponsorSigner = (await ethers.getSigners()).find(x => x.address.toLowerCase() === sponsor.toLowerCase());
+    if (!sponsorSigner) throw new Error("Test sponsor signer unavailable: " + sponsor);
+    await ensureRegistered(staking, sponsorSigner, MASTER, seen);
+  }
+  await staking.connect(signer).registerReferral(sponsor);
+  return sponsor;
+}
+
+async function stakeRegistered(staking, signer, packageId, amount, sponsor = ethers.ZeroAddress) {
+  await ensureRegistered(staking, signer, sponsor);
+  const info = await staking.userInfo(signer.address);
+  const bound = info.referrer === ethers.ZeroAddress ? MASTER : info.referrer;
+  return staking.connect(signer).stake(packageId, amount, bound);
+}
 
 function athForUsd(usd18, price8) {
   return (usd18 * 100_000_000n) / price8;
@@ -31,7 +56,7 @@ async function stakeTurnover(staking, signer, amount, referrer) {
   const maxPerPosition = ethers.parseEther("50000");
   while (remaining > 0n) {
     const portion = remaining > maxPerPosition ? maxPerPosition : remaining;
-    await staking.connect(signer).stake(2, portion, referrer);
+    await stakeRegistered(staking, signer, 2, portion, referrer);
     remaining -= portion;
   }
 }
@@ -91,6 +116,7 @@ describe("AETHER ATH Staking v1", function () {
     }
 
     await token.approve(await staking.getAddress(), ethers.MaxUint256);
+    await staking.setMasterAccount(MASTER);
     await staking.fundRewards(ethers.parseEther("160000000"));
     await staking.fundNetworkReserve(ethers.parseEther("50000000"));
     expect(await staking.paused()).to.equal(true);
@@ -290,18 +316,19 @@ describe("AETHER ATH Staking v1", function () {
 
   it("enforces the inclusive $10-$50,000 range for every duration", async function () {
     for (let packageId = 0; packageId < 3; packageId++) {
-      await staking.connect(user).stake(packageId, ethers.parseEther("10"), ethers.ZeroAddress);
-      await staking.connect(user).stake(packageId, ethers.parseEther("50000"), ethers.ZeroAddress);
+      await stakeRegistered(staking, user, packageId, ethers.parseEther("10"), ethers.ZeroAddress);
+      await stakeRegistered(staking, user, packageId, ethers.parseEther("50000"), ethers.ZeroAddress);
+      await ensureRegistered(staking, second, MASTER);
       await expect(
-        staking.connect(second).stake(packageId, ethers.parseEther("50000.01"), ethers.ZeroAddress)
+        staking.connect(second).stake(packageId, ethers.parseEther("50000.01"), (await staking.userInfo(second.address)).referrer)
       ).to.be.revertedWith("amount out of range");
     }
   });
 
   it("assigns globally unique Staking Contract IDs and exposes the member owner/package snapshot", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
-    await staking.connect(user).stake(1, ethers.parseEther("100"), ethers.ZeroAddress);
-    await staking.connect(second).stake(0, ethers.parseEther("20"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 1, ethers.parseEther("100"), ethers.ZeroAddress);
+    await stakeRegistered(staking, second, 0, ethers.parseEther("20"), ethers.ZeroAddress);
 
     expect(await staking.totalStakingContracts()).to.equal(3n);
     expect(await staking.totalActiveStakingContracts()).to.equal(3n);
@@ -336,9 +363,9 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("moves closed member contracts from ACTIVE to N-ACTIVE without changing Package IDs", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
-    await staking.connect(user).stake(1, ethers.parseEther("100"), ethers.ZeroAddress);
-    await staking.connect(second).stake(0, ethers.parseEther("20"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 1, ethers.parseEther("100"), ethers.ZeroAddress);
+    await stakeRegistered(staking, second, 0, ethers.parseEther("20"), ethers.ZeroAddress);
 
     expect(await staking.activeContractCountByMember(user.address)).to.equal(2n);
     expect(await staking.activeStakingMembers()).to.equal(2n);
@@ -376,7 +403,7 @@ describe("AETHER ATH Staking v1", function () {
     const rewardBefore = await staking.rewardReserveATH();
     const networkBefore = await staking.networkReserveATH();
     const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
 
     expect(await staking.principalLiabilityATH()).to.equal(principal);
     expect(await staking.rewardReserveATH()).to.equal(rewardBefore);
@@ -393,7 +420,7 @@ describe("AETHER ATH Staking v1", function () {
     const expectedReferral = (principal * 1_000n) / 10_000n;
     const refBefore = await token.balanceOf(referrer.address);
 
-    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), referrer.address);
 
     expect(await token.balanceOf(referrer.address) - refBefore).to.equal(expectedReferral);
     expect(await staking.principalLiabilityATH()).to.equal(principal);
@@ -402,7 +429,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("credits one daily Staking reward only at the 00:50 UTC reward slot", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
     const schedule = await staking.getRewardSchedule(user.address, 0);
     expect(schedule.firstRewardAt % BigInt(DAY)).to.equal(3000n);
     expect(schedule.totalRewardDays).to.equal(180n);
@@ -431,7 +458,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("revalues the fixed ATH principal at the live ATH price when calculating daily staking rewards", async function () {
-    await staking.connect(user).stake(2, ethers.parseEther("1000"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 2, ethers.parseEther("1000"), ethers.ZeroAddress);
     const position = await staking.userStakes(user.address, 0);
     expect(position.principalATH).to.equal(athForUsd(ethers.parseEther("1000"), PRICE_007));
 
@@ -451,7 +478,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("allows a permissionless 00:50 keeper to settle holder reward and Lifestyle Bonus / Matching Staking in real time", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), referrer.address);
     await advanceToRewardSlot(staking, user.address, 0);
 
     const rewardATH = athForUsd(ethers.parseEther("0.035"), PRICE_007);
@@ -469,8 +496,8 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("batch-settles multiple due positions at the 00:50 slot", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
-    await staking.connect(second).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, second, 0, ethers.parseEther("10"), ethers.ZeroAddress);
 
     const s1 = await staking.getRewardSchedule(user.address, 0);
     const s2 = await staking.getRewardSchedule(second.address, 0);
@@ -493,7 +520,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("distributes Lifestyle Bonus / Matching Staking level 1 at 8% of the user's daily reward", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), referrer.address);
     await advanceToRewardSlot(staking, user.address, 0);
 
     const rewardATH = athForUsd(ethers.parseEther("0.035"), PRICE_007);
@@ -525,9 +552,9 @@ describe("AETHER ATH Staking v1", function () {
       await token.connect(member).approve(await staking.getAddress(), ethers.MaxUint256);
     }
 
-    await staking.connect(chain[0]).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, chain[0], 0, ethers.parseEther("10"), ethers.ZeroAddress);
     for (let i = 1; i < chain.length; i++) {
-      await staking.connect(chain[i]).stake(0, ethers.parseEther("10"), chain[i - 1].address);
+      await stakeRegistered(staking, chain[i], 0, ethers.parseEther("10"), chain[i - 1].address);
     }
 
     const leaf = chain[10];
@@ -548,7 +575,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("snapshots package economics so later admin edits do not rewrite existing stakes", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
     await staking.updatePackage(
       0,
       ethers.parseEther("10"),
@@ -570,7 +597,7 @@ describe("AETHER ATH Staking v1", function () {
 
   it("returns the exact ATH principal after lock without erasing accrued reward", async function () {
     const principal = athForUsd(ethers.parseEther("10"), PRICE_007);
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
 
     await expect(staking.connect(user).withdrawPrincipal(0)).to.be.revertedWith("still locked");
 
@@ -593,11 +620,11 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
-  it("rejects referral cycles", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+  it("prevents changing an already-bound sponsor, which keeps referral paths acyclic", async function () {
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), referrer.address);
     await expect(
       staking.connect(referrer).stake(0, ethers.parseEther("10"), user.address)
-    ).to.be.revertedWith("referral cycle");
+    ).to.be.revertedWith("sponsor mismatch");
   });
 
   it("caps cumulative reward funding at 160M ATH", async function () {
@@ -634,7 +661,7 @@ describe("AETHER ATH Staking v1", function () {
   });
 
   it("only permits recovery of ATH above protected principal + reward reserve", async function () {
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
     await token.transfer(await staking.getAddress(), ethers.parseEther("5"));
     expect(await staking.availableExcessATH()).to.equal(ethers.parseEther("5"));
 
@@ -662,7 +689,7 @@ describe("AETHER ATH Staking v1", function () {
     const values = ["900","899","890","880","870"];
 
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+      await stakeRegistered(staking, legs[i], 2, ethers.parseEther(values[i]), user.address);
     }
 
     const snapshot = await staking.getSmallLegTurnoverUSDT(user.address);
@@ -683,13 +710,13 @@ describe("AETHER ATH Staking v1", function () {
 
   it("requires at least five direct sponsors even if four legs already meet small-leg turnover", async function () {
     for (const leg of [leg1, leg2, leg3, leg4]) {
-      await staking.connect(leg).stake(2, ethers.parseEther("500"), user.address);
+      await stakeRegistered(staking, leg, 2, ethers.parseEther("500"), user.address);
     }
     expect((await staking.getSmallLegTurnoverUSDT(user.address)).smallLegTurnover)
       .to.equal(ethers.parseEther("1500"));
     expect(await staking.getEligibleRank(user.address)).to.equal(0n);
 
-    await staking.connect(leg5).stake(2, ethers.parseEther("500"), user.address);
+    await stakeRegistered(staking, leg5, 2, ethers.parseEther("500"), user.address);
     expect(await staking.directSponsorCount(user.address)).to.equal(5n);
     expect(await staking.getEligibleRank(user.address)).to.equal(1n);
   });
@@ -698,12 +725,12 @@ describe("AETHER ATH Staking v1", function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["900","899","890","880","870"];
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+      await stakeRegistered(staking, legs[i], 2, ethers.parseEther(values[i]), user.address);
     }
 
     expect((await staking.getSmallLegTurnoverUSDT(user.address)).bigLeg).to.equal(leg1.address);
 
-    await staking.connect(leg2).stake(1, ethers.parseEther("100"), user.address);
+    await stakeRegistered(staking, leg2, 1, ethers.parseEther("100"), user.address);
     const snapshot = await staking.getSmallLegTurnoverUSDT(user.address);
     expect(snapshot.bigLeg).to.equal(leg2.address);
     expect(snapshot.largestTurnover).to.equal(ethers.parseEther("999"));
@@ -719,13 +746,13 @@ describe("AETHER ATH Staking v1", function () {
 
   it("treats Rank Sponsor rates as total Direct Referral rates inclusive of the common 10%", async function () {
     // Bind Rank-1 candidate (user) under future Rank-2 upline (referrer).
-    await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), referrer.address);
 
     // user -> Rank 1: small-leg = 1,000 (300 + 250 + 250 + 250 + 250; largest 300).
     const userLegs = [leg1, leg2, leg3, leg4, leg5];
     const userValues = ["300","250","250","250","250"];
     for (let i = 0; i < userLegs.length; i++) {
-      await staking.connect(userLegs[i]).stake(1, ethers.parseEther(userValues[i]), user.address);
+      await stakeRegistered(staking, userLegs[i], 1, ethers.parseEther(userValues[i]), user.address);
     }
     expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
 
@@ -740,7 +767,7 @@ describe("AETHER ATH Staking v1", function () {
     const r2Legs = [second, presaleBuyer, keeper, treasury, extraA];
     const r2Values = ["1500","1000","1000","1000","1000"];
     for (let i = 0; i < r2Legs.length; i++) {
-      await staking.connect(r2Legs[i]).stake(2, ethers.parseEther(r2Values[i]), referrer.address);
+      await stakeRegistered(staking, r2Legs[i], 2, ethers.parseEther(r2Values[i]), referrer.address);
     }
     expect((await staking.rankInfo(referrer.address)).highestRank).to.equal(2n);
 
@@ -760,7 +787,7 @@ describe("AETHER ATH Staking v1", function () {
     const totalRankSponsorBefore = await staking.totalRankSponsorPaidATH();
     const reserveBefore = await staking.networkReserveATH();
 
-    await staking.connect(extraB).stake(1, ethers.parseEther("100"), user.address);
+    await stakeRegistered(staking, extraB, 1, ethers.parseEther("100"), user.address);
 
     expect((await token.balanceOf(user.address)) - userBefore).to.equal(rank1Total);
     expect((await token.balanceOf(referrer.address)) - refBefore).to.equal(rank2Diff);
@@ -774,14 +801,14 @@ describe("AETHER ATH Staking v1", function () {
 
   it("skips the same Rank but continues pass-up to a higher Rank", async function () {
     // Build hierarchy: referrer (future R2) -> second (future R1) -> user (future R1).
-    await staking.connect(second).stake(0, ethers.parseEther("10"), referrer.address);
-    await staking.connect(user).stake(0, ethers.parseEther("10"), second.address);
+    await stakeRegistered(staking, second, 0, ethers.parseEther("10"), referrer.address);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), second.address);
 
     // user -> Rank 1.
     const userLegs = [leg1, leg2, leg3, leg4, leg5];
     const userValues = ["300","250","250","250","250"];
     for (let i = 0; i < userLegs.length; i++) {
-      await staking.connect(userLegs[i]).stake(1, ethers.parseEther(userValues[i]), user.address);
+      await stakeRegistered(staking, userLegs[i], 1, ethers.parseEther(userValues[i]), user.address);
     }
     expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
 
@@ -790,7 +817,7 @@ describe("AETHER ATH Staking v1", function () {
     for (const signer of midLegs) {
       await token.transfer(signer.address, ethers.parseEther("10000"));
       await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
-      await staking.connect(signer).stake(1, ethers.parseEther("300"), second.address);
+      await stakeRegistered(staking, signer, 1, ethers.parseEther("300"), second.address);
     }
     expect((await staking.rankInfo(second.address)).highestRank).to.equal(1n);
 
@@ -799,14 +826,14 @@ describe("AETHER ATH Staking v1", function () {
     for (const signer of topLegs) {
       await token.transfer(signer.address, ethers.parseEther("50000"));
       await token.connect(signer).approve(await staking.getAddress(), ethers.MaxUint256);
-      await staking.connect(signer).stake(2, ethers.parseEther("1500"), referrer.address);
+      await stakeRegistered(staking, signer, 2, ethers.parseEther("1500"), referrer.address);
     }
     expect((await staking.rankInfo(referrer.address)).highestRank).to.equal(2n);
 
     // Bind a new personally sponsored member under user (R1).
     await token.transfer(treasury.address, ethers.parseEther("10000"));
     await token.connect(treasury).approve(await staking.getAddress(), ethers.MaxUint256);
-    await staking.connect(treasury).stake(0, ethers.parseEther("10"), user.address);
+    await stakeRegistered(staking, treasury, 0, ethers.parseEther("10"), user.address);
 
     const principal = athForUsd(ethers.parseEther("100"), PRICE_007);
     const directR1Total = (principal * 1300n) / 10_000n;
@@ -829,7 +856,7 @@ describe("AETHER ATH Staking v1", function () {
     const rankBefore = await staking.totalRankSponsorPaidATH();
     const reserveBefore = await staking.networkReserveATH();
 
-    await expect(staking.connect(treasury).stake(1, ethers.parseEther("100"), user.address))
+    await expect(stakeRegistered(staking, treasury, 1, ethers.parseEther("100"), user.address))
       .to.emit(staking, "RankSponsorSameRankSkipped")
       .withArgs(second.address, treasury.address, 1n);
 
@@ -863,7 +890,7 @@ describe("AETHER ATH Staking v1", function () {
     const rankBefore = await staking.totalRankSponsorPaidATH();
     const reserveBefore = await staking.networkReserveATH();
 
-    await staking.connect(newcomer).stake(1, ethers.parseEther("100"), user.address);
+    await stakeRegistered(staking, newcomer, 1, ethers.parseEther("100"), user.address);
 
     expect((await token.balanceOf(user.address)) - userBefore).to.equal(expectedTotal);
     expect((await staking.totalReferralPaidATH()) - referralBefore).to.equal(expectedTotal);
@@ -889,7 +916,7 @@ describe("AETHER ATH Staking v1", function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["900","899","890","880","870"];
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+      await stakeRegistered(staking, legs[i], 2, ethers.parseEther(values[i]), user.address);
     }
 
     const info = await staking.rankInfo(user.address);
@@ -932,14 +959,14 @@ describe("AETHER ATH Staking v1", function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["900","899","890","880","870"];
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+      await stakeRegistered(staking, legs[i], 2, ethers.parseEther(values[i]), user.address);
     }
 
     const firstInfo = await staking.rankInfo(user.address);
     expect(firstInfo.highestRank).to.equal(1n);
 
     // The ranked account itself creates a stake, waits through its lock, then withdraws it.
-    await staking.connect(user).stake(0, ethers.parseEther("10"), ethers.ZeroAddress);
+    await stakeRegistered(staking, user, 0, ethers.parseEther("10"), ethers.ZeroAddress);
     await increase(180 * DAY);
     await staking.connect(user).withdrawPrincipal(0);
     expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
@@ -958,7 +985,7 @@ describe("AETHER ATH Staking v1", function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["900","899","890","880","870"];
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(2, ethers.parseEther(values[i]), user.address);
+      await stakeRegistered(staking, legs[i], 2, ethers.parseEther(values[i]), user.address);
     }
 
     let info = await staking.rankInfo(user.address);
