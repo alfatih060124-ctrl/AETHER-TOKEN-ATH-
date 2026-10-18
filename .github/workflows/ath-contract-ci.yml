@@ -3,6 +3,8 @@ name: ATH Contract CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [feat/member-area-presale-stake-flow]
   workflow_dispatch:
 
 permissions:
