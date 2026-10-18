@@ -58,3 +58,12 @@ The reward percentage is applied daily to the current USD value of the fixed ATH
 - Referral registration is one-time and permanent. A sponsor must already be registered; self-referral and referral cycles are rejected. After registration confirmation, the member's own referral link becomes available.
 - Staking is separate and remains paused until its existing reserve-funding/opening checks pass. Presale-to-Staking beneficiaries must also be registered before their atomic stake can be created.
 - Never put private keys, seed phrases, or wallet PINs in repository configuration. The Master address is public and is not a signing credential.
+
+
+## Testnet Master setup and member-area verification
+
+The guarded setup script is available as `npm run master:configure:testnet`. Set `ATH_STAKING_ADDRESS` to the deployed Staking contract address and configure the Hardhat BSC Testnet signer with the contract owner's key using the repository's existing secret-management approach. The script refuses to run outside BSC Testnet/local Hardhat, requires the contract to remain paused, verifies ownership, configures the fixed Master address once, and checks that the Master is registered at Rank 8. It does not deploy contracts, open Staking, or write secrets to the repository.
+
+Master referral URL format: `https://mining.aether.boats/?page=member&ref=0x240086965A9ED9672c649aC0538F049f14270112`. Before a live browser test, verify the deployed contract address/chain in the frontend config and ensure the web deployment includes the current `staking.js` and `member-routing.js`. A connected wallet must approve `registerReferral`; the member-area gate is reset when the selected wallet account changes.
+
+**Release gate:** contract tests and browser tests must pass before merging or deploying. GitHub Actions has recently failed at `startup_failure` before jobs were created; that is an infrastructure/startup result, not a passing test result.
