@@ -590,7 +590,11 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     ) external nonReentrant whenNotPaused {
         require(msg.sender == presaleSettlement && presaleSettlement != address(0), "unauthorized settlement");
         require(beneficiary != address(0), "zero beneficiary");
-        require(principalATH > 0 && principalATH == getATHAmount(amountUSDT), "principal price mismatch");
+        // The configured Presale settlement contract computes principalATH from the
+        // authoritative tranche-by-tranche quote and transfers that exact reserve amount
+        // to Staking in this same transaction. The unified oracle is one current-stage price
+        // and cannot represent weighted purchases spanning multiple Presale tranches.
+        require(principalATH > 0, "zero principal");
         _createStake(beneficiary, packageId, amountUSDT, principalATH, referrer, false);
     }
 
