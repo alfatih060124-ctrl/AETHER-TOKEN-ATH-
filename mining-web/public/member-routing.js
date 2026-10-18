@@ -81,10 +81,24 @@
       renderMemberGate(currentPage());
     });
   }
-  window.addEventListener("aether-member-registration-status", event => {
+  window.addEventListener("aether-member-registration-status", async event => {
     const detail = event.detail || {};
-    verifiedAddress = String(detail.address || "").toLowerCase();
-    memberRegistrationVerified = detail.registered === true;
+    const claimedAddress = String(detail.address || "").toLowerCase();
+    memberRegistrationVerified = false;
+    verifiedAddress = "";
+    try {
+      const accounts = window.ethereum && typeof window.ethereum.request === "function"
+        ? await window.ethereum.request({method:"eth_accounts"})
+        : [];
+      const activeAddress = String(accounts && accounts[0] || "").toLowerCase();
+      if (claimedAddress && activeAddress && claimedAddress === activeAddress && detail.registered === true) {
+        verifiedAddress = activeAddress;
+        memberRegistrationVerified = true;
+      }
+    } catch (_) {
+      memberRegistrationVerified = false;
+      verifiedAddress = "";
+    }
     renderMemberGate(currentPage());
   });
   document.addEventListener("click", event => {
