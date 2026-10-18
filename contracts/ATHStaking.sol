@@ -580,7 +580,7 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Creates a beneficiary-owned stake for an atomic Presale settlement.
     /// @dev Presale must transfer principal ATH to this contract in the same transaction.
-    ///      Strict oracle reconciliation prevents the caller from choosing a cheaper principal.
+    ///      Only the configured settlement contract can supply the tranche-priced principal.
     function stakeFromPresale(
         address beneficiary,
         uint256 packageId,
