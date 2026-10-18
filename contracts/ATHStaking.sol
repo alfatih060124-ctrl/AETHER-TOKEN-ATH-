@@ -663,8 +663,8 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
 
         UserInfo storage user = userInfo[account];
         require(isMemberRegistered[account] || account == masterAccount, "register with referral first");
-        if (account != masterAccount && user.referrer == address(0)) {
-            require(referrer != address(0), "referral required");
+        if (account != masterAccount) {
+            require(user.referrer != address(0), "referral required");
             require(referrer == user.referrer, "sponsor mismatch");
         }
 
