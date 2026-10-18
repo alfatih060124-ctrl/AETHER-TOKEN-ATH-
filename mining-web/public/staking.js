@@ -24,7 +24,7 @@ const se=id=>document.getElementById(id);
 function sToast(message,error=false){const el=se("toast");if(!el)return;el.textContent=message;el.classList.toggle("error",error);el.classList.add("show");setTimeout(()=>el.classList.remove("show"),3600)}
 function sShort(v){return v?v.slice(0,6)+"…"+v.slice(-4):""}
 function sReferralLinkFor(address){
-  if(!address||!ethers.isAddress(address))return "";
+  if(!sMemberRegistered||!address||!ethers.isAddress(address))return "";
   const url=new URL(window.location.href);
   url.searchParams.set("page","member");
   url.searchParams.set("ref",ethers.getAddress(address));
