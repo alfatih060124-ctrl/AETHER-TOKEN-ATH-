@@ -76,3 +76,18 @@ The implementation must resolve the existing contract boundary explicitly; do no
 6. Keep Presale and Staking paused; keep the frontend purchase action disabled until contracts are deployed to a non-production test environment and verified against actual payment token, oracle and package configuration.
 
 This architecture is a required implementation gate, not evidence that the integration has already been implemented or tested.
+
+
+## Staking package revision — 2026-10-18
+
+The six amount-tier packages are replaced in source by three duration choices sharing the same inclusive investment range of $10–$50,000:
+
+| Package ID | Lock duration | Daily reward rate | Stored basis points |
+|---|---:|---:|---:|
+| 0 | 180 days | 0.35% per day | 35 |
+| 1 | 365 days | 0.45% per day | 45 |
+| 2 | 730 days | 0.55% per day | 55 |
+
+The daily reward rate is applied to the recorded USDT-denominated stake value for each eligible reward day, using the existing reward settlement schedule. The contract continues to calculate ATH principal from the authoritative sale quote for Presale settlement; a UI price estimate is not authoritative. Principal ATH amount remains fixed after staking, while its displayed market value can change with the ATH price.
+
+This change must not alter the existing Direct Referral, Lifestyle Bonus / Matching Staking L1–L10, Rank qualification, Rank Salary, group turnover, reward-pool allocations, or referral binding rules. Tests must verify all three duration/rate combinations, the $10 minimum, the $50,000 inclusive maximum, and rejection above $50,000. Existing deployed contracts are not modified by source changes; any deployment requires separate review and explicit approval.
