@@ -4,6 +4,8 @@
   const memberPages = new Set(["member","member-staking","member-referrals","member-network","member-lifestyle","member-rank","member-history"]);
   const memberZones = () => [...document.querySelectorAll('[data-member-only="true"], [data-holder-zone="staking"]')];
   const connectButton = () => document.getElementById("connectBtn");
+  let memberRegistrationVerified = false;
+  let verifiedAddress = "";
   function walletLooksConnected() {
     const t = String(connectButton()?.textContent || "").replace(/\s/g,"");
     return /^0x[0-9a-fA-F]{3,}.*[0-9a-fA-F]{3,}$/.test(t) || (t.startsWith("0x") && t.includes("…"));
@@ -31,16 +33,19 @@
     const gate = document.getElementById("memberAreaGateMessage");
     const status = document.getElementById("memberAreaStatus");
     const connected = walletLooksConnected();
+    const registrationOk = connected && memberRegistrationVerified;
     const onMember = memberPages.has(page);
     const tabs = document.querySelector(".member-page-tabs");
     const isMainMember = page === "member";
-    if (gate) gate.textContent = connected
-      ? "Wallet connected. Choose a member page above to view your staking and reward information."
-      : "Connect your wallet to open the member area. Member pages stay hidden until a wallet is connected.";
-    if (status) status.textContent = connected ? "Wallet connected" : "Wallet verification required";
-    if (tabs) tabs.hidden = !onMember;
+    if (gate) gate.textContent = !connected
+      ? "Connect your wallet through a valid sponsor referral link to open the member area."
+      : !registrationOk
+        ? "Referral registration must be confirmed on-chain before the member area can be opened."
+        : "Wallet registered. Choose a member page to view your account information.";
+    if (status) status.textContent = !connected ? "Wallet verification required" : !registrationOk ? "Referral registration required" : "Member registered";
+    if (tabs) tabs.hidden = !(onMember && registrationOk);
     memberZones().forEach(el => {
-      const shouldShow = onMember && connected && (isMainMember || page === "member-staking" || page === "member-referrals" || page === "member-network" || page === "member-lifestyle" || page === "member-rank" || page === "member-history");
+      const shouldShow = onMember && registrationOk && (isMainMember || page === "member-staking" || page === "member-referrals" || page === "member-network" || page === "member-lifestyle" || page === "member-rank" || page === "member-history");
       if (el.matches('[data-holder-zone="staking"]')) {
         el.hidden = !(shouldShow && (isMainMember || page === "member-staking" || page === "member-network" || page === "member-lifestyle" || page === "member-rank"));
       } else if (el.id === "referral") {
@@ -58,17 +63,23 @@
     };
     document.querySelectorAll("[data-member-panel]").forEach(panel => {
       const allowed = page === "member" || (pagePanelMap[page] || []).includes(panel.dataset.memberPanel);
-      panel.hidden = !(onMember && connected && allowed);
+      panel.hidden = !(onMember && registrationOk && allowed);
     });
     const historyPanel = document.getElementById("member-history-panel");
-    if (historyPanel) historyPanel.hidden = !(page === "member-history" && connected);
+    if (historyPanel) historyPanel.hidden = !(page === "member-history" && registrationOk);
     const stakingRoot = document.getElementById("staking");
     if (stakingRoot && page !== "member" && page !== "member-staking" && page !== "member-network" && page !== "member-lifestyle" && page !== "member-rank") stakingRoot.hidden = true;
     const mainMember = document.getElementById("member-area-shell");
-    if (mainMember) mainMember.style.display = onMember ? "block" : "none";
-    if (gate) gate.style.display = onMember && !connected ? "block" : "none";
+    if (mainMember) mainMember.style.display = onMember && registrationOk ? "block" : "none";
+    if (gate) gate.style.display = onMember && !registrationOk ? "block" : "none";
   }
   function onWalletChange() { renderMemberGate(currentPage()); }
+  window.addEventListener("aether-member-registration-status", event => {
+    const detail = event.detail || {};
+    verifiedAddress = String(detail.address || "").toLowerCase();
+    memberRegistrationVerified = detail.registered === true;
+    renderMemberGate(currentPage());
+  });
   document.addEventListener("click", event => {
     const a = event.target.closest("a[data-page-link]");
     if (!a) return;
