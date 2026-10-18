@@ -49,6 +49,12 @@ Do not add a coordinator that simply calls `ATHStaking.stake` as itself: that wo
 - Frontend remains fail-closed until verified deployment configuration and audit approval are available.
 - Production deployment/activation requires explicit owner approval. This specification itself does not authorize either.
 
+## Economic safety gate: large purchases crossing multiple stages
+
+The availability-majority rule is now documented and reflected in the Presale quote implementation, but it has a material economic consequence that must be explicitly approved before atomic settlement is enabled: a request spanning many 100,000-ATH thresholds may be priced entirely at only the current or immediately next stage price. For example, a 30,000,000 ATH request with only 100,000 ATH remaining in the opening stage selects $0.071 under the current majority comparison, rather than being charged across later stages. This can materially reduce proceeds versus the original staged schedule.
+
+Do not treat this consequence as a harmless implementation detail. Before production/testnet activation, the owner must choose and record the intended treatment for purchases that cross more than one price threshold. Until then, keep real purchase execution disabled. Do not silently substitute tier-weighted pricing, a cap, or a multi-stage price rule without explicit approval. The existing step schedule, majority threshold, tie handling, and sale allocation must be reviewed together as one economic rule.
+
 ## Implementation architecture gate (required before coding)
 
 The implementation must resolve the existing contract boundary explicitly; do not add a superficial coordinator.
