@@ -352,6 +352,14 @@
         </article>
         <article class="staking-panel" data-member-panel="referrals">
           <h3>Staking Account</h3>
+          <div class="staking-referral-share">
+            <label for="stakingReferralLink">Your Personal Referral Link</label>
+            <div class="staking-referral-link-row">
+              <input id="stakingReferralLink" class="staking-input" type="text" readonly value="" placeholder="Connect wallet to generate your link" />
+              <button id="stakingReferralCopyBtn" class="btn btn-dark" type="button" disabled>Copy Link</button>
+            </div>
+            <small id="stakingReferralLinkStatus">Connect your wallet to generate a unique referral link.</small>
+          </div>
           <div class="staking-account">
             <div><span>Active Staked Value</span><strong id="stakingActiveUsd">$0.00</strong></div>
             <div><span>Stake Positions</span><strong id="stakingPositionCount">0</strong></div>
