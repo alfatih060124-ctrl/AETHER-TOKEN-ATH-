@@ -84,15 +84,13 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         return totalSoldATH == SALE_ALLOCATION_ATH;
     }
 
-    /// @notice Returns payment-token units for the selected single price stage.
-    /// @dev When a purchase crosses the next 100k boundary, compare the remaining
-    ///      current-stage inventory with the requested amount. A 50% tie stays
-    ///      at the current stage; below 50% selects the next stage.
+    /// @notice Quotes ATH across every 100,000-token price tranche crossed.
+    /// @dev Each tranche is charged at its own stage price; the next tranche
+    ///      increases by exactly $0.001 per ATH after each 100,000 ATH sold.
     function quotePaymentForATH(uint256 athAmount) public view returns (uint256) {
         require(athAmount > 0, "zero ATH amount");
         require(athAmount <= remainingATH(), "presale allocation exceeded");
-        uint256 selectedPrice = _selectedPriceUSD8(totalSoldATH, athAmount);
-        return _paymentForATHAtPrice(athAmount, selectedPrice);
+        return _paymentForATHAcrossStages(totalSoldATH, athAmount);
     }
 
     /// @param maxPaymentAmount Buyer protection if another purchase advances the curve first.
@@ -106,8 +104,7 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         require(athAmount <= remainingATH(), "presale allocation exceeded");
 
         uint256 openingPrice = currentPriceUSD8();
-        uint256 selectedPrice = _selectedPriceUSD8(totalSoldATH, athAmount);
-        paymentAmount = _paymentForATHAtPrice(athAmount, selectedPrice);
+        paymentAmount = _paymentForATHAcrossStages(totalSoldATH, athAmount);
         require(paymentAmount <= maxPaymentAmount, "payment exceeds max");
 
         totalSoldATH += athAmount;
@@ -151,25 +148,25 @@ contract ATHPresale is Ownable, Pausable, ReentrancyGuard {
         athToken.safeTransfer(to, amount);
     }
 
-    function _selectedPriceUSD8(uint256 soldBefore, uint256 athAmount)
+    function _paymentForATHAcrossStages(uint256 soldBefore, uint256 athAmount)
         internal
-        pure
-        returns (uint256)
+        view
+        returns (uint256 paymentAmount)
     {
-        uint256 stage = soldBefore / STEP_SIZE_ATH;
-        uint256 offset = soldBefore % STEP_SIZE_ATH;
-        uint256 currentPrice = START_PRICE_USD8 + (stage * PRICE_STEP_USD8);
-        if (currentPrice > FINAL_PRICE_USD8) currentPrice = FINAL_PRICE_USD8;
+        uint256 cursor = soldBefore;
+        uint256 unpriced = athAmount;
+        while (unpriced > 0) {
+            uint256 offset = cursor % STEP_SIZE_ATH;
+            uint256 trancheRemaining = STEP_SIZE_ATH - offset;
+            uint256 trancheAmount = unpriced < trancheRemaining ? unpriced : trancheRemaining;
+            uint256 stage = cursor / STEP_SIZE_ATH;
+            uint256 price = START_PRICE_USD8 + (stage * PRICE_STEP_USD8);
+            if (price > FINAL_PRICE_USD8) price = FINAL_PRICE_USD8;
 
-        uint256 remainingAtCurrentStage = STEP_SIZE_ATH - offset;
-        if (athAmount <= remainingAtCurrentStage) return currentPrice;
-
-        // Integer comparison implements remaining/requested >= 50% exactly.
-        // At an exact tie, retain the current (lower) stage price.
-        if (remainingAtCurrentStage * 2 >= athAmount) return currentPrice;
-
-        uint256 nextPrice = currentPrice + PRICE_STEP_USD8;
-        return nextPrice > FINAL_PRICE_USD8 ? FINAL_PRICE_USD8 : nextPrice;
+            paymentAmount += _paymentForATHAtPrice(trancheAmount, price);
+            cursor += trancheAmount;
+            unpriced -= trancheAmount;
+        }
     }
 
     function _paymentForATHAtPrice(uint256 athAmount, uint256 priceUSD8)
