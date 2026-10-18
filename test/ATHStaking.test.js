@@ -118,6 +118,118 @@ describe("AETHER ATH Staking v1", function () {
     expect(await fresh.paused()).to.equal(false);
   });
 
+  it("restricts Presale settlement to the configured address and requires Staking to be paused for configuration", async function () {
+    await expect(
+      staking.connect(owner).setPresaleSettlement(await presale.getAddress())
+    ).to.be.revertedWithCustomError(staking, "EnforcedPause");
+
+    await staking.pause();
+    await staking.connect(owner).setPresaleSettlement(await presale.getAddress());
+    expect(await staking.presaleSettlement()).to.equal(await presale.getAddress());
+
+    await expect(
+      staking.connect(user).stakeFromPresale(
+        user.address,
+        0,
+        ethers.parseEther("10"),
+        athForUsd(ethers.parseEther("10"), PRICE_007),
+        ethers.ZeroAddress
+      )
+    ).to.be.revertedWith("unauthorized settlement");
+
+    await staking.unpause();
+    expect(await staking.paused()).to.equal(false);
+  });
+
+  it("does not allow an unconfigured caller to submit a settlement even with a zero beneficiary", async function () {
+    await staking.pause();
+    await staking.setPresaleSettlement(await presale.getAddress());
+    await staking.unpause();
+
+    // The configured Presale is authorized, but only it can call this entry point.
+    // An EOA cannot impersonate the configured settlement contract.
+    await expect(
+      staking.connect(user).stakeFromPresale(
+        ethers.ZeroAddress,
+        0,
+        ethers.parseEther("10"),
+        athForUsd(ethers.parseEther("10"), PRICE_007),
+        ethers.ZeroAddress
+      )
+    ).to.be.revertedWith("unauthorized settlement");
+  });
+
+  it("atomically buys Presale ATH into a beneficiary-owned Staking position and rolls back on downstream failure", async function () {
+    await staking.pause();
+    await staking.setPresaleSettlement(await presale.getAddress());
+    await staking.unpause();
+    await presale.setStakingSettlement(await staking.getAddress());
+    await presale.unpause();
+
+    const amountATH = ethers.parseEther("1000");
+    const quote = await presale.quotePaymentForATH(amountATH);
+    const buyerStableBefore = await stable.balanceOf(presaleBuyer.address);
+    const soldBefore = await presale.totalSoldATH();
+
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        amountATH, quote, 0, referrer.address,
+        BigInt((await ethers.provider.getBlock("latest")).timestamp + 3600)
+      )
+    ).to.emit(presale, "ATHPurchasedAndStaked");
+
+    expect(await presale.totalSoldATH()).to.equal(soldBefore + amountATH);
+    expect(buyerStableBefore - (await stable.balanceOf(presaleBuyer.address))).to.equal(quote);
+    expect(await staking.stakeCount(presaleBuyer.address)).to.equal(1n);
+    const position = await staking.userStakes(presaleBuyer.address, 0);
+    expect(position.principalATH).to.equal(amountATH);
+    expect(position.amountUSDT).to.equal(ethers.parseEther("70"));
+    expect(position.packageId).to.equal(0n);
+    expect(await staking.userInfo(presaleBuyer.address).then(x => x.referrer)).to.equal(referrer.address);
+
+    const soldAfterSuccess = await presale.totalSoldATH();
+    const buyerAfterSuccess = await stable.balanceOf(presaleBuyer.address);
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        ethers.parseEther("1000"), ethers.MaxUint256, 99, ethers.ZeroAddress,
+        BigInt((await ethers.provider.getBlock("latest")).timestamp + 3600)
+      )
+    ).to.be.revertedWith("invalid package");
+    expect(await presale.totalSoldATH()).to.equal(soldAfterSuccess);
+    expect(await stable.balanceOf(presaleBuyer.address)).to.equal(buyerAfterSuccess);
+    expect(await staking.stakeCount(presaleBuyer.address)).to.equal(1n);
+  });
+
+  it("enforces buy-and-stake deadline and max-payment protection without changing sale state", async function () {
+    await staking.pause();
+    await staking.setPresaleSettlement(await presale.getAddress());
+    await staking.unpause();
+    await presale.setStakingSettlement(await staking.getAddress());
+    await presale.unpause();
+
+    const amountATH = ethers.parseEther("1000");
+    const quote = await presale.quotePaymentForATH(amountATH);
+    const soldBefore = await presale.totalSoldATH();
+    const stableBefore = await stable.balanceOf(presaleBuyer.address);
+    const now = BigInt((await ethers.provider.getBlock("latest")).timestamp);
+
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        amountATH, quote, 0, ethers.ZeroAddress, now - 1n
+      )
+    ).to.be.revertedWith("expired");
+
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        amountATH, quote - 1n, 0, ethers.ZeroAddress, now + 3600n
+      )
+    ).to.be.revertedWith("payment exceeds max");
+
+    expect(await presale.totalSoldATH()).to.equal(soldBefore);
+    expect(await stable.balanceOf(presaleBuyer.address)).to.equal(stableBefore);
+    expect(await staking.stakeCount(presaleBuyer.address)).to.equal(0n);
+  });
+
   it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
     expect(await presale.currentPriceUSD8()).to.equal(PRICE_007);

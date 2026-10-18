@@ -1,0 +1,32 @@
+name: ATH Contract CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Source self-check
+        run: npm run source:selfcheck
+      - name: JavaScript syntax check
+        run: npm run syntax:check
+      - name: Compile Solidity contracts
+        run: npm run compile
+      - name: Run automated tests
+        run: npm test
