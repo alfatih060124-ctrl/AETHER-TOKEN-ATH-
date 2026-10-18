@@ -126,6 +126,9 @@ must(staking, /function totalLifestyleMatchingPaidATH\(/, "Lifestyle Bonus / Mat
   must(staking, /_addPackage\(10 ether, 50_000 ether, 35, 180\)/, "Staking 180-day package is configured at 0.35% daily");
   must(staking, /_addPackage\(10 ether, 50_000 ether, 45, 365\)/, "Staking 365-day package is configured at 0.45% daily");
   must(staking, /_addPackage\(10 ether, 50_000 ether, 55, 730\)/, "Staking 730-day package is configured at 0.55% daily");
+  must(staking, /amountUSDT <= pkg\.maxUSDT/, "Staking enforces the selected package's maximum investment");
+  must(staking, /position\.principalATH \* priceOracle\.getPrice\(\)/, "Daily rewards use live USD value of the fixed ATH principal");
+  must(staking, /activeDailyRewardWeightedPrincipalATH/, "Reward reserve runway tracks duration-weighted ATH principal");
 must(staking, /principalLiabilityATH/, "Staking protects principal liability");
 must(staking, /rewardReserveATH/, "Staking separates daily reward reserve");
 must(staking, /MAX_NETWORK_MARKETING_POOL\s*=\s*50_000_000 ether/, "Networking bonuses are capped by the 50M Marketing allocation");
