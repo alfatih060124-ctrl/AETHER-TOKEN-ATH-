@@ -420,6 +420,26 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
+  it("revalues the fixed ATH principal at the live ATH price when calculating daily staking rewards", async function () {
+    await staking.connect(user).stake(2, ethers.parseEther("1000"), ethers.ZeroAddress);
+    const position = await staking.userStakes(user.address, 0);
+    expect(position.principalATH).to.equal(athForUsd(ethers.parseEther("1000"), PRICE_007));
+
+    await presale.connect(owner).unpause();
+    const fullAllocation = ethers.parseEther("30000000");
+    const quote = await presale.quotePaymentForATH(fullAllocation);
+    await presale.connect(presaleBuyer).buyATH(fullAllocation, quote);
+    const livePrice = await priceRegistry.getPrice();
+    expect(livePrice).to.equal(37_000_000n);
+
+    const schedule = await staking.getRewardSchedule(user.address, 0);
+    await setNextTimestamp(schedule.firstRewardAt);
+    const expectedPrincipalValue = (position.principalATH * livePrice) / 100_000_000n;
+    const expectedDailyReward = (expectedPrincipalValue * 55n) / 10_000n;
+    expect(await staking.getPendingRewardUSDT(user.address, 0)).to.equal(expectedDailyReward);
+    expect(expectedDailyReward).to.equal(ethers.parseEther("29.071428571428571428"));
+  });
+
   it("allows a permissionless 00:50 keeper to settle holder reward and Lifestyle Bonus / Matching Staking in real time", async function () {
     await staking.connect(user).stake(0, ethers.parseEther("10"), referrer.address);
     await advanceToRewardSlot(staking, user.address, 0);
