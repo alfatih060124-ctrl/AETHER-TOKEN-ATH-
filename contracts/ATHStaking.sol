@@ -49,6 +49,12 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
     // whose principal ATH was transferred directly from the Presale reserve.
     address public presaleSettlement;
 
+    // Referral registration is separate from staking. Master is configured once while paused.
+    address public masterAccount;
+    mapping(address => bool) public isMemberRegistered;
+    event MasterAccountConfigured(address indexed masterAccount);
+    event MemberRegistered(address indexed member, address indexed sponsor);
+
 
     struct Package {
         uint256 minUSDT;
@@ -291,6 +297,42 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         rankWeeklySalaryUSDT[5] = 2_000 ether;
         rankWeeklySalaryUSDT[6] = 5_000 ether;
         rankWeeklySalaryUSDT[7] = 10_000 ether;
+    }
+
+    /// @notice Configure the first/root Account Master once before member registration starts.
+    /// @dev The Master is Rank 8 from inception; Rank Salary follows the existing Rank 8 schedule.
+    function setMasterAccount(address account) external onlyOwner whenPaused {
+        require(masterAccount == address(0), "master already configured");
+        require(account != address(0), "zero master");
+        require(!isMemberRegistered[account], "master already registered");
+        masterAccount = account;
+        isMemberRegistered[account] = true;
+        RankInfo storage info = rankInfo[account];
+        info.highestRank = uint8(RANK_COUNT);
+        info.firstRankAchievedAt = uint64(block.timestamp);
+        info.nextPayoutAt = uint64(_first0030AtOrAfter(block.timestamp + RANK_FIRST_DELAY));
+        for (uint8 r = 1; r <= uint8(RANK_COUNT); r++) {
+            rankQualifiedAt[account][r] = uint64(block.timestamp);
+        }
+        isRankMember[account] = true;
+        rankMembers.push(account);
+        totalWeeklyRankSalaryUSDT += rankWeeklySalaryUSDT[RANK_COUNT - 1];
+        emit MasterAccountConfigured(account);
+        emit RankAchieved(account, uint8(RANK_COUNT), 0, 0, block.timestamp, info.nextPayoutAt);
+    }
+
+    /// @notice Bind a member to the sponsor in their referral URL without requiring a stake.
+    /// @dev Registration is intentionally available while Staking is paused; this does not open staking.
+    function registerReferral(address sponsor) external nonReentrant {
+        require(masterAccount != address(0), "master not configured");
+        require(msg.sender != masterAccount, "master is root");
+        require(!isMemberRegistered[msg.sender], "already registered");
+        require(sponsor != address(0) && sponsor != msg.sender, "invalid sponsor");
+        require(isMemberRegistered[sponsor], "sponsor not registered");
+        require(!_createsReferralCycle(msg.sender, sponsor), "referral cycle");
+        _bindReferrer(msg.sender, sponsor);
+        isMemberRegistered[msg.sender] = true;
+        emit MemberRegistered(msg.sender, sponsor);
     }
 
     function setPresaleSettlement(address settlement) external onlyOwner whenPaused {
@@ -620,15 +662,10 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         require(principalATH > 0, "zero principal");
 
         UserInfo storage user = userInfo[account];
-        if (user.referrer == address(0) && referrer != address(0)) {
-            require(referrer != account, "self referral");
-            require(!_createsReferralCycle(account, referrer), "referral cycle");
-            user.referrer = referrer;
-            directSponsorCount[referrer] += 1;
-            directLegMembers[referrer].push(account);
-            isDirectLegMember[referrer][account] = true;
-            emit ReferrerBound(account, referrer);
-            emit DirectSponsorAdded(referrer, account, directSponsorCount[referrer]);
+        require(isMemberRegistered[account] || account == masterAccount, "register with referral first");
+        if (account != masterAccount && user.referrer == address(0)) {
+            require(referrer != address(0), "referral required");
+            require(referrer == user.referrer, "sponsor mismatch");
         }
 
         if (!isStakingMember[account]) {
@@ -1251,6 +1288,16 @@ contract ATHStaking is Ownable, Pausable, ReentrancyGuard {
         uint256 slot = dayStart + RANK_PAYOUT_UTC_OFFSET;
         if (slot < timestamp) slot += 1 days;
         return slot;
+    }
+
+    function _bindReferrer(address user, address sponsor) internal {
+        require(userInfo[user].referrer == address(0), "sponsor already bound");
+        userInfo[user].referrer = sponsor;
+        directSponsorCount[sponsor] += 1;
+        directLegMembers[sponsor].push(user);
+        isDirectLegMember[sponsor][user] = true;
+        emit ReferrerBound(user, sponsor);
+        emit DirectSponsorAdded(sponsor, user, directSponsorCount[sponsor]);
     }
 
     function _createsReferralCycle(address user, address candidate) internal view returns (bool) {
