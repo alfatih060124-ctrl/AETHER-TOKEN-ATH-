@@ -26,6 +26,16 @@ async function advanceToRewardSlot(staking, account, stakeId, extraDays = 0) {
   await setNextTimestamp(target);
 }
 
+async function stakeTurnover(staking, signer, amount, referrer) {
+  let remaining = BigInt(amount);
+  const maxPerPosition = ethers.parseEther("50000");
+  while (remaining > 0n) {
+    const portion = remaining > maxPerPosition ? maxPerPosition : remaining;
+    await staking.connect(signer).stake(2, portion, referrer);
+    remaining -= portion;
+  }
+}
+
 describe("AETHER ATH Staking v1", function () {
   let signers;
   let owner, user, referrer, second, treasury, presaleBuyer, leg1, leg2, leg3, leg4, leg5, keeper;
@@ -837,7 +847,7 @@ describe("AETHER ATH Staking v1", function () {
     const legs = [leg1, leg2, leg3, leg4, leg5];
     const values = ["300000","250000","250000","250000","250000"];
     for (let i = 0; i < legs.length; i++) {
-      await staking.connect(legs[i]).stake(5, ethers.parseEther(values[i]), user.address);
+      await stakeTurnover(staking, legs[i], ethers.parseEther(values[i]), user.address);
     }
     expect((await staking.rankInfo(user.address)).highestRank).to.equal(8n);
 
