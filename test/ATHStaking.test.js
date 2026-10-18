@@ -260,29 +260,32 @@ describe("AETHER ATH Staking v1", function () {
     );
   });
 
-  it("loads the six blueprint staking packages", async function () {
-    expect(await staking.packageCount()).to.equal(6n);
+  it("loads three duration choices with one shared $10-$50,000 investment range", async function () {
+    expect(await staking.packageCount()).to.equal(3n);
     const expected = [
-      ["10", "99", 35n, 180n],
-      ["100", "499", 45n, 180n],
-      ["500", "1999", 55n, 365n],
-      ["2000", "9999", 65n, 365n],
-      ["10000", "49999", 75n, 730n],
+      [35n, 180n],
+      [45n, 365n],
+      [55n, 730n],
     ];
 
     for (let i = 0; i < expected.length; i++) {
       const pkg = await staking.packages(i);
-      expect(pkg.minUSDT).to.equal(ethers.parseEther(expected[i][0]));
-      expect(pkg.maxUSDT).to.equal(ethers.parseEther(expected[i][1]));
-      expect(pkg.dailyRateBps).to.equal(expected[i][2]);
-      expect(pkg.lockDays).to.equal(expected[i][3]);
+      expect(pkg.minUSDT).to.equal(ethers.parseEther("10"));
+      expect(pkg.maxUSDT).to.equal(ethers.parseEther("50000"));
+      expect(pkg.dailyRateBps).to.equal(expected[i][0]);
+      expect(pkg.lockDays).to.equal(expected[i][1]);
       expect(pkg.active).to.equal(true);
     }
+  });
 
-    const diamond = await staking.packages(5);
-    expect(diamond.minUSDT).to.equal(ethers.parseEther("50000"));
-    expect(diamond.dailyRateBps).to.equal(85n);
-    expect(diamond.lockDays).to.equal(730n);
+  it("enforces the inclusive $10-$50,000 range for every duration", async function () {
+    for (let packageId = 0; packageId < 3; packageId++) {
+      await staking.connect(user).stake(packageId, ethers.parseEther("10"), ethers.ZeroAddress);
+      await staking.connect(user).stake(packageId, ethers.parseEther("50000"), ethers.ZeroAddress);
+      await expect(
+        staking.connect(second).stake(packageId, ethers.parseEther("50000.01"), ethers.ZeroAddress)
+      ).to.be.revertedWith("amount out of range");
+    }
   });
 
   it("assigns globally unique Staking Contract IDs and exposes the member owner/package snapshot", async function () {
@@ -330,7 +333,7 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.activeContractCountByMember(user.address)).to.equal(2n);
     expect(await staking.activeStakingMembers()).to.equal(2n);
 
-    await increase(180 * DAY);
+    await increase(365 * DAY);
     await staking.connect(user).withdrawPrincipal(0);
 
     expect(await staking.totalStakingContracts()).to.equal(3n);
