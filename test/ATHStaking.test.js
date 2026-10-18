@@ -117,6 +117,7 @@ describe("AETHER ATH Staking v1", function () {
 
     await token.approve(await staking.getAddress(), ethers.MaxUint256);
     await staking.setMasterAccount(MASTER);
+    await staking.connect(presaleBuyer).registerReferral(referrer.address);
     await staking.fundRewards(ethers.parseEther("160000000"));
     await staking.fundNetworkReserve(ethers.parseEther("50000000"));
     expect(await staking.paused()).to.equal(true);
@@ -700,12 +701,12 @@ describe("AETHER ATH Staking v1", function () {
     expect(await staking.directSponsorCount(user.address)).to.equal(5n);
     expect(await staking.getEligibleRank(user.address)).to.equal(1n);
     expect((await staking.rankInfo(user.address)).highestRank).to.equal(1n);
-    expect(await staking.totalRankMembers()).to.equal(1n);
+    expect(await staking.totalRankMembers()).to.equal(2n);
     expect(await staking.isRankMember(user.address)).to.equal(true);
-    expect(await staking.getRankMembers(0, 200)).to.deep.equal([user.address]);
+    expect(await staking.getRankMembers(0, 200)).to.deep.equal([MASTER, user.address]);
     expect(await staking.totalDirectLegs(user.address)).to.equal(5n);
     expect(await staking.getDirectLegMembers(user.address, 0, 200)).to.deep.equal(legs.map(x => x.address));
-    expect(await staking.totalWeeklyRankSalaryUSDT()).to.equal(ethers.parseEther("25"));
+    expect(await staking.totalWeeklyRankSalaryUSDT()).to.equal(ethers.parseEther("10025"));
   });
 
   it("requires at least five direct sponsors even if four legs already meet small-leg turnover", async function () {
