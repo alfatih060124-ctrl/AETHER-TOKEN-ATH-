@@ -159,6 +159,47 @@ describe("AETHER ATH Staking v1", function () {
     ).to.be.revertedWith("unauthorized settlement");
   });
 
+  it("atomically buys Presale ATH into a beneficiary-owned Staking position and rolls back on downstream failure", async function () {
+    await staking.pause();
+    await staking.setPresaleSettlement(await presale.getAddress());
+    await staking.unpause();
+    await presale.setStakingSettlement(await staking.getAddress());
+    await presale.unpause();
+
+    const amountATH = ethers.parseEther("1000");
+    const quote = await presale.quotePaymentForATH(amountATH);
+    const buyerStableBefore = await stable.balanceOf(presaleBuyer.address);
+    const soldBefore = await presale.totalSoldATH();
+
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        amountATH, quote, 0, referrer.address,
+        BigInt((await ethers.provider.getBlock("latest")).timestamp + 3600)
+      )
+    ).to.emit(presale, "ATHPurchasedAndStaked");
+
+    expect(await presale.totalSoldATH()).to.equal(soldBefore + amountATH);
+    expect(buyerStableBefore - (await stable.balanceOf(presaleBuyer.address))).to.equal(quote);
+    expect(await staking.stakeCount(presaleBuyer.address)).to.equal(1n);
+    const position = await staking.userStakes(presaleBuyer.address, 0);
+    expect(position.principalATH).to.equal(amountATH);
+    expect(position.amountUSDT).to.equal(ethers.parseEther("70"));
+    expect(position.packageId).to.equal(0n);
+    expect(await staking.userInfo(presaleBuyer.address).then(x => x.referrer)).to.equal(referrer.address);
+
+    const soldAfterSuccess = await presale.totalSoldATH();
+    const buyerAfterSuccess = await stable.balanceOf(presaleBuyer.address);
+    await expect(
+      presale.connect(presaleBuyer).buyAndStake(
+        ethers.parseEther("1000"), ethers.MaxUint256, 99, ethers.ZeroAddress,
+        BigInt((await ethers.provider.getBlock("latest")).timestamp + 3600)
+      )
+    ).to.be.revertedWith("invalid package");
+    expect(await presale.totalSoldATH()).to.equal(soldAfterSuccess);
+    expect(await stable.balanceOf(presaleBuyer.address)).to.equal(buyerAfterSuccess);
+    expect(await staking.stakeCount(presaleBuyer.address)).to.equal(1n);
+  });
+
   it("keeps ATH fixed at 1B while Staking follows the Presale opening price $0.070", async function () {
     expect(await token.totalSupply()).to.equal(ethers.parseEther("1000000000"));
     expect(await presale.currentPriceUSD8()).to.equal(PRICE_007);
