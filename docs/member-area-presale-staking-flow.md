@@ -41,3 +41,8 @@ The member-area gate is client-side presentation only. It must not be treated as
 ## Duration-based single staking package
 
 The source package model is now one shared amount range ($10–$50,000 inclusive) with three duration selections: 180 days / 0.35% daily, 365 days / 0.45% daily, and 730 days / 0.55% daily. The selected duration maps to the authoritative on-chain package ID. This is a source change only; the UI remains fail-closed until a verified, audited atomic settlement deployment is available.
+
+
+## Reward valuation rule
+
+The reward percentage is applied daily to the current USD value of the fixed ATH principal: `principalATH × current ATH USD price`. The principal ATH quantity itself does not change when the market price changes. For example, 14,285.714285714… ATH originally acquired for $1,000 at $0.07 is worth about $5,285.714 at $0.37; at 0.55% daily, the indicative reward is about $29.0714 in USD value, converted to ATH using the current oracle price at settlement. Actual on-chain results are subject to integer rounding and the configured oracle.
