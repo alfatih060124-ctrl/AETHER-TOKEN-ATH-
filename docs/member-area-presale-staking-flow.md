@@ -4,6 +4,7 @@
 
 - Adds query-based page navigation for Home, Mining, Presale, Docs and member-area subpages.
 - Moves staking, network/rank panels, and referral/leaderboard details behind the member-area UI gate.
+- Generates a personal Staking referral URL from each connected wallet, provides a Copy Link action, pre-fills the sponsor wallet from a valid `?ref=0x…` link, and preserves that referral parameter while navigating member pages.
 - Adds package selection and staking-duration selection to the Presale form.
 - Computes the estimated ATH amount from the live `ATHPresale.currentPriceUSD8()` quote using integer arithmetic.
 - Keeps the transaction button disabled in staking-settlement mode until an audited atomic settlement contract is configured.
