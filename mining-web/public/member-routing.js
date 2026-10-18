@@ -21,7 +21,8 @@
       a.classList.toggle("active", active);
       if (active) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
     });
-    const route = "/?page=" + encodeURIComponent(page);
+    const referral = new URLSearchParams(location.search).get("ref");
+    const route = "/?page=" + encodeURIComponent(page) + (referral && /^0x[0-9a-fA-F]{40}$/.test(referral) ? "&ref=" + encodeURIComponent(referral) : "");
     if (replace) history.replaceState({page},"",route); else history.pushState({page},"",route);
     renderMemberGate(page);
     window.dispatchEvent(new CustomEvent("aether-page-change",{detail:{page}}));
