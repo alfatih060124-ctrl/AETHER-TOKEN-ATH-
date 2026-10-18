@@ -28,5 +28,7 @@ jobs:
         run: npm run syntax:check
       - name: Compile Solidity contracts
         run: npm run compile
+      - name: Check member-area web scripts
+        run: npm --prefix mining-web run check
       - name: Run automated tests
         run: npm test
