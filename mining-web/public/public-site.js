@@ -48,6 +48,35 @@
     window.addEventListener("aether-language-change", applyStakingLanguage);
     window.addEventListener("aether-language-refresh", applyStakingLanguage);
     applyStakingLanguage();
+
+    // Hide obsolete small-leg metrics until the approved cumulative-turnover
+    // Rank implementation has passed contract and API verification.
+    const obsoleteRankFields = ["stakingSmallLeg","stakingBigLeg","stakingNetworkSmallLeg","stakingNetworkBigLeg"];
+    for (const id of obsoleteRankFields) {
+      const metric = document.getElementById(id);
+      if (metric) metric.closest("div")?.setAttribute("hidden","");
+    }
+    const rankPanel = document.querySelector(".site-mode-staking .staking-rank-panel");
+    if (rankPanel) {
+      const obsoleteExplanation = [...rankPanel.querySelectorAll("p")].find(p=>p.textContent.includes("Small-leg turnover ="));
+      if (obsoleteExplanation) obsoleteExplanation.setAttribute("hidden","");
+      const notice = document.createElement("p");
+      notice.className = "staking-note";
+      notice.setAttribute("role","status");
+      notice.dataset.stakingRankNotice = "true";
+      rankPanel.appendChild(notice);
+      const notices = {
+        id:"Kualifikasi Rank mengacu pada omzet staking pribadi kumulatif dan seluruh omzet grup jaringan (langsung maupun tidak langsung), tanpa menghitung ganda omzet pribadi. Data Rank belum dapat dinyatakan final sebelum kontrak dan API diverifikasi.",
+        en:"Rank qualification uses cumulative personal staking turnover plus total downline group turnover (direct and indirect), without double counting personal turnover. Rank data is not final until the contract and API are verified."
+      };
+      const refreshRankNotice=()=>{
+        const lang=document.getElementById("aetherLangSelect")?.value||"en";
+        notice.textContent=notices[lang]||notices.en;
+      };
+      document.getElementById("aetherLangSelect")?.addEventListener("change",refreshRankNotice);
+      window.addEventListener("aether-language-change",refreshRankNotice);
+      refreshRankNotice();
+    }
     const stakingTranslations = document.createElement("script");
     stakingTranslations.src = "/staking-public-i18n.js?v=20261123";
     stakingTranslations.defer = true;
