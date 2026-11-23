@@ -48,5 +48,9 @@
     window.addEventListener("aether-language-change", applyStakingLanguage);
     window.addEventListener("aether-language-refresh", applyStakingLanguage);
     applyStakingLanguage();
+    const stakingTranslations = document.createElement("script");
+    stakingTranslations.src = "/staking-public-i18n.js?v=20261123";
+    stakingTranslations.defer = true;
+    document.body.appendChild(stakingTranslations);
   }
 })();
