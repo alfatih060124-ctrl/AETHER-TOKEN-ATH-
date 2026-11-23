@@ -42,3 +42,5 @@
   .site-mode-staking .nav-actions { max-width: 100%; flex-wrap: wrap; }
   .site-mode-staking #staking table { display: block; max-width: 100%; overflow-x: auto; }
 }
+
+.site-mode-staking [hidden] { display: none !important; }
