@@ -296,6 +296,8 @@ function safePublicPath(urlPath, controlPanelHost = false) {
   const normalized = path.posix.normalize(decoded).replace(/^\.\.(\/|\\|$)/g, "");
 
   if (!controlPanelHost && ADMIN_PUBLIC_FILES.has(normalized)) return null;
+  // The Staking member portal is never served from Mining or unified hosts.
+  if (normalized === "/staking-member.html" && (controlPanelHost || PUBLIC_SITE !== "staking")) return null;
   if (controlPanelHost && !CONTROL_PANEL_ALLOWED_FILES.has(normalized)) return null;
 
   let relative;
