@@ -22,3 +22,23 @@
 .site-mode-staking .hero-copy h2 { max-width: 13ch; }
 .site-mode-staking .hero-buttons { flex-wrap: wrap; }
 .site-mode-staking .main-nav a[href="#staking"] { display: inline-flex !important; }
+/* Staking-only mobile containment; do not affect the Mining layout. */
+.site-mode-staking { max-width: 100%; overflow-x: clip; }
+.site-mode-staking .shell,
+.site-mode-staking .hero-grid,
+.site-mode-staking .hero-copy,
+.site-mode-staking #staking { min-width: 0; max-width: 100%; }
+.site-mode-staking img, .site-mode-staking svg { max-width: 100%; }
+@media (max-width: 767px) {
+  .site-mode-staking .hero-grid { display: grid; grid-template-columns: minmax(0,1fr); }
+  .site-mode-staking .hero-copy { overflow-wrap: anywhere; }
+  .site-mode-staking .hero-copy h1 { font-size: clamp(2rem, 11vw, 3.8rem); }
+  .site-mode-staking .hero-copy h2 { max-width: 100%; font-size: clamp(1.4rem, 6vw, 2.3rem); }
+  .site-mode-staking .hero-logo-wrap { max-width: 100%; min-width: 0; overflow: hidden; }
+  .site-mode-staking .hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+  .site-mode-staking .hero-buttons .btn { max-width: 100%; white-space: normal; text-align: center; }
+  .site-mode-staking .nav-wrap { flex-wrap: wrap; min-width: 0; }
+  .site-mode-staking .main-nav { max-width: 100%; overflow-x: auto; }
+  .site-mode-staking .nav-actions { max-width: 100%; flex-wrap: wrap; }
+  .site-mode-staking #staking table { display: block; max-width: 100%; overflow-x: auto; }
+}
