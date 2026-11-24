@@ -106,6 +106,25 @@
   dialog.append(close,title,list,status);document.body.append(dialog);
   close.onclick=()=>dialog.close();
   const target=()=>{const u=new URL(location.origin+"/");const q=new URLSearchParams(location.search);for(const key of ["ref","sponsor"]){const v=q.get(key);if(/^0x[0-9a-f]{40}$/i.test(v||""))u.searchParams.set(key,v);}return u.href;};
+  // First-party SDK handles the app link and callback format. Never treat an
+  // address returned by a wallet as an authenticated member session.
+  const aetherSDK=document.createElement("script");
+  aetherSDK.src="https://wallet.aether.boats/sdk/aether-wallet.js";
+  aetherSDK.async=true;
+  document.head.append(aetherSDK);
+  async function connectAetherApp(){
+    if(typeof window.AetherWallet?.connect!=="function"){
+      status.textContent=txt("SDK AETHER Wallet belum tersedia. Coba lagi atau buka situs melalui browser DApp AETHER Wallet.","AETHER Wallet SDK unavailable. Try again or open this site in AETHER Wallet DApp browser.");
+      return;
+    }
+    try{
+      status.textContent=txt("Membuka AETHER Wallet. Setujui koneksi di aplikasi.","Opening AETHER Wallet. Approve the connection in the app.");
+      await window.AetherWallet.connect({chain:"bsc"});
+      status.textContent=txt("Permintaan koneksi selesai. Login member memerlukan verifikasi tanda tangan di server.","Connection request completed. Member login requires server signature verification.");
+    }catch(e){
+      status.textContent=txt("Koneksi belum berhasil. Pastikan AETHER Wallet terinstal dan coba lagi.","Connection unsuccessful. Ensure AETHER Wallet is installed and try again.");
+    }
+  }
   const wallets=[
     ["AETHER Wallet",/aether/i,null,"aether"],
     ["TokenPocket",/tokenpocket|token pocket/i,()=> "tpdapp://open?params="+encodeURIComponent(JSON.stringify({url:target(),chain:"BSC",source:"AETHER ATH"})),"tp"],
@@ -141,7 +160,7 @@
   }
   function open(){
     title.textContent=txt("Hubungkan Wallet","Connect Wallet");list.replaceChildren();status.textContent=txt("Pilih wallet Anda. Tidak ada transaksi yang akan dikirim.","Choose your wallet. No transaction will be sent.");
-    for(const w of wallets)row(w[0],()=>{const p=injected(w);if(p)return connect(p);if(w[2]){location.href=w[2]();return;}status.textContent=txt("Buka situs ini di browser DApp ","Open this site in the DApp browser of ")+w[0]+". "+target();},w[3]);
+    for(const w of wallets)row(w[0],()=>{const p=injected(w);if(p)return connect(p);if(w[3]==="aether")return connectAetherApp();if(w[2]){location.href=w[2]();return;}status.textContent=txt("Buka situs ini di browser DApp ","Open this site in the DApp browser of ")+w[0]+". "+target();},w[3]);
     for(const d of providers.values())if(!wallets.some(w=>w[1].test(d.info.name+" "+d.info.rdns)))row(d.info.name.slice(0,60),()=>connect(d.provider));
     row(txt("Wallet browser lainnya","Other browser wallet"),()=>{if(window.ethereum?.request)return connect(window.ethereum);status.textContent=txt("WalletConnect QR belum dikonfigurasi. Gunakan browser DApp wallet Anda.","WalletConnect QR is not configured yet. Use your wallet's DApp browser.");});
     if(!dialog.open)dialog.showModal();
