@@ -20,7 +20,7 @@
     if (heroTitle) heroTitle.textContent = "Stake. Build. Grow Together.";
     if (heroCopy) heroCopy.textContent = "Use the dedicated AETHER ATH Staking portal to manage stake positions, daily rewards, direct referrals, network ranks, Lifestyle Bonus and rank salary.";
     if (brand) brand.setAttribute("aria-label", "AETHER ATH Staking");
-    if (heroButtons) heroButtons.innerHTML = '<a class="btn btn-gold btn-large" href="#staking" data-staking-cta="dashboard">Open Staking Dashboard →</a><a class="btn btn-dark btn-large" href="#docs" data-staking-cta="notes">Read Protocol Notes</a>';
+    if (heroButtons) heroButtons.innerHTML = '<a class="btn btn-gold btn-large" href="/staking-member.html" data-staking-cta="dashboard">Open Staking Dashboard →</a><a class="btn btn-dark btn-large" href="#docs" data-staking-cta="notes">Read Protocol Notes</a>';
     const localized = {
       en: ["Stake. Build. Grow Together.", "Use the dedicated AETHER ATH Staking portal to manage stake positions, daily rewards, direct referrals, network ranks, Lifestyle Bonus and rank salary.", "Open Staking Dashboard →", "Read Protocol Notes"],
       id: ["Staking. Bangun Jaringan. Tumbuh Bersama.", "Kelola posisi staking ATH, reward harian, referral langsung, peringkat jaringan, Lifestyle Bonus, dan gaji peringkat melalui portal AETHER Staking.", "Buka Dasbor Staking →", "Baca Informasi Protokol"],
@@ -41,7 +41,7 @@
       if (heroCopy) heroCopy.textContent = t[1];
       const dashboard = heroButtons?.querySelector('[data-staking-cta="dashboard"]');
       const notes = heroButtons?.querySelector('[data-staking-cta="notes"]');
-      if (dashboard) dashboard.textContent = t[2];
+      if (dashboard) { dashboard.textContent = ({en:"Member Area",id:"Area Member",zh:"会员专区",es:"Área de miembros",ar:"منطقة الأعضاء",ru:"Личный кабинет",ko:"회원 영역",ja:"メンバーエリア",vi:"Khu vực thành viên",pt:"Área de membros"})[code] || "Member Area"; dashboard.href="/staking-member.html"+location.search.replace(/^\?rev=[^&]*&?/, "?").replace(/^\?$/, ""); }
       if (notes) notes.textContent = t[3];
     };
     document.getElementById("aetherLangSelect")?.addEventListener("change", applyStakingLanguage);
