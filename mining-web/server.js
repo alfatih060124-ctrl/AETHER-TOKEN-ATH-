@@ -328,7 +328,8 @@ const server = http.createServer((req, res) => {
   if (!controlPanelHost && requestPath === "/") {
     const rev = String(process.env.FRONTEND_REV || "dev").trim();
     if (requestUrl.searchParams.get("rev") !== rev) {
-      const location = "/?rev=" + encodeURIComponent(rev);
+      if (PUBLIC_SITE === "staking") requestUrl.searchParams.set("rev", rev);
+      const location = PUBLIC_SITE === "staking" ? "/" + requestUrl.search : "/?rev=" + encodeURIComponent(rev);
       res.writeHead(302, {
         location,
         "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
