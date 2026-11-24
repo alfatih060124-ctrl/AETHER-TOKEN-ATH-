@@ -1,0 +1,33 @@
+"use strict";
+const fs=require("fs"),path=require("path"),vm=require("vm"),assert=require("assert/strict");
+const root=path.join(__dirname,"public");
+const html=fs.readFileSync(path.join(root,"staking-member.html"),"utf8");
+const source=fs.readFileSync(path.join(root,"staking-member-registration-i18n.js"),"utf8");
+const window={};
+vm.runInNewContext(source,{window},{timeout:1000});
+const translations=window.ATH_STAKING_MEMBER_REG_I18N;
+const languages=["id","en","zh","es","ar","ru","ko","ja","vi","pt"];
+const keys=Object.keys(translations.en);
+const selectors=[...html.matchAll(/\bdata-reg(?:-placeholder|-title|-aria)?="([^"]+)"/g)].map(x=>x[1]);
+assert.equal(languages.length,10);
+assert.ok(keys.length>=20,"Registration messages must be localized");
+for(const key of selectors)assert.ok(keys.includes(key),"Missing registration label: "+key);
+for(const language of languages){
+ assert.ok(translations[language],"Missing language: "+language);
+ assert.deepEqual(Object.keys(translations[language]).sort(),keys.slice().sort(),"Missing/extra translation keys for "+language);
+ for(const key of keys)assert.ok(typeof translations[language][key]==="string" && translations[language][key].trim(),"Empty "+language+" translation: "+key);
+}
+const inline=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x=>x[1].trim()).filter(Boolean);
+assert.equal(inline.length,1,"Unexpected inline script count");
+new vm.Script(inline[0],{filename:"staking-member.html:inline"});
+assert.match(html,/id="test-registration-form"/);
+assert.match(html,/data-reg="registrationTitle"/);
+assert.match(html,/data-reg-placeholder="addressHint"/);
+assert.match(html,/data-reg-aria="languageLabel"/);
+assert.match(html,/data-reg-title="connectPending"/);
+assert.match(html,/\/staking-member-registration-i18n\.js/);
+assert.match(html,/id="connect"[^>]*disabled/);
+assert.match(html,/validReferral/);
+assert.match(html,/browser-local-only/);
+assert.match(html,/localStorage\.setItem\('aether-language',lang\.value\)/);
+console.log("Staking Member i18n QC passed: "+languages.length+" languages, "+keys.length+" complete keys, registration guards and JS syntax.");

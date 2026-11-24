@@ -67,7 +67,15 @@
       rankPanel.appendChild(notice);
       const notices = {
         id:"Kualifikasi Rank mengacu pada omzet staking pribadi kumulatif dan seluruh omzet grup jaringan (langsung maupun tidak langsung), tanpa menghitung ganda omzet pribadi. Data Rank belum dapat dinyatakan final sebelum kontrak dan API diverifikasi.",
-        en:"Rank qualification uses cumulative personal staking turnover plus total downline group turnover (direct and indirect), without double counting personal turnover. Rank data is not final until the contract and API are verified."
+        en:"Rank qualification uses cumulative personal staking turnover plus total downline group turnover (direct and indirect), without double counting personal turnover. Rank data is not final until the contract and API are verified.",
+        zh:"等级资格依据个人累计质押业绩以及全部直属和间接团队业绩，不重复计算个人业绩。合约和 API 验证完成前，等级数据不能视为最终结果。",
+        es:"La calificación de rango considera el volumen acumulado de staking personal y el volumen total del grupo directo e indirecto, sin contar dos veces el volumen personal. Los datos de rango no son definitivos hasta verificar el contrato y la API.",
+        ar:"تعتمد أهلية الرتبة على حجم التخزين الشخصي التراكمي وإجمالي حجم المجموعة المباشرة وغير المباشرة، دون تكرار الحساب الشخصي. بيانات الرتب ليست نهائية حتى التحقق من العقد وواجهة API.",
+        ru:"Квалификация ранга учитывает накопленный личный оборот стейкинга и оборот всей прямой и косвенной сети без двойного учёта личного оборота. Данные ранга не окончательны до проверки контракта и API.",
+        ko:"등급 자격은 누적 개인 스테이킹 실적과 직간접 전체 그룹 실적을 합산하며 개인 실적을 중복 계산하지 않습니다. 계약과 API 검증 전까지 등급 데이터는 확정되지 않습니다.",
+        ja:"ランク資格は個人の累積ステーキング実績と直属・間接グループ全体の実績を合算し、個人実績の二重計上を行いません。コントラクトと API の検証が完了するまでランクデータは確定しません。",
+        vi:"Điều kiện cấp bậc dựa trên tổng doanh số staking cá nhân tích lũy và toàn bộ doanh số nhóm trực tiếp, gián tiếp, không tính trùng doanh số cá nhân. Dữ liệu cấp bậc chưa được chốt cho đến khi xác minh hợp đồng và API.",
+        pt:"A qualificação do nível considera o volume acumulado de staking pessoal e todo o volume do grupo direto e indireto, sem duplicar o volume pessoal. Os dados de nível só serão finais após a verificação do contrato e da API."
       };
       const refreshRankNotice=()=>{
         const lang=document.getElementById("aetherLangSelect")?.value||"en";
