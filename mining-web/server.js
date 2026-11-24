@@ -281,6 +281,11 @@ const CONTROL_PANEL_ALLOWED_FILES = new Set([
 function renderPublicSiteHtml(data, controlPanelHost = false) {
   if (controlPanelHost || PUBLIC_SITE === "unified") return data;
   let html = Buffer.isBuffer(data) ? data.toString("utf8") : String(data);
+  if (PUBLIC_SITE === "staking") {
+    // Remove operational sections from the public response, not just visually.
+    html = html.replace(/<section\b[^>]*\b(?:data-holder-zone|id)=["'](?:staking|holder-workspace|buy-ath|referral|leaderboard|mining)["'][^>]*>[\s\S]*?<\/section>/gi, "");
+    html = html.replace(/href=["']#staking["']/gi, 'href="/staking-member.html"');
+  }
   const bodyClass = `site-mode-${PUBLIC_SITE}`;
   html = html.replace(/<body([^>]*)>/i, (_match, attrs) => {
     const cleanAttrs = attrs.replace(/\sdata-public-site=["'][^"']*["']/i, "");
