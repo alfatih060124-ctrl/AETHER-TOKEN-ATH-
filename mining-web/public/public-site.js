@@ -125,10 +125,23 @@
       status.textContent=txt("Wallet terhubung: ","Wallet connected: ")+address.slice(0,6)+"…"+address.slice(-4)+". "+txt("Login member masih dalam pengujian. Belum ada registrasi atau transaksi.","Member login is still under development. No registration or transaction has occurred.");
     }catch(e){status.textContent=txt("Koneksi dibatalkan atau gagal. Silakan coba lagi.","Connection canceled or failed. Please try again.");}
   }
-  function row(label,action){const b=document.createElement("button");b.type="button";b.className="ath-wallet-option";b.textContent=label;b.onclick=action;list.append(b);}
+  function row(label,action,key="other"){
+    const b=document.createElement("button");b.type="button";b.className="ath-wallet-option";b.dataset.wallet=key;
+    const mark=document.createElement("span");mark.className="ath-wallet-mark";mark.setAttribute("aria-hidden","true");
+    if(key==="aether"){
+      const logo=document.querySelector(".brand img");
+      if(logo?.src){const img=document.createElement("img");img.src=logo.src;img.alt="";mark.append(img);}
+    }
+    if(!mark.hasChildNodes())mark.textContent=({tp:"TP",trust:"TW",mm:"M",safe:"S",other:"+"})[key]||"";
+    const copy=document.createElement("span");copy.className="ath-wallet-copy";
+    const name=document.createElement("strong");name.textContent=label;copy.append(name);
+    if(key==="aether"){const sub=document.createElement("small");sub.textContent=txt("Wallet resmi ekosistem","Official ecosystem wallet");copy.append(sub);}
+    const arrow=document.createElement("span");arrow.className="ath-wallet-arrow";arrow.textContent="›";arrow.setAttribute("aria-hidden","true");
+    b.append(mark,copy,arrow);b.onclick=action;list.append(b);
+  }
   function open(){
     title.textContent=txt("Hubungkan Wallet","Connect Wallet");list.replaceChildren();status.textContent=txt("Pilih wallet Anda. Tidak ada transaksi yang akan dikirim.","Choose your wallet. No transaction will be sent.");
-    for(const w of wallets)row(w[0],()=>{const p=injected(w);if(p)return connect(p);if(w[2]){location.href=w[2]();return;}status.textContent=txt("Buka situs ini di browser DApp ","Open this site in the DApp browser of ")+w[0]+". "+target();});
+    for(const w of wallets)row(w[0],()=>{const p=injected(w);if(p)return connect(p);if(w[2]){location.href=w[2]();return;}status.textContent=txt("Buka situs ini di browser DApp ","Open this site in the DApp browser of ")+w[0]+". "+target();},w[3]);
     for(const d of providers.values())if(!wallets.some(w=>w[1].test(d.info.name+" "+d.info.rdns)))row(d.info.name.slice(0,60),()=>connect(d.provider));
     row(txt("Wallet browser lainnya","Other browser wallet"),()=>{if(window.ethereum?.request)return connect(window.ethereum);status.textContent=txt("WalletConnect QR belum dikonfigurasi. Gunakan browser DApp wallet Anda.","WalletConnect QR is not configured yet. Use your wallet's DApp browser.");});
     if(!dialog.open)dialog.showModal();
