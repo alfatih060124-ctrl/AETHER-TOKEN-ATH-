@@ -53,3 +53,13 @@
 .site-mode-staking .ath-wallet-option{display:block;width:100%;text-align:left;background:#1c1810;border:1px solid #483b24;border-radius:10px;color:#f4e6ca;font:inherit;padding:14px;margin:8px 0;cursor:pointer;}
 .site-mode-staking .ath-wallet-option:focus-visible,.site-mode-staking .ath-wallet-option:hover{border-color:#e2bf70;outline-color:#e2bf70;}
 .site-mode-staking .ath-wallet-picker p{font-size:.9rem;overflow-wrap:anywhere;line-height:1.5;}
+
+/* ATH Staking wallet selector brand layout. */
+.site-mode-staking .ath-wallet-option{display:flex;align-items:center;gap:12px;min-height:66px;padding:11px 13px;text-align:start;}
+.site-mode-staking .ath-wallet-option[data-wallet="aether"]{border-color:#b89449;background:linear-gradient(115deg,#2a2010,#19140d);}
+.site-mode-staking .ath-wallet-mark{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:10px;background:#292317;color:#e6c875;overflow:hidden;font-size:15px;font-weight:700;}
+.site-mode-staking .ath-wallet-mark img{display:block;width:100%;height:100%;object-fit:contain;}
+.site-mode-staking .ath-wallet-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px;}
+.site-mode-staking .ath-wallet-copy strong{font-size:15px;overflow-wrap:anywhere;}
+.site-mode-staking .ath-wallet-copy small{font-size:11px;font-weight:400;color:#c8b68e;}
+.site-mode-staking .ath-wallet-arrow{font-size:24px;color:#c7a967;}
