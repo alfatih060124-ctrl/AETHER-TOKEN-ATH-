@@ -302,7 +302,7 @@ function safePublicPath(urlPath, controlPanelHost = false) {
 
   if (!controlPanelHost && ADMIN_PUBLIC_FILES.has(normalized)) return null;
   // The Staking member portal is never served from Mining or unified hosts.
-  if (normalized === "/staking-member.html" && (controlPanelHost || PUBLIC_SITE !== "staking")) return null;
+  if (normalized === "/staking-member.html") return null;
   if (controlPanelHost && !CONTROL_PANEL_ALLOWED_FILES.has(normalized)) return null;
 
   let relative;
@@ -324,6 +324,24 @@ const server = http.createServer((req, res) => {
   const controlPanelHost = isControlPanelHost(req);
   const requestUrl = new URL(String(req.url || "/"), "https://aether.local");
   const requestPath = requestUrl.pathname;
+  // Member API and private HTML are available only on the Staking service.
+  if (!controlPanelHost && PUBLIC_SITE === "staking" && (requestPath.startsWith("/api/member/") || requestPath === "/staking-member.html")) {
+    const proxy = require("./staking-member-proxy.cjs");
+    const unavailable = () => send(res, 503, JSON.stringify({ok:false,error:"MEMBER_API_UNAVAILABLE"}), MIME[".json"]);
+    if (requestPath === "/staking-member.html") {
+      if (req.method !== "GET") return send(res, 405, "Method not allowed", "text/plain; charset=utf-8");
+      return proxy.forward(req,"/api/member/session").then(result=>{
+        if(result.status===401){res.writeHead(302,{location:"/","cache-control":"no-store"});return res.end();}
+        if(result.status!==200||!JSON.parse(result.body).ok)return unavailable();
+        return send(res,200,fs.readFileSync(path.join(PUBLIC_DIR,"staking-member.html")),MIME[".html"]);
+      }).catch(unavailable);
+    }
+    if(!proxy.ROUTES.has(requestPath))return send(res,404,JSON.stringify({ok:false,error:"NOT_FOUND"}),MIME[".json"]);
+    if(proxy.ROUTES.get(requestPath)!==req.method)return send(res,405,JSON.stringify({ok:false,error:"METHOD_NOT_ALLOWED"}),MIME[".json"]);
+    const input=req.method==="POST"?readJson(req,8192):Promise.resolve(undefined);
+    return input.then(body=>proxy.forward(req,requestPath,body)).then(result=>send(res,result.status,result.body,MIME[".json"],false,result.cookie?{"set-cookie":result.cookie}:{})).catch(unavailable);
+  }
+
 
   if (!controlPanelHost && requestPath === "/") {
     const rev = String(process.env.FRONTEND_REV || "dev").trim();
