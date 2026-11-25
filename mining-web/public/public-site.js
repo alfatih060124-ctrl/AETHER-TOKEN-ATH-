@@ -136,13 +136,38 @@
     const found=[...providers.values()].find(d=>w[1].test(d.info.name+" "+d.info.rdns));if(found)return found.provider;
     const candidates=window.ethereum?.providers||[window.ethereum];return candidates.find(p=>p?.request&&({aether:p.isAether||p.isAetherWallet,tp:p.isTokenPocket,trust:p.isTrust||p.isTrustWallet,mm:p.isMetaMask&&!p.isTrust&&!p.isTrustWallet&&!p.isTokenPocket&&!p.isAetherWallet&&!p.isAether&&!p.isSafePal,safe:p.isSafePal})[w[3]]);
   }
+  let authenticating=false;
+  async function memberPost(path,data){
+    const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data),credentials:"same-origin",cache:"no-store"});
+    const b=await r.json();
+    if(!r.ok||!b.ok){const err=new Error(b.error||"AUTH_FAILED");throw err;}
+    return b;
+  }
   async function connect(p){
+    if(authenticating)return;
+    authenticating=true;
     try{
       const accounts=await p.request({method:"eth_requestAccounts"});
       const address=accounts?.[0];
-      if(!/^0x[0-9a-f]{40}$/i.test(address||""))throw new Error("No wallet account");
-      status.textContent=txt("Wallet terhubung: ","Wallet connected: ")+address.slice(0,6)+"…"+address.slice(-4)+". "+txt("Login member masih dalam pengujian. Belum ada registrasi atau transaksi.","Member login is still under development. No registration or transaction has occurred.");
-    }catch(e){status.textContent=txt("Koneksi dibatalkan atau gagal. Silakan coba lagi.","Connection canceled or failed. Please try again.");}
+      if(!/^0x[0-9a-f]{40}$/i.test(address||""))throw new Error("INVALID_WALLET");
+      const params=new URLSearchParams(location.search);
+      const referral=params.get("ref")||params.get("sponsor")||undefined;
+      status.textContent=txt("Memeriksa akun dan referral...","Checking account and referral...");
+      const challenge=await memberPost("/api/member/challenge",{wallet:address,referral});
+      if(typeof challenge.message!=="string"||!challenge.message.startsWith("AETHER ATH Staking member authentication\n")||!challenge.message.includes("Origin: https://staking.aether.boats\n")||!challenge.message.includes("Wallet: "+address.toLowerCase()+"\n"))throw new Error("INVALID_CHALLENGE");
+      status.textContent=txt("Setujui tanda tangan login. Tidak ada transaksi atau persetujuan token.","Approve the login signature. No transaction or token approval.");
+      const hex="0x"+Array.from(new TextEncoder().encode(challenge.message),b=>b.toString(16).padStart(2,"0")).join("");
+      const signature=await p.request({method:"personal_sign",params:[hex,address]});
+      const result=await memberPost("/api/member/verify",{nonce:challenge.nonce,signature});
+      if(result.member?.wallet!==address.toLowerCase())throw new Error("INVALID_SESSION");
+      const session=await fetch("/api/member/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json());
+      if(!session.ok||session.member?.wallet!==address.toLowerCase())throw new Error("INVALID_SESSION");
+      const lang=document.getElementById("aetherLangSelect")?.value||"en";
+      location.assign("/staking-member.html?lang="+encodeURIComponent(lang));
+    }catch(e){
+      const messages={REFERRAL_REQUIRED:txt("Member baru wajib membuka tautan referral sponsor.","New members must open a sponsor referral link."),INVALID_SPONSOR:txt("Sponsor belum terdaftar atau tidak valid.","Sponsor is not registered or invalid."),MEMBER_API_UNAVAILABLE:txt("Registrasi belum dibuka. Silakan coba setelah sistem siap.","Registration is not open yet. Please try after the system is ready.")};
+      status.textContent=messages[e.message]||txt("Login dibatalkan atau gagal. Silakan coba lagi.","Login canceled or failed. Please try again.");
+    }finally{authenticating=false;}
   }
   function row(label,action,key="other"){
     const b=document.createElement("button");b.type="button";b.className="ath-wallet-option";b.dataset.wallet=key;
