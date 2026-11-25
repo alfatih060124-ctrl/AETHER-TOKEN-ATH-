@@ -3,31 +3,20 @@
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#080807;color:#f6f0dc}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#28200f,#080807 60%);min-height:100vh}a{color:inherit;text-decoration:none}header{border-bottom:1px solid #6d572a;position:sticky;top:0;background:#0b0a08ee;z-index:2}.wrap{width:min(1140px,calc(100% - 32px));margin:auto}.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:17px 0}.brand{font-weight:800;letter-spacing:.14em;color:#e8c579}.brand small{display:block;font-size:10px;letter-spacing:.23em;color:#bcb09b}.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}select,button{background:#17140d;border:1px solid #8c703a;color:#f8ebc6;border-radius:10px;padding:11px 14px;font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.primary{background:linear-gradient(120deg,#c9a45c,#e5ce91);color:#171108;font-weight:750}nav{display:flex;gap:8px;overflow-x:auto;padding:16px 0;scrollbar-width:thin}nav a{white-space:nowrap;padding:11px 14px;border:1px solid #493c22;border-radius:10px;color:#c6bba1}nav a.active{background:#b99652;color:#100d07}h1{font-size:clamp(27px,5vw,43px);margin:32px 0 8px}h2{font-size:20px;color:#e8c579}.muted{color:#b4aa95;line-height:1.7}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:22px 0}.panel{background:linear-gradient(145deg,#1d1910,#10100e);border:1px solid #51432a;border-radius:16px;padding:22px;min-width:0}.metric{font-size:24px;font-weight:750;color:#f5d894;overflow-wrap:anywhere}.tag{font-size:12px;color:#e8c579}.detail{display:none}.detail.active{display:block}.notice{border-left:3px solid #d7b66f;padding:12px 17px;background:#241e13;margin:22px 0;border-radius:0 9px 9px 0}.rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.rowitem{padding:13px;border:1px solid #413824;border-radius:9px}.rowitem strong{display:block;margin-top:8px}.hidden{display:none!important}footer{color:#968b76;padding:32px 0}@media(max-width:720px){.grid,.rows{grid-template-columns:1fr}.panel{padding:17px}nav a{font-size:13px}header .bar{align-items:flex-start}}
 </style></head><body>
-<header><div class="wrap bar"><a href="/" class="brand">AETHER <small data-reg="brandSub">STAKING MEMBER</small></a><div class="tools"><select id="lang" aria-label="Bahasa" data-reg-aria="languageLabel"><option value="id">Indonesia</option><option value="en">English</option><option value="zh">中文</option><option value="es">Español</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="ko">한국어</option><option value="ja">日本語</option><option value="vi">Tiếng Việt</option><option value="pt">Português</option></select><button id="connect" class="primary" type="button" disabled aria-disabled="true" title="Koneksi wallet menunggu pemeriksaan keamanan" data-reg-title="connectPending" data-t="connect">Hubungkan Wallet</button></div></div></header>
+<header><div class="wrap bar"><a href="/" class="brand">AETHER <small data-reg="brandSub">STAKING MEMBER</small></a><div class="tools"><select id="lang" aria-label="Bahasa" data-reg-aria="languageLabel"><option value="id">Indonesia</option><option value="en">English</option><option value="zh">中文</option><option value="es">Español</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="ko">한국어</option><option value="ja">日本語</option><option value="vi">Tiếng Việt</option><option value="pt">Português</option></select><button id="connect" class="primary" type="button">Logout</button></div></div></header>
 <main class="wrap"><h1 data-t="title">Area Member Staking</h1><p class="muted" data-t="intro">Dasbor khusus member ATH Staking. Informasi on-chain akan tersedia setelah koneksi wallet dan kontrak terverifikasi.</p>
-<div class="notice" role="status" data-t="notice">Mode aman: transaksi dan koneksi wallet dinonaktifkan sampai integrasi referral, kontrak, dan pemeriksaan keamanan selesai. Tidak ada saldo atau bonus yang disimulasikan.</div>
-<section class="panel" id="test-registration" aria-labelledby="test-registration-title">
-  <h2 id="test-registration-title" data-reg="registrationTitle">Uji Pendaftaran Member (Lokal)</h2>
-  <p class="muted" data-reg="registrationNote">Hanya untuk pengujian antarmuka: akun disimpan di browser ini, bukan di server atau smart contract. Jangan masukkan seed phrase atau private key.</p>
-  <form id="test-registration-form">
-    <div class="rows">
-      <label class="rowitem"><span data-reg="walletAddress">Alamat wallet EVM Anda</span><input id="test-wallet" required inputmode="text" autocomplete="off" placeholder="0x… (42 karakter)" data-reg-placeholder="addressHint" pattern="0x[a-fA-F0-9]{40}" maxlength="42" style="display:block;width:100%;margin-top:8px;background:#080807;color:#f6f0dc;border:1px solid #8c703a;border-radius:8px;padding:12px"></label>
-      <label class="rowitem"><span data-reg="sponsorAddress">Alamat wallet sponsor</span><input id="test-sponsor" required inputmode="text" autocomplete="off" placeholder="0x… (42 karakter)" data-reg-placeholder="addressHint" pattern="0x[a-fA-F0-9]{40}" maxlength="42" style="display:block;width:100%;margin-top:8px;background:#080807;color:#f6f0dc;border:1px solid #8c703a;border-radius:8px;padding:12px"></label>
-    </div>
-    <p><button class="primary" type="submit" data-reg="createAccount">Buat Akun Uji Lokal</button> <button type="button" id="test-clear" data-reg="clearTest">Hapus Data Uji</button></p>
-    <p id="test-result" class="muted" role="status" aria-live="polite"></p>
-  </form>
-</section>
+<div class="notice" role="status" id="member-notice">Account registration only. Financial transactions remain disabled until contracts are verified.</div>
+<section class="panel" id="account-profile" aria-live="polite"><h2 id="profile-heading">Account</h2><div class="rows"><div class="rowitem"><span id="profile-wallet-label">Wallet</span><strong id="profile-wallet">—</strong></div><div class="rowitem"><span id="profile-sponsor-label">Sponsor</span><strong id="profile-sponsor">—</strong></div><div class="rowitem"><span>Rank</span><strong id="profile-rank">—</strong></div><div class="rowitem" id="profile-master" hidden><span id="profile-allocation-label">Unfunded master allocation</span><strong id="profile-allocation">—</strong><p id="profile-master-note" class="muted"></p></div></div><p id="profile-status" class="muted">Verifying session…</p></section>
 <nav id="tabs" aria-label="Navigasi member" data-reg-aria="navigationLabel"><a href="#dashboard" data-tab="dashboard" data-t="dashboard">Dasbor</a><a href="#positions" data-tab="positions" data-t="positions">Posisi Staking</a><a href="#rewards" data-tab="rewards" data-t="rewards">Reward</a><a href="#network" data-tab="network" data-t="network">Jaringan Saya</a><a href="#lifestyle" data-tab="lifestyle" data-t="lifestyle">Lifestyle Bonus</a><a href="#rank" data-tab="rank" data-t="rank">Rank & Gaji</a><a href="#referral" data-tab="referral" data-t="referral">Referral</a><a href="#history" data-tab="history" data-t="history">Riwayat</a></nav>
-<section id="dashboard" class="detail"><h2 data-t="dashboard">Dasbor</h2><div class="grid"><div class="panel"><span data-t="wallet">Status Wallet</span><div class="metric" data-t="notconnected">Belum Terhubung</div></div><div class="panel"><span data-t="active">Staking Aktif</span><div class="metric">—</div><small data-t="unavailable">Belum tersedia</small></div><div class="panel"><span data-t="totalreward">Total Reward</span><div class="metric">—</div><small data-t="unavailable">Belum tersedia</small></div></div></section>
+<section id="dashboard" class="detail"><h2 data-t="dashboard">Dasbor</h2><div class="grid"><div class="panel"><span data-t="wallet">Status Wallet</span><div class="metric" id="session-wallet">—</div></div><div class="panel"><span data-t="active">Staking Aktif</span><div class="metric">—</div><small data-t="unavailable">Belum tersedia</small></div><div class="panel"><span data-t="totalreward">Total Reward</span><div class="metric">—</div><small data-t="unavailable">Belum tersedia</small></div></div></section>
 <section id="positions" class="detail"><h2 data-t="positions">Posisi Staking</h2><div class="grid" id="package-cards" aria-label="Paket Staking" data-reg-aria="packagesLabel"></div><div class="panel"><p data-t="positiontext">Daftar paket, nilai pokok, durasi, dan tanggal unlock akan dibaca dari kontrak terverifikasi.</p></div></section>
 <section id="rewards" class="detail"><h2 data-t="rewards">Reward</h2><div class="panel"><p data-t="rewardtext">Reward harian dan status klaim akan ditampilkan berdasarkan data on-chain. Klaim belum aktif.</p></div></section>
 <section id="network" class="detail"><h2 data-t="network">Jaringan Saya</h2><div class="panel"><p data-t="networktext">Pohon sponsor, anggota langsung dan tidak langsung, serta total omzet grup akan ditampilkan setelah verifikasi data.</p></div></section>
 <section id="lifestyle" class="detail"><h2 data-t="lifestyle">Lifestyle Bonus</h2><div class="panel"><p data-t="lifestyletext">Lifestyle Bonus adalah Network Bonus Level 1–10, bukan program bonus terpisah.</p><div class="rows" id="levels"></div></div></section>
 <section id="rank" class="detail"><h2 data-t="rank">Rank & Gaji</h2><div class="panel"><p data-t="ranktext">Kualifikasi Rank: omzet staking pribadi kumulatif ditambah seluruh omzet grup langsung dan tidak langsung, tanpa mengurangi kaki terbesar atau menghitung ganda omzet pribadi. Perhitungan aktual menunggu kontrak terverifikasi.</p><div class="rows" id="ranks"></div></div></section>
-<section id="referral" class="detail"><h2 data-t="referral">Referral</h2><div class="panel"><p data-t="referraltext">Link sponsor dan pengikatan sponsor akan diaktifkan setelah pemeriksaan alur referral selesai. Koneksi tanpa referral tidak dibuka.</p></div></section>
+<section id="referral" class="detail"><h2 data-t="referral">Referral</h2><div class="panel"><p id="referral-info">Link sponsor dan pengikatan sponsor akan diaktifkan setelah pemeriksaan alur referral selesai. Koneksi tanpa referral tidak dibuka.</p><input id="member-referral" readonly aria-label="Referral link" style="width:100%;padding:12px;background:#080807;color:#f6f0dc;border:1px solid #8c703a;border-radius:8px"><p><button id="copy-referral" type="button">Copy referral</button></p></div></section>
 <section id="history" class="detail"><h2 data-t="history">Riwayat</h2><div class="panel"><p data-t="historytext">Riwayat staking, reward, bonus jaringan, dan klaim akan berasal dari data transaksi yang terverifikasi.</p></div></section>
-<footer>AETHER STAKING · <span data-t="readonly">Pratinjau member — tanpa transaksi</span></footer></main>
+<footer>AETHER STAKING · <span data-t="readonly">Member — transaksi nonaktif</span></footer></main>
 <script src="/staking-member-registration-i18n.js"></script>
 <script>
 (()=>{'use strict';
@@ -75,47 +64,45 @@ vi:{duration:'Thời hạn',daily:'Thưởng mỗi ngày',range:'Giá trị gói
 pt:{duration:'Duração',daily:'Recompensa diária',range:'Valor do pacote $10–$50.000',disclaimer:'Informação do programa, sem garantia de retorno.'}
 };
 function renderPackages(code){const l=packageLabels[code]||packageLabels.en;const nodes=packages.map(p=>{const box=document.createElement('div');box.className='panel';const title=document.createElement('h2');title.textContent=p.days+' '+(code==='id'?'hari':code==='en'?'days':code==='zh'?'天':code==='es'?'días':code==='ar'?'يوم':code==='ru'?'дней':code==='ko'?'일':code==='ja'?'日':code==='vi'?'ngày':'dias');const reward=document.createElement('div');reward.className='metric';reward.textContent=p.rate;const label=document.createElement('p');label.className='muted';label.textContent=l.daily;box.append(title,reward,label);return box});const note=document.createElement('div');note.className='panel';const range=document.createElement('strong');range.textContent=l.range;const disclaimer=document.createElement('p');disclaimer.className='muted';disclaimer.textContent=l.disclaimer;note.append(range,disclaimer);document.getElementById('package-cards').replaceChildren(...nodes,note)}
-const REG=window.ATH_STAKING_MEMBER_REG_I18N || {};
-const walletInput=document.getElementById('test-wallet'),sponsorInput=document.getElementById('test-sponsor'),result=document.getElementById('test-result');
-const langSelector=document.getElementById('lang');
+const REG=window.ATH_STAKING_MEMBER_REG_I18N||{};
 const params=new URLSearchParams(location.search);
-function localText(key){const data=REG[langSelector.value]||REG.en||{};return data[key]||REG.en?.[key]||'';}
-let registrationMessageKey='';
-function showRegistrationMessage(key){registrationMessageKey=key;result.textContent=localText(key);}
+let member=null;
 function applyRegistrationTranslations(){
- document.querySelectorAll('[data-reg]').forEach(el=>{const value=localText(el.dataset.reg);if(value)el.textContent=value});
- document.querySelectorAll('[data-reg-placeholder]').forEach(el=>{const value=localText(el.dataset.regPlaceholder);if(value)el.placeholder=value});
- document.querySelectorAll('[data-reg-title]').forEach(el=>{const value=localText(el.dataset.regTitle);if(value)el.title=value});
- document.querySelectorAll('[data-reg-aria]').forEach(el=>{const value=localText(el.dataset.regAria);if(value)el.setAttribute('aria-label',value)});
- if(registrationMessageKey)result.textContent=localText(registrationMessageKey);
+ const code=document.getElementById('lang').value;
+ const data=REG[code]||REG.en||{};
+ for(const el of document.querySelectorAll('[data-reg]')){const t=data[el.dataset.reg]||REG.en?.[el.dataset.reg];if(t)el.textContent=t;}
+ for(const el of document.querySelectorAll('[data-reg-aria]')){const t=data[el.dataset.regAria]||REG.en?.[el.dataset.regAria];if(t)el.setAttribute('aria-label',t);}
 }
-const sponsorFromLink=params.get('ref')||params.get('sponsor');
-const validReferral=/^0x[a-fA-F0-9]{40}$/.test(sponsorFromLink||'');
-sponsorInput.readOnly=true;
-sponsorInput.setAttribute('aria-readonly','true');
-if(validReferral)sponsorInput.value=sponsorFromLink;
-else showRegistrationMessage('missingReferral');
-const storageKey='ath-staking-local-test-account-v1';let testAccount=null;
-try{const saved=JSON.parse(localStorage.getItem(storageKey)||'null');if(saved&&/^0x[a-fA-F0-9]{40}$/.test(saved.wallet)&&/^0x[a-fA-F0-9]{40}$/.test(saved.sponsor)){testAccount=saved;walletInput.value=saved.wallet;sponsorInput.value=saved.sponsor;showRegistrationMessage('savedAccount')}}catch{}
-document.getElementById('test-registration-form').addEventListener('submit',e=>{
- e.preventDefault();
- if(!validReferral){showRegistrationMessage('referralRejected');return}
- const wallet=walletInput.value.trim(),sponsor=sponsorInput.value.trim();
- if(!/^0x[a-fA-F0-9]{40}$/.test(wallet)||!/^0x[a-fA-F0-9]{40}$/.test(sponsor)){showRegistrationMessage('invalidAddresses');return}
- if(wallet.toLowerCase()===sponsor.toLowerCase()){showRegistrationMessage('selfReferral');return}
- if(testAccount&&testAccount.wallet.toLowerCase()===wallet.toLowerCase()&&testAccount.sponsor.toLowerCase()!==sponsor.toLowerCase()){showRegistrationMessage('sponsorImmutable');return}
- testAccount={wallet,sponsor,createdAt:new Date().toISOString(),mode:'browser-local-only'};
- try{localStorage.setItem(storageKey,JSON.stringify(testAccount));showRegistrationMessage('accountCreated')}
- catch{showRegistrationMessage('storageError')}
-});
-document.getElementById('test-clear').addEventListener('click',()=>{
- try{localStorage.removeItem(storageKey)}catch{}
- testAccount=null;walletInput.value='';sponsorInput.value=validReferral?sponsorFromLink:'';
- showRegistrationMessage('dataCleared');
-});
+function renderProfile(){
+ const id=document.getElementById('lang').value==='id';
+ const t=(a,b)=>id?a:b, set=(key,value)=>{document.getElementById(key).textContent=value;};
+ set('profile-heading',t('Akun member','Member account'));
+ set('profile-wallet-label',t('Alamat wallet','Wallet address'));
+ set('profile-sponsor-label',t('Sponsor tetap','Permanent sponsor'));
+ set('connect',t('Keluar','Logout'));
+ set('member-notice',t('Registrasi akun saja. Transaksi finansial belum aktif.','Account registration only. Financial transactions remain disabled.'));
+ set('copy-referral',t('Salin referral','Copy referral'));
+ if(!member)return;
+ set('profile-wallet',member.wallet);set('session-wallet',member.wallet);
+ set('profile-sponsor',member.sponsor||'Master');
+ set('profile-rank',member.is_master&&member.rank===8?'R8':'—');
+ set('profile-status',t('Akun terautentikasi di server.','Account authenticated by server.'));
+ if(member.is_master&&member.funded===false){
+  document.getElementById('profile-master').hidden=false;
+  set('profile-allocation-label',t('Alokasi khusus Master (belum didanai)','Special Master allocation (unfunded)'));
+  set('profile-allocation',new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(member.allocation_usd))+' / '+member.duration_days+' '+t('hari','days'));
+  set('profile-master-note',t('Bukan saldo staking aktif atau kontrak on-chain.','Not an active staking balance or on-chain contract.'));
+ }
+ const referral=new URL('/',location.origin);referral.searchParams.set('ref',member.wallet);
+ document.getElementById('member-referral').value=referral.href;
+ set('referral-info',t('Bagikan tautan referral pribadi Anda. Sponsor terikat setelah registrasi terverifikasi.','Share your personal referral link. Sponsors are bound after verified registration.'));
+}
+document.getElementById('copy-referral').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(document.getElementById('member-referral').value)}catch{document.getElementById('member-referral').select()}});
+document.getElementById('connect').addEventListener('click',async()=>{try{const r=await fetch('/api/member/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',credentials:'same-origin'});if(r.ok)location.replace('/');else throw Error()}catch{document.getElementById('profile-status').textContent='Logout failed. Try again.'}});
+async function loadMember(){try{const r=await fetch('/api/member/session',{credentials:'same-origin',cache:'no-store'});if(r.status===401){location.replace('/');return;}const b=await r.json();if(!r.ok||!b.ok||!b.member)throw Error();member=b.member;renderProfile();}catch{document.getElementById('profile-status').textContent='Session unavailable. Return to the public page and reconnect.';}}
 const lang=document.getElementById('lang');try{const preferred=params.get('lang') || localStorage.getItem('aether-staking-member-lang') || localStorage.getItem('aether-language');if(languages.includes(preferred))lang.value=preferred}catch{}
-function apply(){const i=languages.indexOf(lang.value);document.documentElement.lang=lang.value;document.documentElement.dir=lang.value==='ar'?'rtl':'ltr';document.title='AETHER Staking — '+D.title[i];renderPackages(lang.value);document.querySelectorAll('[data-t]').forEach(el=>{const t=D[el.dataset.t];if(t)el.textContent=t[i]||t[1]});applyRegistrationTranslations();try{localStorage.setItem('aether-staking-member-lang',lang.value);localStorage.setItem('aether-language',lang.value)}catch{}}
+function apply(){const i=languages.indexOf(lang.value);document.documentElement.lang=lang.value;document.documentElement.dir=lang.value==='ar'?'rtl':'ltr';document.title='AETHER Staking — '+D.title[i];renderPackages(lang.value);document.querySelectorAll('[data-t]').forEach(el=>{const t=D[el.dataset.t];if(t)el.textContent=t[i]||t[1]});applyRegistrationTranslations();renderProfile();try{localStorage.setItem('aether-staking-member-lang',lang.value);localStorage.setItem('aether-language',lang.value)}catch{}}
 function navigate(){const id=location.hash.slice(1);const active=['dashboard','positions','rewards','network','lifestyle','rank','referral','history'].includes(id)?id:'dashboard';document.querySelectorAll('.detail').forEach(x=>x.classList.toggle('active',x.id===active));document.querySelectorAll('[data-tab]').forEach(x=>{const yes=x.dataset.tab===active;x.classList.toggle('active',yes);if(yes)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')})}
-lang.addEventListener('change',apply);window.addEventListener('hashchange',navigate);apply();navigate();
+lang.addEventListener('change',apply);window.addEventListener('hashchange',navigate);apply();navigate();loadMember();
 })();
 </script></body></html>
