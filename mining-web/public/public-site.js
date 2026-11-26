@@ -112,18 +112,93 @@
   aetherSDK.src="https://wallet.aether.boats/sdk/aether-wallet.js";
   aetherSDK.async=true;
   document.head.append(aetherSDK);
-  async function connectAetherApp(){
-    if(typeof window.AetherWallet?.connect!=="function"){
-      status.textContent=txt("SDK AETHER Wallet belum tersedia. Coba lagi atau buka situs melalui browser DApp AETHER Wallet.","AETHER Wallet SDK unavailable. Try again or open this site in AETHER Wallet DApp browser.");
-      return;
+  // Official SDK is a deep-link launcher, not a Promise returning an account.
+  // The callback is only an account hint; the server must verify the signature.
+  let externalConnection=null, handlingCallback=false;
+  const pendingPrefix="ath-staking-wallet-request:";
+  const hintKey="ath-staking-wallet-hint";
+  const callbackURL=()=>{const u=new URL(location.href);u.hash="";return u.href;};
+  function rememberRequest(request,kind,extra={}){
+    const data={kind,expires:Date.now()+300000,origin:location.origin,...extra};
+    localStorage.setItem(pendingPrefix+request.requestId,JSON.stringify(data));
+  }
+  function takeRequest(id){
+    if(typeof id!=="string"||!/^[a-z0-9-]{1,100}$/i.test(id))return null;
+    try{const key=pendingPrefix+id,raw=localStorage.getItem(key);localStorage.removeItem(key);const d=JSON.parse(raw||"null");return d&&d.origin===location.origin&&d.expires>Date.now()?d:null;}catch{return null;}
+  }
+  function clearCallback(){const u=new URL(location.href);u.hash="";history.replaceState(null,"",u.pathname+u.search);}
+  function setExternal(address,referral,expires=Date.now()+300000){
+    externalConnection={address,referral,expires};
+    try{sessionStorage.setItem(hintKey,JSON.stringify(externalConnection));}catch{}
+    paintConnection();
+  }
+  function clearExternal(){externalConnection=null;try{sessionStorage.removeItem(hintKey);}catch{}paintConnection();}
+  function restoreExternal(){
+    try{const d=JSON.parse(sessionStorage.getItem(hintKey)||"null");if(d&&validAccount(d.address)&&d.expires>Date.now())externalConnection=d;}catch{}
+  }
+  function showWalletStatus(message){if(!dialog.open)dialog.showModal();title.textContent=txt("Verifikasi Login","Verify Login");status.textContent=message;}
+  function connectAetherApp(){
+    if(typeof window.AetherWallet?.createConnectLink!=="function"){
+      showWalletStatus(txt("SDK AETHER Wallet belum tersedia. Coba lagi.","AETHER Wallet SDK unavailable. Try again."));return;
     }
     try{
-      status.textContent=txt("Membuka AETHER Wallet. Setujui koneksi di aplikasi.","Opening AETHER Wallet. Approve the connection in the app.");
-      await window.AetherWallet.connect({chain:"bsc"});
-      status.textContent=txt("Permintaan koneksi selesai. Login member memerlukan verifikasi tanda tangan di server.","Connection request completed. Member login requires server signature verification.");
-    }catch(e){
-      status.textContent=txt("Koneksi belum berhasil. Pastikan AETHER Wallet terinstal dan coba lagi.","Connection unsuccessful. Ensure AETHER Wallet is installed and try again.");
-    }
+      const params=new URLSearchParams(location.search);
+      const referral=params.get("ref")||params.get("sponsor")||undefined;
+      const request=window.AetherWallet.createConnectLink({chain:"bsc",callback:callbackURL()});
+      rememberRequest(request,"connect",{referral});
+      showWalletStatus(txt("Setujui koneksi di AETHER Wallet, lalu kembali ke Chrome.","Approve connection in AETHER Wallet, then return to Chrome."));
+      location.assign(request.url);
+    }catch{showWalletStatus(txt("Tidak dapat membuka AETHER Wallet atau penyimpanan browser tidak tersedia.","Unable to open AETHER Wallet or browser storage is unavailable."));}
+  }
+  function callbackSignature(value,encoding){
+    if(typeof value!=="string"||value.length>256)return null;
+    if(/^0x[0-9a-f]{130}$/i.test(value))return value;
+    if(/^[0-9a-f]{130}$/i.test(value))return "0x"+value;
+    if(!/^(base64|base64url)$/i.test(encoding||""))return null;
+    try{const raw=value.replace(/-/g,"+").replace(/_/g,"/");const bytes=atob(raw+"=".repeat((4-raw.length%4)%4));return bytes.length===65?"0x"+Array.from(bytes,x=>x.charCodeAt(0).toString(16).padStart(2,"0")).join(""):null;}catch{return null;}
+  }
+  async function verifyExternal(){
+    if(authenticating||!externalConnection)return;
+    if(externalConnection.expires<=Date.now()){clearExternal();showWalletStatus(txt("Sesi koneksi kedaluwarsa. Hubungkan wallet kembali.","Connection expired. Connect your wallet again."));return;}
+    if(typeof window.AetherWallet?.createSignMessageLink!=="function"){showWalletStatus(txt("SDK tanda tangan belum siap. Coba lagi.","Signing SDK not ready. Try again."));return;}
+    authenticating=true;
+    try{
+      const {address,referral}=externalConnection;
+      showWalletStatus(txt("Memeriksa akun dan referral...","Checking account and referral..."));
+      const challenge=await memberPost("/api/member/challenge",{wallet:address,referral});
+      validateChallenge(challenge,address);
+      const request=window.AetherWallet.createSignMessageLink({chain:"bsc",address,message:challenge.message,callback:callbackURL()});
+      rememberRequest(request,"sign",{address,nonce:challenge.nonce,referral});
+      // Render an explicit click target so Chrome has a fresh user gesture.
+      list.replaceChildren();
+      row(txt("Buka AETHER Wallet & tanda tangani","Open AETHER Wallet & sign"),()=>{location.assign(request.url);},"aether");
+      status.textContent=txt("Tanda tangani pesan login saja. Tidak ada transaksi atau persetujuan token.","Sign the login message only. No transaction or token approval.");
+    }catch(e){showWalletStatus(authError(e));}finally{authenticating=false;}
+  }
+  async function handleAetherCallback(){
+    if(handlingCallback)return;
+    const p=new URLSearchParams(location.hash.slice(1));
+    if(!p.has("aether_status"))return;
+    handlingCallback=true;
+    try{
+      const d=takeRequest(p.get("aether_request_id"));
+      clearCallback();
+      if(!d||p.get("aether_chain")!=="bsc")throw Error("CALLBACK_INVALID");
+      if(/reject|cancel|error|fail|denied/i.test(p.get("aether_status")||""))throw Error("CALLBACK_REJECTED");
+      const address=p.get("aether_address");
+      if(d.kind==="connect"){
+        if(!validAccount(address))throw Error("CALLBACK_INVALID");
+        setExternal(address,d.referral);
+        list.replaceChildren();row(txt("Verifikasi Login","Verify Login"),verifyExternal,"aether");
+        showWalletStatus(txt("Alamat wallet diterima. Verifikasi tanda tangan untuk masuk ke akun member.","Wallet address received. Verify your signature to access your member account."));
+      }else if(d.kind==="sign"){
+        const sig=callbackSignature(p.get("aether_signature"),p.get("aether_signature_encoding"));
+        if(!sig||!validAccount(address)||address.toLowerCase()!==d.address.toLowerCase())throw Error("CALLBACK_INVALID");
+        showWalletStatus(txt("Memverifikasi tanda tangan di server...","Verifying signature on server..."));
+        await completeLogin(d.address,d.nonce,sig);
+        clearExternal();
+      }else throw Error("CALLBACK_INVALID");
+    }catch(e){showWalletStatus(e.message==="CALLBACK_INVALID"?txt("Callback tidak valid atau sudah kedaluwarsa. Hubungkan wallet kembali.","Invalid or expired callback. Connect your wallet again."):authError(e));}finally{handlingCallback=false;}
   }
   const wallets=[
     ["AETHER Wallet",/aether/i,null,"aether"],
@@ -153,10 +228,10 @@
     return [...new Set(all.filter(p=>typeof p?.request==="function"))];
   }
   function paintConnection(){
-    const connected=!!activeConnection;
+    const connected=!!activeConnection||!!(externalConnection&&externalConnection.expires>Date.now());
     connectionHint.hidden=!connected;
     button.textContent=connected?txt("Verifikasi Login","Verify Login"):txt("Hubungkan Wallet","Connect Wallet");
-    connectionHint.textContent=connected?txt("Wallet terhubung · verifikasi login diperlukan","Wallet connected · login verification required"):"";
+    connectionHint.textContent=connected?(activeConnection?txt("Wallet terhubung · verifikasi login diperlukan","Wallet connected · login verification required"):txt("Alamat diterima · verifikasi login diperlukan","Address received · login verification required")):"";
   }
   async function readApproved(p){
     try{
@@ -187,32 +262,39 @@
     if(!r.ok||!b.ok){const err=new Error(b.error||"AUTH_FAILED");throw err;}
     return b;
   }
+  function validateChallenge(challenge,address){
+    if(typeof challenge.message!=="string"||!challenge.message.startsWith("AETHER ATH Staking member authentication\n")||!challenge.message.includes("Origin: https://staking.aether.boats\n")||!challenge.message.includes("Wallet: "+address.toLowerCase()+"\n")||!/^[a-f0-9]{64}$/.test(challenge.nonce||""))throw Error("INVALID_CHALLENGE");
+  }
+  function authError(e){
+    const messages={REFERRAL_REQUIRED:txt("Member baru wajib membuka tautan referral sponsor.","New members must open a sponsor referral link."),INVALID_SPONSOR:txt("Sponsor belum terdaftar atau tidak valid.","Sponsor is not registered or invalid."),MEMBER_API_UNAVAILABLE:txt("Registrasi belum dibuka. Silakan coba setelah sistem siap.","Registration is not open yet. Please try after the system is ready.")};
+    const signingDisabled=/sign(?:ing|ature)?[^\n]*(?:disabled|not supported|not allowed|unsupported)|(?:disabled|unsupported)[^\n]*sign|personal_sign/i.test(String(e?.message||""))||Number(e?.code)===4200;
+    return messages[e.message]||(signingDisabled?txt("Wallet sudah terhubung, tetapi tanda tangan DApp belum diizinkan. Gunakan wallet yang mendukung tanda tangan pesan.","Wallet connected, but message signing is unavailable. Use a wallet that supports message signing."):txt("Login dibatalkan atau gagal. Silakan coba lagi.","Login canceled or failed. Please try again."));
+  }
+  async function completeLogin(address,nonce,signature){
+    const result=await memberPost("/api/member/verify",{nonce,signature});
+    if(result.member?.wallet!==address.toLowerCase())throw Error("INVALID_SESSION");
+    const session=await fetch("/api/member/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json());
+    if(!session.ok||session.member?.wallet!==address.toLowerCase())throw Error("INVALID_SESSION");
+    const lang=document.getElementById("aetherLangSelect")?.value||"en";
+    location.assign("/staking-member.html?lang="+encodeURIComponent(lang));
+  }
   async function connect(p){
     if(authenticating)return;
     authenticating=true;
     try{
       const approved=await readApproved(p);
       const address=approved||(await p.request({method:"eth_requestAccounts"}))?.[0];
-      if(!/^0x[0-9a-f]{40}$/i.test(address||""))throw new Error("INVALID_WALLET");
+      if(!validAccount(address))throw Error("INVALID_WALLET");
       const params=new URLSearchParams(location.search);
       const referral=params.get("ref")||params.get("sponsor")||undefined;
       status.textContent=txt("Memeriksa akun dan referral...","Checking account and referral...");
       const challenge=await memberPost("/api/member/challenge",{wallet:address,referral});
-      if(typeof challenge.message!=="string"||!challenge.message.startsWith("AETHER ATH Staking member authentication\n")||!challenge.message.includes("Origin: https://staking.aether.boats\n")||!challenge.message.includes("Wallet: "+address.toLowerCase()+"\n"))throw new Error("INVALID_CHALLENGE");
+      validateChallenge(challenge,address);
       status.textContent=txt("Setujui tanda tangan login. Tidak ada transaksi atau persetujuan token.","Approve the login signature. No transaction or token approval.");
       const hex="0x"+Array.from(new TextEncoder().encode(challenge.message),b=>b.toString(16).padStart(2,"0")).join("");
       const signature=await p.request({method:"personal_sign",params:[hex,address]});
-      const result=await memberPost("/api/member/verify",{nonce:challenge.nonce,signature});
-      if(result.member?.wallet!==address.toLowerCase())throw new Error("INVALID_SESSION");
-      const session=await fetch("/api/member/session",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json());
-      if(!session.ok||session.member?.wallet!==address.toLowerCase())throw new Error("INVALID_SESSION");
-      const lang=document.getElementById("aetherLangSelect")?.value||"en";
-      location.assign("/staking-member.html?lang="+encodeURIComponent(lang));
-    }catch(e){
-      const messages={REFERRAL_REQUIRED:txt("Member baru wajib membuka tautan referral sponsor.","New members must open a sponsor referral link."),INVALID_SPONSOR:txt("Sponsor belum terdaftar atau tidak valid.","Sponsor is not registered or invalid."),MEMBER_API_UNAVAILABLE:txt("Registrasi belum dibuka. Silakan coba setelah sistem siap.","Registration is not open yet. Please try after the system is ready.")};
-      const signingDisabled=/sign(?:ing|ature)?[^\n]*(?:disabled|not supported|not allowed|unsupported)|(?:disabled|unsupported)[^\n]*sign|personal_sign/i.test(String(e?.message||""))||Number(e?.code)===4200;
-      status.textContent=messages[e.message]||(signingDisabled?txt("Wallet sudah terhubung, tetapi tanda tangan DApp belum diizinkan. Aktifkan izin tanda tangan pesan di wallet jika tersedia, atau gunakan wallet kompatibel. Login tetap memerlukan verifikasi.","Wallet connected, but DApp message signing is unavailable. Enable message signing permission if available, or use a compatible wallet. Login still requires verification."):txt("Login dibatalkan atau gagal. Silakan coba lagi.","Login canceled or failed. Please try again."));
-    }finally{authenticating=false;}
+      await completeLogin(address,challenge.nonce,signature);
+    }catch(e){status.textContent=authError(e);}finally{authenticating=false;}
   }
   function row(label,action,key="other"){
     const b=document.createElement("button");b.type="button";b.className="ath-wallet-option";b.dataset.wallet=key;
@@ -235,13 +317,18 @@
     row(txt("Wallet browser lainnya","Other browser wallet"),()=>{if(window.ethereum?.request)return connect(window.ethereum);status.textContent=txt("WalletConnect QR belum dikonfigurasi. Gunakan browser DApp wallet Anda.","WalletConnect QR is not configured yet. Use your wallet's DApp browser.");});
     if(!dialog.open)dialog.showModal();
   }
-  document.addEventListener("click",e=>{if(e.target.closest?.("#connectBtn")){e.preventDefault();e.stopImmediatePropagation();open();if(activeConnection)connect(activeConnection.p);}},true);
+  document.addEventListener("click",e=>{if(e.target.closest?.("#connectBtn")){e.preventDefault();e.stopImmediatePropagation();open();if(activeConnection)connect(activeConnection.p);else if(externalConnection)verifyExternal();}},true);
   window.addEventListener("eip6963:announceProvider",()=>syncConnection());
   window.addEventListener("focus",()=>syncConnection());
   window.addEventListener("pageshow",()=>syncConnection());
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncConnection();});
   document.getElementById("aetherLangSelect")?.addEventListener("change",paintConnection);
   window.addEventListener("aether-language-refresh",paintConnection);
+  restoreExternal();
+  paintConnection();
+  window.addEventListener("hashchange",handleAetherCallback);
+  window.addEventListener("pageshow",handleAetherCallback);
+  handleAetherCallback();
   syncConnection();
   setTimeout(syncConnection,700);
   setTimeout(syncConnection,2000);
