@@ -103,7 +103,7 @@
   const dialog=document.createElement("dialog");dialog.className="ath-wallet-picker";dialog.setAttribute("aria-label","Connect Wallet");
   const title=document.createElement("h2"),close=document.createElement("button"),list=document.createElement("div"),status=document.createElement("p");
   close.type="button";close.textContent="×";close.setAttribute("aria-label","Close");close.className="ath-wallet-close";status.setAttribute("role","status");status.setAttribute("aria-live","polite");
-  dialog.append(close,title,list,status);document.body.append(dialog);
+  dialog.append(close,title,status,list);document.body.append(dialog);
   close.onclick=()=>dialog.close();
   const target=()=>{const u=new URL(location.origin+"/");const q=new URLSearchParams(location.search);for(const key of ["ref","sponsor"]){const v=q.get(key);if(/^0x[0-9a-f]{40}$/i.test(v||""))u.searchParams.set(key,v);}return u.href;};
   // First-party SDK handles the app link and callback format. Never treat an
@@ -294,7 +294,13 @@
       const hex="0x"+Array.from(new TextEncoder().encode(challenge.message),b=>b.toString(16).padStart(2,"0")).join("");
       const signature=await p.request({method:"personal_sign",params:[hex,address]});
       await completeLogin(address,challenge.nonce,signature);
-    }catch(e){status.textContent=authError(e);}finally{authenticating=false;}
+    }catch(e){
+      title.textContent=txt("Verifikasi Login","Verify Login");
+      list.replaceChildren();
+      status.textContent=authError(e);
+      row(txt("Coba verifikasi lagi","Retry verification"),()=>openVerification({p}),"other");
+      row(txt("Pilih wallet lain","Choose another wallet"),open,"other");
+    }finally{authenticating=false;}
   }
   function row(label,action,key="other"){
     const b=document.createElement("button");b.type="button";b.className="ath-wallet-option";b.dataset.wallet=key;
@@ -317,7 +323,21 @@
     row(txt("Wallet browser lainnya","Other browser wallet"),()=>{if(window.ethereum?.request)return connect(window.ethereum);status.textContent=txt("WalletConnect QR belum dikonfigurasi. Gunakan browser DApp wallet Anda.","WalletConnect QR is not configured yet. Use your wallet's DApp browser.");});
     if(!dialog.open)dialog.showModal();
   }
-  document.addEventListener("click",e=>{if(e.target.closest?.("#connectBtn")){e.preventDefault();e.stopImmediatePropagation();open();if(activeConnection)connect(activeConnection.p);else if(externalConnection)verifyExternal();}},true);
+  function openVerification(connection){
+    if(authenticating)return;
+    list.replaceChildren();
+    title.textContent=txt("Verifikasi Login","Verify Login");
+    status.textContent=txt("Memverifikasi wallet yang sudah terhubung…","Verifying the connected wallet…");
+    if(!dialog.open)dialog.showModal();
+    if(connection)connect(connection.p);else verifyExternal();
+  }
+  document.addEventListener("click",e=>{
+    if(!e.target.closest?.("#connectBtn"))return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(activeConnection){openVerification(activeConnection);return;}
+    if(externalConnection&&externalConnection.expires>Date.now()){openVerification(null);return;}
+    open();
+  },true);
   window.addEventListener("eip6963:announceProvider",()=>syncConnection());
   window.addEventListener("focus",()=>syncConnection());
   window.addEventListener("pageshow",()=>syncConnection());
