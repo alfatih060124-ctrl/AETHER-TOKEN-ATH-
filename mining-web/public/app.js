@@ -26,8 +26,153 @@ function fmtUtc(timestamp){if(!timestamp||Number(timestamp)<=0)return "—";retu
 function rewardStatusLabel(status){return {0:t("NOT ELIGIBLE"),1:t("CLAIMABLE"),2:t("CLAIMED"),3:t("EXPIRED"),4:t("PENDING 00:05 UTC")}[Number(status)]||t("UNKNOWN")}
 function contractReady(){return Boolean(cfg?.miningAddress&&ethers.isAddress(cfg.miningAddress))}
 function setSystemStatus(){const ready=contractReady();$("networkBadge").textContent=`◆ ${cfg?.chainName||"BSC Testnet"} ⌄`;$("networkBadge").className=`network-select ${ready?"network-good":"network-warn"}`;$("contractDot").classList.toggle("live",ready);if(!ready){$("systemStatus").textContent=t("Testnet contract pending");$("contractStatus").textContent=t("Interface is live; transaction controls remain locked until the verified MiningAirdrop address is configured.")}else{$("systemStatus").textContent=t("Mining contract connected");$("contractStatus").textContent=shortAddress(cfg.miningAddress)}if(cfg?.mainnetEnabled)$("safetyCopy").textContent=t("Mainnet flag is enabled in runtime configuration. Verify audit, multisig and liquidity-lock gates before any production transaction.")}
-async function ensureChain(){if(!window.ethereum||!cfg)return;const wanted=`0x${Number(cfg.chainId).toString(16)}`,current=await window.ethereum.request({method:"eth_chainId"});if(current.toLowerCase()===wanted.toLowerCase())return;try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:wanted}]})}catch(err){if(err?.code!==4902)throw err;await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:wanted,chainName:cfg.chainName,nativeCurrency:{name:"BNB",symbol:"tBNB",decimals:18},rpcUrls:[cfg.rpcUrl],blockExplorerUrls:[cfg.explorerUrl]}]})}}
-async function connectWallet(){if(!window.ethereum){toast(t("No EVM wallet detected. Open this page in AETHER Wallet, MetaMask, or another compatible wallet."),true);return}try{await ensureChain();provider=new ethers.BrowserProvider(window.ethereum);await provider.send("eth_requestAccounts",[]);signer=await provider.getSigner();account=await signer.getAddress();$("connectBtn").textContent=shortAddress(account);if(contractReady())contract=new ethers.Contract(cfg.miningAddress,ABI,signer);await refresh();toast(t("Wallet connected."))}catch(err){toast(err?.shortMessage||err?.message||t("Wallet connection failed."),true)}}
+let holderWallet = null;
+let connectingWallet = false;
+let walletRevision = 0;
+const announcedAetherWallets = new Set();
+
+window.addEventListener("eip6963:announceProvider", ({detail}) => {
+  if (detail?.info?.name === "AETHER Wallet" &&
+      detail.provider?.isAether === true && typeof detail.provider.request === "function") {
+    announcedAetherWallets.add(detail.provider);
+  }
+});
+window.dispatchEvent(new Event("eip6963:requestProvider"));
+
+function getAetherWallet() {
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+  const injected = window.ethereum;
+  if (injected?.isAether === true && typeof injected.request === "function") return injected;
+  if (announcedAetherWallets.size === 1) return announcedAetherWallets.values().next().value;
+  return null;
+}
+
+async function ensureChain(wallet) {
+  const wanted = `0x${Number(cfg.chainId).toString(16)}`;
+  if ((await wallet.request({method:"eth_chainId"})).toLowerCase() === wanted) return;
+  try {
+    await wallet.request({method:"wallet_switchEthereumChain", params:[{chainId:wanted}]});
+  } catch (err) {
+    if (err?.code !== 4902) throw err;
+    await wallet.request({method:"wallet_addEthereumChain", params:[{
+      chainId:wanted, chainName:cfg.chainName,
+      nativeCurrency:{name:"BNB",symbol:Number(cfg.chainId) === 56 ? "BNB" : "tBNB",decimals:18},
+      rpcUrls:[cfg.rpcUrl], blockExplorerUrls:[cfg.explorerUrl]
+    }]});
+  }
+  if ((await wallet.request({method:"eth_chainId"})).toLowerCase() !== wanted) {
+    throw new Error(t("Select the configured BNB Smart Chain network in your wallet."));
+  }
+}
+
+function notifyHolderWallet() {
+  window.dispatchEvent(new Event("aether-holder-wallet-change"));
+}
+
+function resetHolderWallet() {
+  provider = signer = contract = null;
+  account = "";
+  $("connectBtn").textContent = t("Connect Wallet");
+  updateButtons();
+  notifyHolderWallet();
+}
+
+function subscribeHolderWallet(wallet) {
+  const changed = () => {
+    if (holderWallet !== wallet) return;
+    const revision = ++walletRevision;
+    resetHolderWallet();
+    void syncHolderWallet(wallet, revision).catch(console.error);
+  };
+  wallet.on?.("accountsChanged", changed);
+  wallet.on?.("chainChanged", changed);
+  wallet.on?.("disconnect", () => {
+    if (holderWallet !== wallet) return;
+    ++walletRevision;
+    resetHolderWallet();
+    void refresh();
+  });
+}
+
+async function syncHolderWallet(wallet, revision) {
+  const [chain, accounts] = await Promise.all([
+    wallet.request({method:"eth_chainId"}),
+    wallet.request({method:"eth_accounts"})
+  ]);
+  if (revision !== walletRevision) return false;
+  if (Number(chain) !== Number(cfg.chainId) || !accounts?.length) {
+    await refresh();
+    return false;
+  }
+  const nextProvider = new ethers.BrowserProvider(wallet);
+  const nextSigner = await nextProvider.getSigner(accounts[0]);
+  const nextAccount = await nextSigner.getAddress();
+  if (revision !== walletRevision) return false;
+  provider = nextProvider;
+  signer = nextSigner;
+  account = nextAccount;
+  contract = contractReady() ? new ethers.Contract(cfg.miningAddress, ABI, signer) : null;
+  $("connectBtn").textContent = shortAddress(account);
+  notifyHolderWallet();
+  await refresh();
+  return revision === walletRevision;
+}
+
+async function connectWallet(wallet, requestAccounts = true) {
+  if (!wallet) {
+    toast(t("No EVM wallet detected. Open this page in AETHER Wallet, MetaMask, or another compatible wallet."), true);
+    return;
+  }
+  if (connectingWallet) return;
+  connectingWallet = true;
+  try {
+    if (requestAccounts) await wallet.request({method:"eth_requestAccounts"});
+    await ensureChain(wallet);
+    if (holderWallet !== wallet) {
+      if (!subscribedHolderWallets.has(wallet)) {
+        subscribeHolderWallet(wallet);
+        subscribedHolderWallets.add(wallet);
+      }
+      holderWallet = wallet;
+    }
+    const revision = ++walletRevision;
+    resetHolderWallet();
+    const connected = await syncHolderWallet(wallet, revision);
+    if (connected) toast(t("Wallet connected."));
+    return connected;
+  } catch (err) {
+    toast(err?.shortMessage || err?.message || t("Wallet connection failed."), true);
+  } finally {
+    connectingWallet = false;
+  }
+}
+
+const subscribedHolderWallets = new WeakSet();
+
+function connectAetherWallet() {
+  const wallet = getAetherWallet();
+  if (wallet) return connectWallet(wallet);
+  const indonesian = $("aetherLangSelect")?.value === "id" || document.documentElement.lang === "id";
+  const androidBrowser = /Android/i.test(navigator.userAgent) &&
+    ["https://mining.aether.boats", "https://staking.aether.boats"].includes(location.origin);
+  if (androidBrowser) {
+    if (Number(cfg.chainId) !== 56) {
+      return toast(indonesian
+        ? "Koneksi dari Chrome belum tersedia untuk jaringan situs ini."
+        : "Chrome connection is not available for this site's network yet.", true);
+    }
+    if (!window.connectAetherFromChrome || !/^[a-f0-9]{32}$/i.test(cfg.walletConnectProjectId ?? "")) {
+      return toast(indonesian
+        ? "Koneksi dari Chrome belum diaktifkan di situs ini. Buka halaman ini dari menu DApps di AETHER Wallet."
+        : "Chrome connection is not enabled on this site yet. Open this page from DApps in AETHER Wallet.", true);
+    }
+    return window.connectAetherFromChrome(cfg, wallet => connectWallet(wallet, false));
+  }
+  toast(indonesian
+    ? "Buka halaman ini dari menu DApps di aplikasi AETHER Wallet, lalu tekan Connect AETHER Wallet."
+    : "Open this page from DApps in the AETHER Wallet app, then tap Connect AETHER Wallet.", true);
+}
+
 function updateButtons(){const usable=Boolean(account&&contractReady()&&contract),hasPower=Boolean(userInfo?.hasPower),active=Boolean(userInfo?.miningActive),referrals=Number(userInfo?.referralCount||0n),multiplier=Number(userInfo?.boosterMultiplier||10000n)/10000,rewardStatus=Number(dailyRewardInfo?.status||0);$("powerBtn").disabled=!usable||hasPower;$("boosterBtn").disabled=!usable||!hasPower||!active||multiplier>1;$("doubleBoosterBtn").disabled=!usable||!hasPower||!active||referrals<5||multiplier!==2;$("dailyBtn").disabled=!usable||rewardStatus!==1;$("vestedBtn").disabled=!usable||!hasPower||!Number(userInfo?.positionsCount||0n);$("powerState").textContent=!account?t("Wallet not connected"):!contractReady()?t("Waiting for verified Testnet contract"):hasPower?t("Power active"):t("Ready to activate");$("boosterState").textContent=!contractReady()?t("Contract pending"):!hasPower?t("Power required"):multiplier>=6?t("Double Power active"):multiplier===2?t("Power Booster active"):active?t("Ready — 30 day duration"):t("Mining window inactive");$("doubleBoosterState").textContent=!contractReady()?t("Contract pending"):referrals<5?t("{count}/5 referrals — not eligible yet",{count:referrals}):multiplier>=6?t("Double Power active until Power Booster expires"):multiplier===2?t("Eligible — follows current Power Booster expiry"):t("Activate Power Booster first");$("dailyState").textContent=!contractReady()?t("Contract pending"):!hasPower?t("Power required"):rewardStatus===1?t("CLAIMABLE · Day {day}/180 · closes 23:59:59 UTC",{day:userInfo.currentDay}):rewardStatus===2?t("CLAIMED for this UTC day"):rewardStatus===4?t("Opens at 00:05 UTC"):active?t("Not claimable for this UTC day"):t("Mining window inactive")}
 function paintUser(){if(!userInfo){$("dayStat").textContent="0";$("activeStat").textContent=t("Not active");$("allocatedStat").textContent="0.000 ATH";$("claimedStat").textContent="0.000 ATH";$("pendingStat").textContent="0.000 ATH";$("burnedStat").textContent="0.000 ATH";$("hashStat").textContent="0";$("multiplierStat").textContent=t("Reward multiplier {value}×",{value:"1.00"});$("referralCount").textContent="0";$("referralBonus").textContent="0%";$("refBonusPill").textContent="+0%";$("dailyRewardPreview").textContent="10.00";$("dailyRewardMirror").textContent="10.0000";$("rewardStatus").textContent=t("Not available");$("rewardOnChain").textContent="0.000 ATH";$("rewardFormula").textContent=t("10 ATH × referral × booster");$("rewardDeadline").textContent="—";updateButtons();return}$("dayStat").textContent=String(userInfo.currentDay);$("activeStat").textContent=userInfo.miningActive?t("Mining active"):t("Not active");$("allocatedStat").textContent=fmtAth(userInfo.totalAllocated);$("claimedStat").textContent=fmtAth(userInfo.totalClaimed);$("pendingStat").textContent=fmtAth(userInfo.pendingVested);$("burnedStat").textContent=fmtAth(vestingSummary?.totalBurned||0n);$("hashStat").textContent=Number(userInfo.totalHash).toLocaleString();const multiplier=Number(userInfo.boosterMultiplier||10000n)/10000;$("multiplierStat").textContent=t("Reward multiplier {value}×",{value:multiplier.toFixed(2)});const referrals=Number(userInfo.referralCount),bonusPct=Number(userInfo.referralBonusBps)/100;$("referralCount").textContent=referrals.toLocaleString();$("referralBonus").textContent=`${bonusPct.toFixed(0)}%`;$("refBonusPill").textContent=`+${bonusPct.toFixed(0)}%`;const dailyReward=dailyRewardInfo?.reward||0n,dailyNumber=Number(ethers.formatEther(dailyReward||0n));$("dailyRewardPreview").textContent=dailyNumber?dailyNumber.toFixed(2):"0.00";$("dailyRewardMirror").textContent=dailyNumber?dailyNumber.toFixed(4):"0.0000";if(dailyRewardInfo){const snapshotMultiplier=Number(dailyRewardInfo.boosterMultiplier||10000n)/10000,snapshotBonus=Number(dailyRewardInfo.referralBonusBps||0n)/100,referralFactor=(1+snapshotBonus/100).toFixed(2);$("rewardStatus").textContent=rewardStatusLabel(dailyRewardInfo.status);$("rewardOnChain").textContent=fmtAth(dailyRewardInfo.reward);$("rewardFormula").textContent=snapshotMultiplier>=6?t("10 ATH × {factor} referral × 2 Power × 3 Double",{factor:referralFactor}):snapshotMultiplier>=2?t("10 ATH × {factor} referral × 2 Power",{factor:referralFactor}):t("10 ATH × {factor} referral",{factor:referralFactor});$("rewardDeadline").textContent=fmtUtc(dailyRewardInfo.claimDeadline)}updateButtons()}
 function clearVestingDetail(){["positionAmount","position30","position60","position90","positionCyclePrincipal","positionClaimable","positionBurned","cycleIncoming","cycleBurn","cycle30","cycle60","cycle90","cycleRollover","finalBurn","finalDistribution"].forEach(id=>$(id).textContent="0.000 ATH");$("positionCurrentCycle").textContent="0 / 12";$("cycleStart").textContent="—";$("cycleEntered").textContent=t("Not entered");$("finalSettlementAt").textContent="—"}
@@ -36,6 +181,6 @@ async function loadSelectedVesting(){if(!readContract||!account||selectedPositio
 async function refresh(){setSystemStatus();if(!contractReady()){readContract=null;userInfo=null;dailyRewardInfo=null;vestingSummary=null;selectedPositionIndex=null;syncPositionSelect();paintUser();return}try{const readProvider=account?provider:new ethers.JsonRpcProvider(cfg.rpcUrl,cfg.chainId);readContract=new ethers.Contract(cfg.miningAddress,ABI,readProvider);const[price,powerPrice,doublePrice]=await Promise.all([readContract.getCurrentPrice(),readContract.powerBoosterPrice(),readContract.doublePowerBoosterPrice()]);powerBoosterPrice=powerPrice;doublePowerBoosterPrice=doublePrice;$("priceStat").textContent=`$${(Number(price)/1_000_000).toFixed(3)}`;$("powerBoosterPriceText").textContent=`${ethers.formatEther(powerPrice)} BNB`;$("doubleBoosterPriceText").textContent=`${ethers.formatEther(doublePrice)} BNB`;if(account){const latestBlock=await readProvider.getBlock("latest");if(!latestBlock)throw new Error(t("Unable to read latest block timestamp"));const dayId=Math.floor(Number(latestBlock.timestamp)/86400),[u,reward,summary]=await Promise.all([readContract.getUserInfo(account),readContract.getDailyRewardStatus(account,dayId),readContract.getVestingSummary(account)]);userInfo={hasPower:u.hasPower,miningActive:u.miningActive,startTime:u.startTime,lastClaimDay:u.lastClaimDay,currentDay:u.currentDay,totalAllocated:u.totalAllocated,totalClaimed:u.totalClaimed,pendingVested:u.pendingVested,referralCount:u.referralCount,referralBonusBps:u.referralBonusBps,boosterMultiplier:u.boosterMultiplier,totalHash:u.totalHash,positionsCount:u.positionsCount};dailyRewardInfo={reward:reward.reward,referralBonusBps:reward.referralBonusBps,boosterMultiplier:reward.boosterMultiplier,claimOpensAt:reward.claimOpensAt,claimDeadline:reward.claimDeadline,status:reward.status};vestingSummary={positionsCount:summary.positionsCount,totalAllocated:summary.totalAllocated,totalClaimed:summary.totalClaimed,totalBurned:summary.totalBurned,totalStillVesting:summary.totalStillVesting};syncPositionSelect();await loadSelectedVesting()}else{userInfo=null;dailyRewardInfo=null;vestingSummary=null;selectedPositionIndex=null;syncPositionSelect()}}catch(err){console.error(err);toast(t("Unable to read ATH Mining contract. Check network and contract configuration."),true);userInfo=null;dailyRewardInfo=null;vestingSummary=null;selectedPositionIndex=null;syncPositionSelect()}paintUser()}
 async function runTx(label,fn){if(!contract)return;try{toast(t("{label}: confirm the transaction in your wallet.",{label:t(label)}));const tx=await fn();toast(t("{label}: submitted {hash}",{label:t(label),hash:shortAddress(tx.hash)}));await tx.wait();toast(t("{label}: confirmed.",{label:t(label)}));await refresh()}catch(err){toast(err?.shortMessage||err?.reason||err?.message||t("{label} failed.",{label:t(label)}),true)}}
 async function buyPower(){const raw=$("referrer").value.trim();let referrer=ethers.ZeroAddress;if(raw){if(!ethers.isAddress(raw))return toast(t("Sponsor wallet is not a valid EVM address."),true);if(raw.toLowerCase()===account.toLowerCase())return toast(t("Self-referral is not allowed."),true);referrer=raw}await runTx("Power",()=>contract.buyPower(referrer,{value:ethers.parseEther(cfg.powerPriceBnb)}))}
-async function boot(){try{cfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());setSystemStatus();paintUser();$("connectBtn").addEventListener("click",connectWallet);$("powerBtn").addEventListener("click",buyPower);$("boosterBtn").addEventListener("click",()=>runTx("Power Booster",()=>contract.buyPowerBooster({value:powerBoosterPrice})));$("doubleBoosterBtn").addEventListener("click",()=>runTx("Double Power Booster",()=>contract.buyDoublePowerBooster({value:doublePowerBoosterPrice})));$("dailyBtn").addEventListener("click",()=>runTx("Daily mining",()=>contract.claimDaily()));$("vestedBtn").addEventListener("click",()=>runTx("Vested ATH",()=>contract.claimAllVested()));$("vestingPositionSelect").addEventListener("change",async event=>{selectedPositionIndex=event.target.value===""?null:Number(event.target.value);await loadSelectedVesting()});$("cycleSelect").addEventListener("change",loadSelectedVesting);if(window.ethereum){window.ethereum.on?.("accountsChanged",async accounts=>{if(!accounts?.length){account="";signer=null;contract=null;$("connectBtn").textContent=t("Connect Wallet");await refresh();return}await connectWallet()});window.ethereum.on?.("chainChanged",()=>window.location.reload())}await refresh()}catch(err){console.error(err);toast(t("Unable to load mining application configuration."),true)}}
+async function boot(){try{cfg=await fetch("/config",{cache:"no-store"}).then(r=>r.json());setSystemStatus();paintUser();$("connectBtn").addEventListener("click",()=>connectWallet(window.ethereum));$("connectAetherBtn").addEventListener("click",connectAetherWallet);$("powerBtn").addEventListener("click",buyPower);$("boosterBtn").addEventListener("click",()=>runTx("Power Booster",()=>contract.buyPowerBooster({value:powerBoosterPrice})));$("doubleBoosterBtn").addEventListener("click",()=>runTx("Double Power Booster",()=>contract.buyDoublePowerBooster({value:doublePowerBoosterPrice})));$("dailyBtn").addEventListener("click",()=>runTx("Daily mining",()=>contract.claimDaily()));$("vestedBtn").addEventListener("click",()=>runTx("Vested ATH",()=>contract.claimAllVested()));$("vestingPositionSelect").addEventListener("change",async event=>{selectedPositionIndex=event.target.value===""?null:Number(event.target.value);await loadSelectedVesting()});$("cycleSelect").addEventListener("change",loadSelectedVesting);await refresh()}catch(err){console.error(err);toast(t("Unable to load mining application configuration."),true)}}
 boot();
 const athAssetRev="20261002-mobile-i18n-v5";const athPublicInfoScript=document.createElement("script");athPublicInfoScript.src="/ath-info.js?v="+athAssetRev;athPublicInfoScript.defer=true;athPublicInfoScript.addEventListener("load",()=>{const athLuxuryPolish=document.createElement("link");athLuxuryPolish.rel="stylesheet";athLuxuryPolish.href="/luxury-polish.css?v="+athAssetRev;document.head.appendChild(athLuxuryPolish)});document.head.appendChild(athPublicInfoScript);const aetherAiStyle=document.createElement("link");aetherAiStyle.rel="stylesheet";aetherAiStyle.href="/aether-ai.css?v="+athAssetRev;document.head.appendChild(aetherAiStyle);const aetherAiScript=document.createElement("script");aetherAiScript.src="/aether-ai.js?v="+athAssetRev;aetherAiScript.defer=true;document.head.appendChild(aetherAiScript);

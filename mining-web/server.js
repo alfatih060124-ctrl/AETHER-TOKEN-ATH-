@@ -14,6 +14,10 @@ const ETHERS_BROWSER_BUNDLE = path.join(
   "dist",
   "ethers.umd.min.js"
 );
+const WALLETCONNECT_BROWSER_BUNDLE = path.join(
+  path.dirname(require.resolve("@walletconnect/universal-provider")),
+  "index.umd.js"
+);
 const aiRate = new Map();
 const adminAuthRate = new Map();
 const adminChallenges = new Map();
@@ -184,6 +188,7 @@ function configPayload() {
     stakingProtocolVersion: "1.0",
     whitepaperVersion: "1.1",
     frontendRev: (process.env.FRONTEND_REV || "dev").trim(),
+    walletConnectProjectId: (process.env.PUBLIC_WALLETCONNECT_PROJECT_ID || "").trim(),
     networkMode: (process.env.NETWORK_MODE || "TESTNET").toUpperCase(),
     chainId: Number(process.env.PUBLIC_CHAIN_ID || 97),
     chainName: process.env.PUBLIC_CHAIN_NAME || "BSC Testnet",
@@ -327,6 +332,15 @@ const server = http.createServer((req, res) => {
 
   if (controlPanelHost && !controlPanelAllowedRequest.has(requestPath)) {
     return send(res, 404, "Not found", "text/plain; charset=utf-8", true);
+  }
+
+  if (!controlPanelHost && requestPath === "/vendor/walletconnect-2.26.0.js" && req.method === "GET") {
+    return fs.readFile(WALLETCONNECT_BROWSER_BUNDLE, (err, data) => {
+      if (err) return send(res, 503, "WalletConnect bundle unavailable", "text/plain; charset=utf-8", false);
+      return send(res, 200, data, MIME[".js"], false, {
+        "cache-control": "public, max-age=86400, immutable"
+      });
+    });
   }
 
   if (controlPanelHost && requestPath === "/vendor/ethers.umd.min.js" && req.method === "GET") {
