@@ -152,12 +152,22 @@ const subscribedHolderWallets = new WeakSet();
 function connectAetherWallet() {
   const wallet = getAetherWallet();
   if (wallet) return connectWallet(wallet);
-  if (window.connectAetherFromChrome && /^[a-f0-9]{32}$/i.test(cfg?.walletConnectProjectId ?? "") &&
-      Number(cfg.chainId) === 56 && /Android/i.test(navigator.userAgent) &&
-      ["https://mining.aether.boats", "https://staking.aether.boats"].includes(location.origin)) {
+  const indonesian = $("aetherLangSelect")?.value === "id" || document.documentElement.lang === "id";
+  const androidBrowser = /Android/i.test(navigator.userAgent) &&
+    ["https://mining.aether.boats", "https://staking.aether.boats"].includes(location.origin);
+  if (androidBrowser) {
+    if (Number(cfg.chainId) !== 56) {
+      return toast(indonesian
+        ? "Koneksi dari Chrome belum tersedia untuk jaringan situs ini."
+        : "Chrome connection is not available for this site's network yet.", true);
+    }
+    if (!window.connectAetherFromChrome || !/^[a-f0-9]{32}$/i.test(cfg.walletConnectProjectId ?? "")) {
+      return toast(indonesian
+        ? "Koneksi dari Chrome belum diaktifkan di situs ini. Buka halaman ini dari menu DApps di AETHER Wallet."
+        : "Chrome connection is not enabled on this site yet. Open this page from DApps in AETHER Wallet.", true);
+    }
     return window.connectAetherFromChrome(cfg, wallet => connectWallet(wallet, false));
   }
-  const indonesian = $("aetherLangSelect")?.value === "id" || document.documentElement.lang === "id";
   toast(indonesian
     ? "Buka halaman ini dari menu DApps di aplikasi AETHER Wallet, lalu tekan Connect AETHER Wallet."
     : "Open this page from DApps in the AETHER Wallet app, then tap Connect AETHER Wallet.", true);
