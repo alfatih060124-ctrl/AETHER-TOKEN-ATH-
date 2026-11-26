@@ -118,7 +118,7 @@ async function syncHolderWallet(wallet, revision) {
   return revision === walletRevision;
 }
 
-async function connectWallet(wallet) {
+async function connectWallet(wallet, requestAccounts = true) {
   if (!wallet) {
     toast(t("No EVM wallet detected. Open this page in AETHER Wallet, MetaMask, or another compatible wallet."), true);
     return;
@@ -126,7 +126,7 @@ async function connectWallet(wallet) {
   if (connectingWallet) return;
   connectingWallet = true;
   try {
-    await wallet.request({method:"eth_requestAccounts"});
+    if (requestAccounts) await wallet.request({method:"eth_requestAccounts"});
     await ensureChain(wallet);
     if (holderWallet !== wallet) {
       if (!subscribedHolderWallets.has(wallet)) {
@@ -137,7 +137,9 @@ async function connectWallet(wallet) {
     }
     const revision = ++walletRevision;
     resetHolderWallet();
-    if (await syncHolderWallet(wallet, revision)) toast(t("Wallet connected."));
+    const connected = await syncHolderWallet(wallet, revision);
+    if (connected) toast(t("Wallet connected."));
+    return connected;
   } catch (err) {
     toast(err?.shortMessage || err?.message || t("Wallet connection failed."), true);
   } finally {
@@ -150,6 +152,11 @@ const subscribedHolderWallets = new WeakSet();
 function connectAetherWallet() {
   const wallet = getAetherWallet();
   if (wallet) return connectWallet(wallet);
+  if (window.connectAetherFromChrome && /^[a-f0-9]{32}$/i.test(cfg?.walletConnectProjectId ?? "") &&
+      Number(cfg.chainId) === 56 && /Android/i.test(navigator.userAgent) &&
+      ["https://mining.aether.boats", "https://staking.aether.boats"].includes(location.origin)) {
+    return window.connectAetherFromChrome(cfg, wallet => connectWallet(wallet, false));
+  }
   const indonesian = $("aetherLangSelect")?.value === "id" || document.documentElement.lang === "id";
   toast(indonesian
     ? "Buka halaman ini dari menu DApps di aplikasi AETHER Wallet, lalu tekan Connect AETHER Wallet."
