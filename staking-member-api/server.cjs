@@ -7,6 +7,15 @@ const {verifyMessage,getAddress}=require("ethers");
 const ORIGIN="https://staking.aether.boats";
 const pool=new Pool({host:"127.0.0.1",port:15485,database:"ath_member",user:"ath_member",password:process.env.POSTGRES_PASSWORD,max:8,connectionTimeoutMillis:3000,statement_timeout:5000});
 if(!process.env.POSTGRES_PASSWORD)throw new Error("Database password required");
+const proxySecret=process.env.STAKING_MEMBER_PROXY_SECRET||"";
+if(!/^[a-f0-9]{64}$/.test(proxySecret))throw new Error("Staking proxy secret required");
+const proxyDigest=crypto.createHash("sha256").update(proxySecret).digest();
+function trustedProxy(req){
+ const s=req.headers["x-ath-member-proxy"];
+ return typeof s==="string"&&s.length===64&&crypto.timingSafeEqual(crypto.createHash("sha256").update(s).digest(),proxyDigest);
+}
+let totalWindow=0,totalCount=0;
+function globalAllowed(){const now=Date.now();if(now>=totalWindow){totalWindow=now+60000;totalCount=0;}return ++totalCount<=240;}
 const COOKIE="ath_member_session";
 const hash=s=>crypto.createHash("sha256").update(s).digest("hex");
 const address=s=>{if(typeof s!=="string"||!/^0x[0-9a-f]{40}$/i.test(s))throw new Error("Invalid wallet");const a=getAddress(s.toLowerCase()).toLowerCase();if(/^0x0{40}$/.test(a))throw new Error("Invalid wallet");return a;};
@@ -24,6 +33,8 @@ try{
 const path=new URL(req.url,"http://localhost").pathname;
 if(path==="/health"&&req.method==="GET"){await pool.query("SELECT 1");return respond(res,200,{ok:true,service:"ath-staking-member",transactionsEnabled:false});}
 if(!path.startsWith("/api/member/"))return respond(res,404,{ok:false,error:"NOT_FOUND"});
+if(!trustedProxy(req))return respond(res,403,{ok:false,error:"PROXY_AUTH_REQUIRED"});
+if(!globalAllowed())return respond(res,429,{ok:false,error:"RATE_LIMIT"});
 if(req.method==="POST"&&(req.headers.origin!==ORIGIN||!/^application\/json(?:;|$)/i.test(req.headers["content-type"]||"")))return respond(res,403,{ok:false,error:"ORIGIN_OR_CONTENT_TYPE"});
 if(path==="/api/member/challenge"&&req.method==="POST"){
 const b=await body(req);const wallet=address(b.wallet);if(!allowed("challenge:"+wallet))return respond(res,429,{ok:false,error:"RATE_LIMIT"});
