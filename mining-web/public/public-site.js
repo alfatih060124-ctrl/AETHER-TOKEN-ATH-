@@ -290,7 +290,7 @@
   async function connect(p){
     if(authenticating)return;
     authenticating=true;
-    let address=null,referral;
+    let address=null,referral,stage="ACCOUNT";
     try{
       const approved=await readApproved(p);
       address=approved||(await p.request({method:"eth_requestAccounts"}))?.[0];
@@ -298,16 +298,21 @@
       const params=new URLSearchParams(location.search);
       referral=params.get("ref")||params.get("sponsor")||undefined;
       status.textContent=txt("Memeriksa akun dan referral...","Checking account and referral...");
+      stage="CHALLENGE";
       const challenge=await memberPost("/api/member/challenge",{wallet:address,referral});
       validateChallenge(challenge,address);
+      stage="SIGNATURE";
       status.textContent=txt("Setujui tanda tangan login. Tidak ada transaksi atau persetujuan token.","Approve the login signature. No transaction or token approval.");
       const hex="0x"+Array.from(new TextEncoder().encode(challenge.message),b=>b.toString(16).padStart(2,"0")).join("");
       const signature=await p.request({method:"personal_sign",params:[hex,address]});
+      stage="VERIFY";
       await completeLogin(address,challenge.nonce,signature);
     }catch(e){
       title.textContent=txt("Verifikasi Login","Verify Login");
       list.replaceChildren();
-      status.textContent=authError(e);
+      const safeCode=typeof e?.code==="number"&&Number.isInteger(e.code)?String(e.code):"UNKNOWN";
+      const knownError=/^(INVALID_CHALLENGE|INVALID_SESSION|INVALID_WALLET|SIGNATURE_MISMATCH|REFERRAL_REQUIRED|INVALID_SPONSOR|MEMBER_API_UNAVAILABLE|AUTH_FAILED)$/.test(e?.message||"")?e.message:safeCode;
+      status.textContent=authError(e)+" ["+stage+":"+knownError+"]";
       if(validAccount(address)&&isAetherProvider(p)&&unsupportedMessageSigning(e)){
         // The official native signing request remains subject to the wallet's own
         // approval and security policy. Do not treat a deep link as a signature.
