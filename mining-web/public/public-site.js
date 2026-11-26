@@ -136,6 +136,50 @@
     const found=[...providers.values()].find(d=>w[1].test(d.info.name+" "+d.info.rdns));if(found)return found.provider;
     const candidates=window.ethereum?.providers||[window.ethereum];return candidates.find(p=>p?.request&&({aether:p.isAether||p.isAetherWallet,tp:p.isTokenPocket,trust:p.isTrust||p.isTrustWallet,mm:p.isMetaMask&&!p.isTrust&&!p.isTrustWallet&&!p.isTokenPocket&&!p.isAetherWallet&&!p.isAether&&!p.isSafePal,safe:p.isSafePal})[w[3]]);
   }
+  // An approved account is not an authenticated member. Detect it without a
+  // second permission request and require explicit consent for personal_sign.
+  let activeConnection=null, syncSequence=0;
+  const connectionHint=document.createElement("span");
+  connectionHint.className="ath-wallet-connection-hint";
+  connectionHint.setAttribute("role","status");
+  connectionHint.setAttribute("aria-live","polite");
+  connectionHint.hidden=true;
+  button.insertAdjacentElement("afterend",connectionHint);
+  const validAccount=a=>typeof a==="string"&&/^0x[0-9a-f]{40}$/i.test(a);
+  function availableProviders(){
+    const all=[...providers.values()].map(d=>d.provider);
+    if(Array.isArray(window.ethereum?.providers))all.push(...window.ethereum.providers);
+    if(window.ethereum?.request&&!all.length)all.push(window.ethereum);
+    return [...new Set(all.filter(p=>typeof p?.request==="function"))];
+  }
+  function paintConnection(){
+    const connected=!!activeConnection;
+    connectionHint.hidden=!connected;
+    button.textContent=connected?txt("Verifikasi Login","Verify Login"):txt("Hubungkan Wallet","Connect Wallet");
+    connectionHint.textContent=connected?txt("Wallet terhubung · verifikasi login diperlukan","Wallet connected · login verification required"):"";
+  }
+  async function readApproved(p){
+    try{
+      const a=await Promise.race([p.request({method:"eth_accounts"}),new Promise(resolve=>setTimeout(()=>resolve([]),1500))]);
+      return Array.isArray(a)&&validAccount(a[0])?a[0]:null;
+    }catch{return null;}
+  }
+  const observed=new WeakSet();
+  function observeProvider(p){
+    if(observed.has(p))return;observed.add(p);
+    if(typeof p.on==="function"){
+      for(const event of ["accountsChanged","connect","disconnect","chainChanged"])try{p.on(event,()=>syncConnection());}catch{}
+    }
+  }
+  async function syncConnection(){
+    const seq=++syncSequence;
+    const all=availableProviders();
+    all.forEach(observeProvider);
+    const found=(await Promise.all(all.map(async p=>({p,address:await readApproved(p)})))).filter(x=>x.address);
+    if(seq!==syncSequence||authenticating)return;
+    activeConnection=found.length===1?found[0]:null;
+    paintConnection();
+  }
   let authenticating=false;
   async function memberPost(path,data){
     const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data),credentials:"same-origin",cache:"no-store"});
@@ -147,8 +191,8 @@
     if(authenticating)return;
     authenticating=true;
     try{
-      const accounts=await p.request({method:"eth_requestAccounts"});
-      const address=accounts?.[0];
+      const approved=await readApproved(p);
+      const address=approved||(await p.request({method:"eth_requestAccounts"}))?.[0];
       if(!/^0x[0-9a-f]{40}$/i.test(address||""))throw new Error("INVALID_WALLET");
       const params=new URLSearchParams(location.search);
       const referral=params.get("ref")||params.get("sponsor")||undefined;
@@ -166,7 +210,8 @@
       location.assign("/staking-member.html?lang="+encodeURIComponent(lang));
     }catch(e){
       const messages={REFERRAL_REQUIRED:txt("Member baru wajib membuka tautan referral sponsor.","New members must open a sponsor referral link."),INVALID_SPONSOR:txt("Sponsor belum terdaftar atau tidak valid.","Sponsor is not registered or invalid."),MEMBER_API_UNAVAILABLE:txt("Registrasi belum dibuka. Silakan coba setelah sistem siap.","Registration is not open yet. Please try after the system is ready.")};
-      status.textContent=messages[e.message]||txt("Login dibatalkan atau gagal. Silakan coba lagi.","Login canceled or failed. Please try again.");
+      const signingDisabled=/sign(?:ing|ature)?[^\n]*(?:disabled|not supported|not allowed|unsupported)|(?:disabled|unsupported)[^\n]*sign|personal_sign/i.test(String(e?.message||""))||Number(e?.code)===4200;
+      status.textContent=messages[e.message]||(signingDisabled?txt("Wallet sudah terhubung, tetapi tanda tangan DApp belum diizinkan. Aktifkan izin tanda tangan pesan di wallet jika tersedia, atau gunakan wallet kompatibel. Login tetap memerlukan verifikasi.","Wallet connected, but DApp message signing is unavailable. Enable message signing permission if available, or use a compatible wallet. Login still requires verification."):txt("Login dibatalkan atau gagal. Silakan coba lagi.","Login canceled or failed. Please try again."));
     }finally{authenticating=false;}
   }
   function row(label,action,key="other"){
@@ -190,5 +235,14 @@
     row(txt("Wallet browser lainnya","Other browser wallet"),()=>{if(window.ethereum?.request)return connect(window.ethereum);status.textContent=txt("WalletConnect QR belum dikonfigurasi. Gunakan browser DApp wallet Anda.","WalletConnect QR is not configured yet. Use your wallet's DApp browser.");});
     if(!dialog.open)dialog.showModal();
   }
-  document.addEventListener("click",e=>{if(e.target.closest?.("#connectBtn")){e.preventDefault();e.stopImmediatePropagation();open();}},true);
+  document.addEventListener("click",e=>{if(e.target.closest?.("#connectBtn")){e.preventDefault();e.stopImmediatePropagation();open();if(activeConnection)connect(activeConnection.p);}},true);
+  window.addEventListener("eip6963:announceProvider",()=>syncConnection());
+  window.addEventListener("focus",()=>syncConnection());
+  window.addEventListener("pageshow",()=>syncConnection());
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncConnection();});
+  document.getElementById("aetherLangSelect")?.addEventListener("change",paintConnection);
+  window.addEventListener("aether-language-refresh",paintConnection);
+  syncConnection();
+  setTimeout(syncConnection,700);
+  setTimeout(syncConnection,2000);
 })();
