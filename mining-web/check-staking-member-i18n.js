@@ -42,5 +42,22 @@ assert.match(proxy,/STAKING_MEMBER_API_ENABLED!=="true"/);
 assert.match(picker,/\/api\/member\/challenge/);
 assert.match(picker,/personal_sign/);
 assert.match(picker,/\/api\/member\/verify/);
+new vm.Script(picker,{filename:"public-site.js"});
+const start=picker.indexOf("  function unsupportedMessageSigning(");
+const end=picker.indexOf("  async function connect(p)",start);
+assert.ok(start>=0&&end>start,"Missing explicit signing capability guard");
+const classify=vm.runInNewContext(picker.slice(start,end)+";unsupportedMessageSigning;",{});
+for(const [error,expected] of [
+ [{code:4200,message:"Unsupported method"},true],
+ [{code:-32601},true],
+ [{message:"DApp signing disabled"},true],
+ [{code:4001,message:"User rejected personal_sign"},false],
+ [{code:4100,message:"Unauthorized"},false],
+ [{message:"signature denied"},false],
+ [{message:"network error"},false]
+])assert.equal(classify(error),expected,"Unexpected signing fallback classification");
+assert.match(picker,/createSignMessageLink/);
+assert.match(picker,/takeRequest\(p\.get\("aether_request_id"\)\)/);
+assert.match(picker,/await completeLogin\(d\.address,d\.nonce,sig\)/);
 new vm.Script(proxy,{filename:"staking-member-proxy.cjs"});
 console.log("Staking Member QC passed: "+languages.length+" translation dictionaries, "+keys.length+" complete keys, authenticated portal source guards and JS syntax.");
